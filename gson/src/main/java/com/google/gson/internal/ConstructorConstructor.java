@@ -78,7 +78,7 @@ public final class ConstructorConstructor {
 
     ObjectConstructor<T> defaultConstructor = newDefaultConstructor(rawType);
     if (defaultConstructor != null) {
-      return defaultConstructor;
+      return newConstructorWithUnsafeBackup(defaultConstructor, type, rawType);
     }
 
     ObjectConstructor<T> defaultImplementation = newDefaultImplementationConstructor(type, rawType);
@@ -88,6 +88,24 @@ public final class ConstructorConstructor {
 
     // finally try unsafe
     return newUnsafeAllocator(type, rawType);
+  }
+
+  private <T> ObjectConstructor<T> newConstructorWithUnsafeBackup(final ObjectConstructor<T> constr, final Type type, final Class<? super T> rawType) {
+    return new ObjectConstructor<T>() {
+      ObjectConstructor<T> backup = null;
+
+      public T construct() {
+        if (backup != null) {
+          return backup.construct();
+        }
+        try {
+          return constr.construct();
+        } catch (RuntimeException e) {
+          backup = newUnsafeAllocator(type, rawType);
+          return backup.construct();
+        }
+      }
+    };
   }
 
   private <T> ObjectConstructor<T> newDefaultConstructor(Class<? super T> rawType) {
