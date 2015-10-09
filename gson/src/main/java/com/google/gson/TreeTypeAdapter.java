@@ -16,11 +16,14 @@
 
 package com.google.gson;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 
 /**
@@ -58,9 +61,9 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     return deserializer.deserialize(value, typeToken.getType(), gson.deserializationContext);
   }
 
-  @Override public void write(JsonWriter out, T value) throws IOException {
+  @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
     if (serializer == null) {
-      delegate().write(out, value);
+      delegate().write(out, value, ctx);
       return;
     }
     if (value == null) {

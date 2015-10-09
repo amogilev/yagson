@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -42,6 +44,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.SerializedName;
@@ -60,7 +63,7 @@ public final class TypeAdapters {
   }
 
   @SuppressWarnings("rawtypes")
-  public static final TypeAdapter<Class> CLASS = new TypeAdapter<Class>() {
+  public static final TypeAdapter<Class> CLASS = new SimpleTypeAdapter<Class>() {
     @Override
     public void write(JsonWriter out, Class value) throws IOException {
       if (value == null) {
@@ -83,7 +86,7 @@ public final class TypeAdapters {
   };
   public static final TypeAdapterFactory CLASS_FACTORY = newFactory(Class.class, CLASS);
 
-  public static final TypeAdapter<BitSet> BIT_SET = new TypeAdapter<BitSet>() {
+  public static final TypeAdapter<BitSet> BIT_SET = new SimpleTypeAdapter<BitSet>() {
     public BitSet read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
@@ -142,7 +145,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory BIT_SET_FACTORY = newFactory(BitSet.class, BIT_SET);
 
-  public static final TypeAdapter<Boolean> BOOLEAN = new TypeAdapter<Boolean>() {
+  public static final TypeAdapter<Boolean> BOOLEAN = new SimpleTypeAdapter<Boolean>() {
     @Override
     public Boolean read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -168,7 +171,7 @@ public final class TypeAdapters {
    * Writes a boolean as a string. Useful for map keys, where booleans aren't
    * otherwise permitted.
    */
-  public static final TypeAdapter<Boolean> BOOLEAN_AS_STRING = new TypeAdapter<Boolean>() {
+  public static final TypeAdapter<Boolean> BOOLEAN_AS_STRING = new SimpleTypeAdapter<Boolean>() {
     @Override public Boolean read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
@@ -185,7 +188,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory BOOLEAN_FACTORY
       = newFactory(boolean.class, Boolean.class, BOOLEAN);
 
-  public static final TypeAdapter<Number> BYTE = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> BYTE = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -208,7 +211,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory BYTE_FACTORY
       = newFactory(byte.class, Byte.class, BYTE);
 
-  public static final TypeAdapter<Number> SHORT = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> SHORT = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -230,7 +233,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory SHORT_FACTORY
       = newFactory(short.class, Short.class, SHORT);
 
-  public static final TypeAdapter<Number> INTEGER = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> INTEGER = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -252,7 +255,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory INTEGER_FACTORY
       = newFactory(int.class, Integer.class, INTEGER);
 
-  public static final TypeAdapter<Number> LONG = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> LONG = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -271,7 +274,7 @@ public final class TypeAdapters {
     }
   };
 
-  public static final TypeAdapter<Number> FLOAT = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> FLOAT = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -286,7 +289,7 @@ public final class TypeAdapters {
     }
   };
 
-  public static final TypeAdapter<Number> DOUBLE = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> DOUBLE = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -301,7 +304,7 @@ public final class TypeAdapters {
     }
   };
 
-  public static final TypeAdapter<Number> NUMBER = new TypeAdapter<Number>() {
+  public static final TypeAdapter<Number> NUMBER = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       JsonToken jsonToken = in.peek();
@@ -323,7 +326,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory NUMBER_FACTORY = newFactory(Number.class, NUMBER);
 
-  public static final TypeAdapter<Character> CHARACTER = new TypeAdapter<Character>() {
+  public static final TypeAdapter<Character> CHARACTER = new SimpleTypeAdapter<Character>() {
     @Override
     public Character read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -345,7 +348,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory CHARACTER_FACTORY
       = newFactory(char.class, Character.class, CHARACTER);
 
-  public static final TypeAdapter<String> STRING = new TypeAdapter<String>() {
+  public static final TypeAdapter<String> STRING = new SimpleTypeAdapter<String>() {
     @Override
     public String read(JsonReader in) throws IOException {
       JsonToken peek = in.peek();
@@ -365,7 +368,7 @@ public final class TypeAdapters {
     }
   };
   
-  public static final TypeAdapter<BigDecimal> BIG_DECIMAL = new TypeAdapter<BigDecimal>() {
+  public static final TypeAdapter<BigDecimal> BIG_DECIMAL = new SimpleTypeAdapter<BigDecimal>() {
     @Override public BigDecimal read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
@@ -383,7 +386,7 @@ public final class TypeAdapters {
     }
   };
   
-  public static final TypeAdapter<BigInteger> BIG_INTEGER = new TypeAdapter<BigInteger>() {
+  public static final TypeAdapter<BigInteger> BIG_INTEGER = new SimpleTypeAdapter<BigInteger>() {
     @Override public BigInteger read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
@@ -403,7 +406,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory STRING_FACTORY = newFactory(String.class, STRING);
 
-  public static final TypeAdapter<StringBuilder> STRING_BUILDER = new TypeAdapter<StringBuilder>() {
+  public static final TypeAdapter<StringBuilder> STRING_BUILDER = new SimpleTypeAdapter<StringBuilder>() {
     @Override
     public StringBuilder read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -421,7 +424,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory STRING_BUILDER_FACTORY =
     newFactory(StringBuilder.class, STRING_BUILDER);
 
-  public static final TypeAdapter<StringBuffer> STRING_BUFFER = new TypeAdapter<StringBuffer>() {
+  public static final TypeAdapter<StringBuffer> STRING_BUFFER = new SimpleTypeAdapter<StringBuffer>() {
     @Override
     public StringBuffer read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -439,7 +442,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory STRING_BUFFER_FACTORY =
     newFactory(StringBuffer.class, STRING_BUFFER);
 
-  public static final TypeAdapter<URL> URL = new TypeAdapter<URL>() {
+  public static final TypeAdapter<URL> URL = new SimpleTypeAdapter<URL>() {
     @Override
     public URL read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -457,7 +460,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory URL_FACTORY = newFactory(URL.class, URL);
 
-  public static final TypeAdapter<URI> URI = new TypeAdapter<URI>() {
+  public static final TypeAdapter<URI> URI = new SimpleTypeAdapter<URI>() {
     @Override
     public URI read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -479,7 +482,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory URI_FACTORY = newFactory(URI.class, URI);
 
-  public static final TypeAdapter<InetAddress> INET_ADDRESS = new TypeAdapter<InetAddress>() {
+  public static final TypeAdapter<InetAddress> INET_ADDRESS = new SimpleTypeAdapter<InetAddress>() {
     @Override
     public InetAddress read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -498,7 +501,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory INET_ADDRESS_FACTORY =
     newTypeHierarchyFactory(InetAddress.class, INET_ADDRESS);
 
-  public static final TypeAdapter<UUID> UUID = new TypeAdapter<UUID>() {
+  public static final TypeAdapter<UUID> UUID = new SimpleTypeAdapter<UUID>() {
     @Override
     public UUID read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -529,14 +532,14 @@ public final class TypeAdapters {
           return date != null ? new Timestamp(date.getTime()) : null;
         }
 
-        @Override public void write(JsonWriter out, Timestamp value) throws IOException {
-          dateTypeAdapter.write(out, value);
+        @Override public void write(JsonWriter out, Timestamp value, ReferencesContext ctx) throws IOException {
+          dateTypeAdapter.write(out, value, ctx);
         }
       };
     }
   };
 
-  public static final TypeAdapter<Calendar> CALENDAR = new TypeAdapter<Calendar>() {
+  public static final TypeAdapter<Calendar> CALENDAR = new SimpleTypeAdapter<Calendar>() {
     private static final String YEAR = "year";
     private static final String MONTH = "month";
     private static final String DAY_OF_MONTH = "dayOfMonth";
@@ -604,7 +607,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory CALENDAR_FACTORY =
     newFactoryForMultipleTypes(Calendar.class, GregorianCalendar.class, CALENDAR);
 
-  public static final TypeAdapter<Locale> LOCALE = new TypeAdapter<Locale>() {
+  public static final TypeAdapter<Locale> LOCALE = new SimpleTypeAdapter<Locale>() {
     @Override
     public Locale read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -641,7 +644,7 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory LOCALE_FACTORY = newFactory(Locale.class, LOCALE);
 
-  public static final TypeAdapter<JsonElement> JSON_ELEMENT = new TypeAdapter<JsonElement>() {
+  public static final SimpleTypeAdapter<JsonElement> JSON_ELEMENT = new SimpleTypeAdapter<JsonElement>() {
     @Override public JsonElement read(JsonReader in) throws IOException {
       switch (in.peek()) {
       case STRING:
@@ -716,7 +719,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory JSON_ELEMENT_FACTORY
       = newTypeHierarchyFactory(JsonElement.class, JSON_ELEMENT);
 
-  private static final class EnumTypeAdapter<T extends Enum<T>> extends TypeAdapter<T> {
+  private static final class EnumTypeAdapter<T extends Enum<T>> extends SimpleTypeAdapter<T> {
     private final Map<String, T> nameToConstant = new HashMap<String, T>();
     private final Map<T, String> constantToName = new HashMap<T, String>();
 

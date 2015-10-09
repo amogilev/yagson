@@ -16,6 +16,8 @@
 
 package com.google.gson.internal.bind;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -91,7 +93,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object value) throws IOException {
+  @Override public void write(JsonWriter out, Object value, ReferencesContext ctx) throws IOException {
     if (value == null) {
       out.nullValue();
       return;
@@ -104,6 +106,6 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       return;
     }
 
-    typeAdapter.write(out, value);
+    typeAdapter.write(out, value, ctx);
   }
 }

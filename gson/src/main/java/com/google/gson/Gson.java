@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.Primitives;
@@ -114,6 +116,9 @@ public final class Gson {
 
   private final Map<TypeToken<?>, TypeAdapter<?>> typeTokenCache
       = Collections.synchronizedMap(new HashMap<TypeToken<?>, TypeAdapter<?>>());
+  
+  final ThreadLocal<ReferencesContext> references
+      = new ThreadLocal<ReferencesContext>();
 
   private final List<TypeAdapterFactory> factories;
   private final ConstructorConstructor constructorConstructor;
@@ -251,7 +256,7 @@ public final class Gson {
     if (serializeSpecialFloatingPointValues) {
       return TypeAdapters.DOUBLE;
     }
-    return new TypeAdapter<Number>() {
+    return new SimpleTypeAdapter<Number>() {
       @Override public Double read(JsonReader in) throws IOException {
         if (in.peek() == JsonToken.NULL) {
           in.nextNull();
@@ -275,7 +280,7 @@ public final class Gson {
     if (serializeSpecialFloatingPointValues) {
       return TypeAdapters.FLOAT;
     }
-    return new TypeAdapter<Number>() {
+    return new SimpleTypeAdapter<Number>() {
       @Override public Float read(JsonReader in) throws IOException {
         if (in.peek() == JsonToken.NULL) {
           in.nextNull();
@@ -307,7 +312,7 @@ public final class Gson {
     if (longSerializationPolicy == LongSerializationPolicy.DEFAULT) {
       return TypeAdapters.LONG;
     }
-    return new TypeAdapter<Number>() {
+    return new SimpleTypeAdapter<Number>() {
       @Override public Number read(JsonReader in) throws IOException {
         if (in.peek() == JsonToken.NULL) {
           in.nextNull();
@@ -601,8 +606,9 @@ public final class Gson {
     writer.setHtmlSafe(htmlSafe);
     boolean oldSerializeNulls = writer.getSerializeNulls();
     writer.setSerializeNulls(serializeNulls);
+    
     try {
-      ((TypeAdapter<Object>) adapter).write(writer, src);
+      ((TypeAdapter<Object>) adapter).write(writer, src, new ReferencesContext(src));
     } catch (IOException e) {
       throw new JsonIOException(e);
     } finally {
@@ -896,11 +902,11 @@ public final class Gson {
       return delegate.read(in);
     }
 
-    @Override public void write(JsonWriter out, T value) throws IOException {
+    @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
       if (delegate == null) {
         throw new IllegalStateException();
       }
-      delegate.write(out, value);
+      delegate.write(out, value, ctx);
     }
   }
 

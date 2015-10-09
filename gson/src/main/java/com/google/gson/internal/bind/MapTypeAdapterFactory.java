@@ -16,6 +16,8 @@
 
 package com.google.gson.internal.bind;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -31,6 +33,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -195,7 +198,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       return map;
     }
 
-    public void write(JsonWriter out, Map<K, V> map) throws IOException {
+    public void write(JsonWriter out, Map<K, V> map, ReferencesContext ctx) throws IOException {
       if (map == null) {
         out.nullValue();
         return;
@@ -203,9 +206,11 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       if (!complexMapKeySerialization) {
         out.beginObject();
+        int i = 0;
         for (Map.Entry<K, V> entry : map.entrySet()) {
           out.name(String.valueOf(entry.getKey()));
-          valueTypeAdapter.write(out, entry.getValue());
+          ctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
+          i++;
         }
         out.endObject();
         return;
@@ -215,8 +220,11 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       List<JsonElement> keys = new ArrayList<JsonElement>(map.size());
 
       List<V> values = new ArrayList<V>(map.size());
+      int i = 0;
       for (Map.Entry<K, V> entry : map.entrySet()) {
-        JsonElement keyElement = keyTypeAdapter.toJsonTree(entry.getKey());
+        K key = entry.getKey();
+        JsonElement keyElement = ctx.doToJsonTree(key, keyTypeAdapter, "" + i + "-key");
+        i++;
         keys.add(keyElement);
         values.add(entry.getValue());
         hasComplexKeys |= keyElement.isJsonArray() || keyElement.isJsonObject();
@@ -224,19 +232,19 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       if (hasComplexKeys) {
         out.beginArray();
-        for (int i = 0; i < keys.size(); i++) {
+        for (i = 0; i < keys.size(); i++) {
           out.beginArray(); // entry array
           Streams.write(keys.get(i), out);
-          valueTypeAdapter.write(out, values.get(i));
+          ctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
           out.endArray();
         }
         out.endArray();
       } else {
         out.beginObject();
-        for (int i = 0; i < keys.size(); i++) {
+        for (i = 0; i < keys.size(); i++) {
           JsonElement keyElement = keys.get(i);
           out.name(keyToString(keyElement));
-          valueTypeAdapter.write(out, values.get(i));
+          ctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
         }
         out.endObject();
       }

@@ -53,7 +53,7 @@ import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import com.google.gson.TypeAdapter;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -689,7 +689,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
   }
 
   @SuppressWarnings("rawtypes")
-  private static class MyClassTypeAdapter extends TypeAdapter<Class> {
+  private static class MyClassTypeAdapter extends SimpleTypeAdapter<Class> {
     @Override
     public void write(JsonWriter out, Class value) throws IOException {
       out.value(value.getName());
@@ -705,7 +705,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
     }
   }
 
-  static class NumberAsStringAdapter extends TypeAdapter<Number> {
+  static class NumberAsStringAdapter extends SimpleTypeAdapter<Number> {
     private final Constructor<? extends Number> constructor;
     NumberAsStringAdapter(Class<? extends Number> type) throws Exception {
       this.constructor = type.getConstructor(String.class);

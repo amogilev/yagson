@@ -16,11 +16,14 @@
 
 package com.google.gson;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.internal.bind.JsonTreeWriter;
 import com.google.gson.internal.bind.JsonTreeReader;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -123,8 +126,9 @@ public abstract class TypeAdapter<T> {
    * for {@code value}.
    *
    * @param value the Java object to write. May be null.
+   * @param refsContext references context to use
    */
-  public abstract void write(JsonWriter out, T value) throws IOException;
+  public abstract void write(JsonWriter out, T value, ReferencesContext refsContext) throws IOException;
 
   /**
    * Converts {@code value} to a JSON document and writes it to {@code out}.
@@ -139,7 +143,7 @@ public abstract class TypeAdapter<T> {
    */
   public final void toJson(Writer out, T value) throws IOException {
     JsonWriter writer = new JsonWriter(out);
-    write(writer, value);
+    write(writer, value, new ReferencesContext(value));
   }
 
   /**
@@ -184,11 +188,11 @@ public abstract class TypeAdapter<T> {
    */
   public final TypeAdapter<T> nullSafe() {
     return new TypeAdapter<T>() {
-      @Override public void write(JsonWriter out, T value) throws IOException {
+      @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
         if (value == null) {
           out.nullValue();
         } else {
-          TypeAdapter.this.write(out, value);
+          TypeAdapter.this.write(out, value, ctx);
         }
       }
       @Override public T read(JsonReader reader) throws IOException {
@@ -228,10 +232,10 @@ public abstract class TypeAdapter<T> {
    * @return the converted JSON tree. May be {@link JsonNull}.
    * @since 2.2
    */
-  public final JsonElement toJsonTree(T value) {
+  public final JsonElement toJsonTree(T value, ReferencesContext ctx) {
     try {
       JsonTreeWriter jsonWriter = new JsonTreeWriter();
-      write(jsonWriter, value);
+      write(jsonWriter, value, ctx);
       return jsonWriter.get();
     } catch (IOException e) {
       throw new JsonIOException(e);

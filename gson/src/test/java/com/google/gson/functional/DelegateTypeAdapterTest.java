@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.TestCase;
+import am.yagson.ReferencesContext;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -76,9 +77,9 @@ public class DelegateTypeAdapterTest extends TestCase {
       final TypeAdapter<T> delegate = gson.getDelegateAdapter(this, type);
       return new TypeAdapter<T>() {
         @Override
-        public void write(JsonWriter out, T value) throws IOException {
+        public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
           ++numWrites;
-          delegate.write(out, value);
+          delegate.write(out, value, ctx);
         }
 
         @Override

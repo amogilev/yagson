@@ -25,15 +25,18 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Locale;
+
 import junit.framework.TestCase;
 
 /**
@@ -68,7 +71,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
   }
 
   public void testRegisteredAdapterOverridesJsonAdapter() {
-    TypeAdapter<A> typeAdapter = new TypeAdapter<A>() {
+    TypeAdapter<A> typeAdapter = new SimpleTypeAdapter<A>() {
       @Override public void write(JsonWriter out, A value) throws IOException {
         out.value("registeredAdapter");
       }
@@ -139,7 +142,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
     A(String value) {
       this.value = value;
     }
-    static final class JsonAdapter extends TypeAdapter<A> {
+    static final class JsonAdapter extends SimpleTypeAdapter<A> {
       @Override public void write(JsonWriter out, A value) throws IOException {
         out.value("jsonAdapter");
       }
@@ -158,7 +161,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
     }
     static final class JsonAdapterFactory implements TypeAdapterFactory {
       public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
-        return new TypeAdapter<T>() {
+        return new SimpleTypeAdapter<T>() {
           @Override public void write(JsonWriter out, T value) throws IOException {
             out.value("jsonAdapterFactory");
           }
@@ -196,7 +199,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
       this.lastName = lastName;
     }
   }
-  private static class UserJsonAdapter extends TypeAdapter<User> {
+  private static class UserJsonAdapter extends SimpleTypeAdapter<User> {
     @Override public void write(JsonWriter out, User user) throws IOException {
       // implement write: combine firstName and lastName into name
       out.beginObject();
@@ -217,7 +220,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
 
   @JsonAdapter(FooJsonAdapter.class)
   private static enum Foo { BAR, BAZ }
-  private static class FooJsonAdapter extends TypeAdapter<Foo> {
+  private static class FooJsonAdapter extends SimpleTypeAdapter<Foo> {
     @Override public void write(JsonWriter out, Foo value) throws IOException {
       out.value(value.name().toLowerCase(Locale.US));
     }

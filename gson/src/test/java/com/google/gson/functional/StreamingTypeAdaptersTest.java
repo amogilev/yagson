@@ -16,16 +16,20 @@
 
 package com.google.gson.functional;
 
+import am.yagson.ReferencesContext;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -35,6 +39,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import junit.framework.TestCase;
 
 public final class StreamingTypeAdaptersTest extends TestCase {
@@ -100,7 +105,7 @@ public final class StreamingTypeAdaptersTest extends TestCase {
   }
 
   private void usePersonNameAdapter() {
-    TypeAdapter<Person> personNameAdapter = new TypeAdapter<Person>() {
+    TypeAdapter<Person> personNameAdapter = new SimpleTypeAdapter<Person>() {
       @Override public Person read(JsonReader in) throws IOException {
         String name = in.nextString();
         return new Person(name, -1);
@@ -152,7 +157,7 @@ public final class StreamingTypeAdaptersTest extends TestCase {
   }
 
   public void testNullSafe() {
-    TypeAdapter<Person> typeAdapter = new TypeAdapter<Person>() {
+    TypeAdapter<Person> typeAdapter = new SimpleTypeAdapter<Person>() {
       @Override public Person read(JsonReader in) throws IOException {
         String[] values = in.nextString().split(",");
         return new Person(values[0], Integer.parseInt(values[1]));
@@ -248,7 +253,7 @@ public final class StreamingTypeAdaptersTest extends TestCase {
   private static <T> String toJson(TypeAdapter<T> typeAdapter, T value) throws IOException {
     StringWriter stringWriter = new StringWriter();
     JsonWriter writer = new JsonWriter(stringWriter);
-    typeAdapter.write(writer, value);
+    typeAdapter.write(writer, value, new ReferencesContext(value));
     return stringWriter.toString();
   }
 

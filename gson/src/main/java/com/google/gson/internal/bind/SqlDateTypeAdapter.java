@@ -18,12 +18,14 @@ package com.google.gson.internal.bind;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -35,7 +37,7 @@ import java.text.SimpleDateFormat;
  * this class state. DateFormat isn't thread safe either, so this class has
  * to synchronize its read and write methods.
  */
-public final class SqlDateTypeAdapter extends TypeAdapter<java.sql.Date> {
+public final class SqlDateTypeAdapter extends SimpleTypeAdapter<java.sql.Date> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {

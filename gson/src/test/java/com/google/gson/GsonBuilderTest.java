@@ -30,7 +30,7 @@ import com.google.gson.stream.JsonWriter;
  * @author Inderjeet Singh
  */
 public class GsonBuilderTest extends TestCase {
-  private static final TypeAdapter<Object> NULL_TYPE_ADAPTER = new TypeAdapter<Object>() {
+  private static final TypeAdapter<Object> NULL_TYPE_ADAPTER = new SimpleTypeAdapter<Object>() {
     @Override public void write(JsonWriter out, Object value) {
       throw new AssertionError();
     }

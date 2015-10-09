@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.TestCase;
+import am.yagson.ReferencesContext;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -179,7 +180,7 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
           return delegate.fromJsonTree(jsonElement);
         }
 
-        @Override public void write(JsonWriter out, R value) throws IOException {
+        @Override public void write(JsonWriter out, R value, ReferencesContext ctx) throws IOException {
           Class<?> srcType = value.getClass();
           String label = subtypeToLabel.get(srcType);
           @SuppressWarnings("unchecked") // registration requires that subtype extends T
@@ -188,7 +189,7 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
             throw new JsonParseException("cannot serialize " + srcType.getName()
                 + "; did you forget to register a subtype?");
           }
-          JsonObject jsonObject = delegate.toJsonTree(value).getAsJsonObject();
+          JsonObject jsonObject = delegate.toJsonTree(value, ctx).getAsJsonObject();
           if (!jsonObject.has(typeFieldName)) {
             JsonObject clone = new JsonObject();
             clone.add(typeFieldName, new JsonPrimitive(label));

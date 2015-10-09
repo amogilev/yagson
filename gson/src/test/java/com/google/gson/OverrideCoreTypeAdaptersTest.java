@@ -26,7 +26,7 @@ import junit.framework.TestCase;
  * @author Jesse Wilson
  */
 public class OverrideCoreTypeAdaptersTest extends TestCase {
-  private static final TypeAdapter<Boolean> booleanAsIntAdapter = new TypeAdapter<Boolean>() {
+  private static final TypeAdapter<Boolean> booleanAsIntAdapter = new SimpleTypeAdapter<Boolean>() {
     @Override public void write(JsonWriter out, Boolean value) throws IOException {
       out.value(value ? 1 : 0);
     }
@@ -36,7 +36,7 @@ public class OverrideCoreTypeAdaptersTest extends TestCase {
     }
   };
 
-  private static final TypeAdapter<String> swapCaseStringAdapter = new TypeAdapter<String>() {
+  private static final TypeAdapter<String> swapCaseStringAdapter = new SimpleTypeAdapter<String>() {
     @Override public void write(JsonWriter out, String value) throws IOException {
       out.value(value.toUpperCase(Locale.US));
     }

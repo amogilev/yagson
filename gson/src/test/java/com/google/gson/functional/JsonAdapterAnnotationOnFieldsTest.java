@@ -18,13 +18,16 @@ package com.google.gson.functional;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
 import java.io.IOException;
+
 import junit.framework.TestCase;
 
 /**
@@ -59,7 +62,7 @@ public final class JsonAdapterAnnotationOnFieldsTest extends TestCase {
 
   public void testFieldAnnotationTakesPrecedenceOverRegisteredTypeAdapter() {
     Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Part.class, new TypeAdapter<Part>() {
+      .registerTypeAdapter(Part.class, new SimpleTypeAdapter<Part>() {
         @Override public void write(JsonWriter out, Part part) throws IOException {
           throw new AssertionError();
         }
@@ -105,7 +108,7 @@ public final class JsonAdapterAnnotationOnFieldsTest extends TestCase {
     }
   }
 
-  private static class PartJsonFieldAnnotationAdapter extends TypeAdapter<Part> {
+  private static class PartJsonFieldAnnotationAdapter extends SimpleTypeAdapter<Part> {
     @Override public void write(JsonWriter out, Part part) throws IOException {
       out.value("PartJsonFieldAnnotationAdapter");
     }
@@ -117,7 +120,7 @@ public final class JsonAdapterAnnotationOnFieldsTest extends TestCase {
 
   private static class GizmoPartTypeAdapterFactory implements TypeAdapterFactory {
     public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
-      return new TypeAdapter<T>() {
+      return new SimpleTypeAdapter<T>() {
         @Override public void write(JsonWriter out, T value) throws IOException {
           out.value("GizmoPartTypeAdapterFactory");
         }
@@ -145,7 +148,7 @@ public final class JsonAdapterAnnotationOnFieldsTest extends TestCase {
     }
   }
 
-  private static class UserClassAnnotationAdapter extends TypeAdapter<User> {
+  private static class UserClassAnnotationAdapter extends SimpleTypeAdapter<User> {
     @Override public void write(JsonWriter out, User user) throws IOException {
       out.value("UserClassAnnotationAdapter");
     }
@@ -164,7 +167,7 @@ public final class JsonAdapterAnnotationOnFieldsTest extends TestCase {
     }
   }
 
-  private static final class UserFieldAnnotationAdapter extends TypeAdapter<User> {
+  private static final class UserFieldAnnotationAdapter extends SimpleTypeAdapter<User> {
     @Override public void write(JsonWriter out, User user) throws IOException {
       out.value("UserFieldAnnotationAdapter");
     }
@@ -174,7 +177,7 @@ public final class JsonAdapterAnnotationOnFieldsTest extends TestCase {
     }
   }
 
-  private static final class RegisteredUserAdapter extends TypeAdapter<User> {
+  private static final class RegisteredUserAdapter extends SimpleTypeAdapter<User> {
     @Override public void write(JsonWriter out, User user) throws IOException {
       out.value("RegisteredUserAdapter");
     }
