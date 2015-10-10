@@ -188,19 +188,22 @@ public abstract class TypeAdapter<T> {
    */
   public final TypeAdapter<T> nullSafe() {
     return new TypeAdapter<T>() {
-      @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
+      @Override public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
         if (value == null) {
           out.nullValue();
         } else {
-          TypeAdapter.this.write(out, value, ctx);
+          TypeAdapter.this.write(out, value, rctx);
         }
       }
-      @Override public T read(JsonReader reader) throws IOException {
+      @Override public T read(JsonReader reader, ReferencesContext rctx) throws IOException {
         if (reader.peek() == JsonToken.NULL) {
           reader.nextNull();
           return null;
         }
-        return TypeAdapter.this.read(reader);
+        return TypeAdapter.this.read(reader, rctx);
+      }
+      @Override public boolean hasSimpleJsonFor(T value) {
+        return TypeAdapter.this.hasSimpleJsonFor(value);
       }
     };
   }
@@ -248,7 +251,18 @@ public abstract class TypeAdapter<T> {
    *
    * @return the converted Java object. May be null.
    */
-  public abstract T read(JsonReader in) throws IOException;
+  public abstract T read(JsonReader in, ReferencesContext rctx) throws IOException;
+  
+  /**
+   * Whether JSON representation of the specified object by this adapter is <i>simple</i>
+   * and may NOT contain any circular dependencies, e.g. a string or number literal.
+   * For convenience, null checks may be skipped, i.e. it does not matter what is returned
+   * for {@code null} objects, if they are serialized as nulls.
+   * <p/>
+   * If {@code false} returned, then the next value MUST be serialized as null, reference, 
+   * array or object (but not as simple string or number).
+   */
+  public abstract boolean hasSimpleJsonFor(T value);
 
   /**
    * Converts the JSON document in {@code in} to a Java object. Unlike Gson's
@@ -261,7 +275,7 @@ public abstract class TypeAdapter<T> {
    */
   public final T fromJson(Reader in) throws IOException {
     JsonReader reader = new JsonReader(in);
-    return read(reader);
+    return read(reader, new ReferencesContext());
   }
 
   /**
@@ -283,10 +297,10 @@ public abstract class TypeAdapter<T> {
    * @param jsonTree the Java object to convert. May be {@link JsonNull}.
    * @since 2.2
    */
-  public final T fromJsonTree(JsonElement jsonTree) {
+  public final T fromJsonTree(JsonElement jsonTree, ReferencesContext rctx) {
     try {
       JsonReader jsonReader = new JsonTreeReader(jsonTree);
-      return read(jsonReader);
+      return read(jsonReader, rctx);
     } catch (IOException e) {
       throw new JsonIOException(e);
     }

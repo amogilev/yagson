@@ -16,7 +16,7 @@ public class Node {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder(32);
-		sb.append("Node [ ").append(id).append(" -> [");
+		sb.append("Node ").append(id).append(" -> [");
 		boolean first = true;
 		for (Node n : connections) {
 			if (!first) {
@@ -65,7 +65,7 @@ public class Node {
 			Node n = connections.get(i);
 			Node on = other.connections.get(i);
 			
-			if (!n.graphEquals(on)) {
+			if (!n.graphEquals(on, visited)) {
 				return false;
 			}
 		}

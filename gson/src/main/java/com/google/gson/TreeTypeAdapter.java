@@ -50,20 +50,22 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     this.skipPast = skipPast;
   }
 
-  @Override public T read(JsonReader in) throws IOException {
+  @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
     if (deserializer == null) {
-      return delegate().read(in);
+      return delegate().read(in, rctx);
     }
     JsonElement value = Streams.parse(in);
     if (value.isJsonNull()) {
       return null;
     }
-    return deserializer.deserialize(value, typeToken.getType(), gson.deserializationContext);
+    T obj = deserializer.deserialize(value, typeToken.getType(), gson.deserializationContext);
+    rctx.registerObject(obj, false);
+    return obj; 
   }
 
-  @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
+  @Override public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
     if (serializer == null) {
-      delegate().write(out, value, ctx);
+      delegate().write(out, value, rctx);
       return;
     }
     if (value == null) {
@@ -72,6 +74,15 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     }
     JsonElement tree = serializer.serialize(value, typeToken.getType(), gson.serializationContext);
     Streams.write(tree, out);
+  }
+
+  @Override public boolean hasSimpleJsonFor(T value) {
+    if (serializer == null) {
+      return delegate().hasSimpleJsonFor(value);
+    } else { 
+      // FIXME(amogilev) no support for references with Gson 1.x serializers yet
+      return true; 
+    }
   }
 
   private TypeAdapter<T> delegate() {

@@ -817,7 +817,7 @@ public final class Gson {
       isEmpty = false;
       TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
       TypeAdapter<T> typeAdapter = getAdapter(typeToken);
-      T object = typeAdapter.read(reader);
+      T object = typeAdapter.read(reader, new ReferencesContext());
       return object;
     } catch (EOFException e) {
       /*
@@ -895,11 +895,11 @@ public final class Gson {
       delegate = typeAdapter;
     }
 
-    @Override public T read(JsonReader in) throws IOException {
+    @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
       if (delegate == null) {
         throw new IllegalStateException();
       }
-      return delegate.read(in);
+      return delegate.read(in, rctx);
     }
 
     @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
@@ -907,6 +907,13 @@ public final class Gson {
         throw new IllegalStateException();
       }
       delegate.write(out, value, ctx);
+    }
+ 
+    @Override public boolean hasSimpleJsonFor(T value) { 
+      if (delegate == null) {
+        throw new IllegalStateException();
+      }
+      return delegate.hasSimpleJsonFor(value);
     }
   }
 

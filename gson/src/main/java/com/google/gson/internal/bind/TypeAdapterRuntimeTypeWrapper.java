@@ -39,19 +39,24 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   }
 
   @Override
-  public T read(JsonReader in) throws IOException {
-    return delegate.read(in);
+  public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+    return delegate.read(in, rctx);
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
-  public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
+  public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
+    TypeAdapter chosen = chooseTypeAdapter(value);
+    chosen.write(out, value, rctx);
+  }
+  
+  @SuppressWarnings("rawtypes")
+  private TypeAdapter chooseTypeAdapter(T value) {
     // Order of preference for choosing type adapters
     // First preference: a type adapter registered for the runtime type
     // Second preference: a type adapter registered for the declared type
     // Third preference: reflective type adapter for the runtime type (if it is a sub class of the declared type)
     // Fourth preference: reflective type adapter for the declared type
-
     TypeAdapter chosen = delegate;
     Type runtimeType = getRuntimeTypeIfMoreSpecific(type, value);
     if (runtimeType != type) {
@@ -68,7 +73,14 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
         chosen = runtimeTypeAdapter;
       }
     }
-    chosen.write(out, value, ctx);
+    return chosen;
+  }
+  
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  @Override
+  public boolean hasSimpleJsonFor(T value) {
+    TypeAdapter chosen = chooseTypeAdapter(value);
+    return chosen.hasSimpleJsonFor(value);
   }
 
   /**

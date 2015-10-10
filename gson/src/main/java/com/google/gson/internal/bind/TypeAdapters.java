@@ -527,13 +527,17 @@ public final class TypeAdapters {
 
       final TypeAdapter<Date> dateTypeAdapter = gson.getAdapter(Date.class);
       return (TypeAdapter<T>) new TypeAdapter<Timestamp>() {
-        @Override public Timestamp read(JsonReader in) throws IOException {
-          Date date = dateTypeAdapter.read(in);
+        @Override public Timestamp read(JsonReader in, ReferencesContext rctx) throws IOException {
+          Date date = dateTypeAdapter.read(in, rctx);
           return date != null ? new Timestamp(date.getTime()) : null;
         }
 
-        @Override public void write(JsonWriter out, Timestamp value, ReferencesContext ctx) throws IOException {
-          dateTypeAdapter.write(out, value, ctx);
+        @Override public void write(JsonWriter out, Timestamp value, ReferencesContext rctx) throws IOException {
+          dateTypeAdapter.write(out, value, rctx);
+        }
+        
+        @Override public boolean hasSimpleJsonFor(Timestamp value) {
+          return dateTypeAdapter.hasSimpleJsonFor(value);
         }
       };
     }

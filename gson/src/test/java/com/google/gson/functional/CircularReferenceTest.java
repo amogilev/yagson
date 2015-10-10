@@ -50,9 +50,11 @@ public class CircularReferenceTest extends TestCase {
     a.children.add(b);
     b.children.add(a);
     try {
-      gson.toJson(a);
-      fail("Circular types should not get printed!");
+      String json = gson.toJson(a);
+      assertNotNull(json);
+      // fail("Circular types should not get printed!"); // now allowed with refs!
     } catch (StackOverflowError expected) {
+      fail("Circular types should be printed without errors!");
     }
   }
 
@@ -61,7 +63,8 @@ public class CircularReferenceTest extends TestCase {
     objA.ref = objA;
 
     String json = gson.toJson(objA);
-    assertFalse(json.contains("ref")); // self-reference is ignored
+//    assertFalse(json.contains("ref")); // self-reference is ignored
+    assertTrue(json.contains("ref")); // self-reference are supported now!
   }
 
   public void testSelfReferenceArrayFieldSerialization() throws Exception {
@@ -70,8 +73,9 @@ public class CircularReferenceTest extends TestCase {
 
     try {
       gson.toJson(objA);
-      fail("Circular reference to self can not be serialized!");
+      // fail("Circular reference to self can not be serialized!");  // now allowed with refs!
     } catch (StackOverflowError expected) {
+      fail("Circular types should be printed without errors!");
     }
   }
 

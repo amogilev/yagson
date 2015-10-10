@@ -16,6 +16,8 @@
 
 package com.google.gson.internal.bind;
 
+import static am.yagson.ReferencesContext.keyRef;
+import static am.yagson.ReferencesContext.valRef;
 import am.yagson.ReferencesContext;
 
 import com.google.gson.Gson;
@@ -159,8 +161,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         new TypeAdapterRuntimeTypeWrapper<V>(context, valueTypeAdapter, valueType);
       this.constructor = constructor;
     }
-
-    public Map<K, V> read(JsonReader in) throws IOException {
+    
+    public Map<K, V> read(JsonReader in, ReferencesContext rctx) throws IOException {
       JsonToken peek = in.peek();
       if (peek == JsonToken.NULL) {
         in.nextNull();
@@ -168,13 +170,14 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       }
 
       Map<K, V> map = constructor.construct();
+      rctx.registerObject(map, false);
 
       if (peek == JsonToken.BEGIN_ARRAY) {
         in.beginArray();
-        while (in.hasNext()) {
+        for (int i = 0; in.hasNext(); i++) {
           in.beginArray(); // entry array
-          K key = keyTypeAdapter.read(in);
-          V value = valueTypeAdapter.read(in);
+          K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
+          V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
           V replaced = map.put(key, value);
           if (replaced != null) {
             throw new JsonSyntaxException("duplicate key: " + key);
@@ -184,10 +187,10 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         in.endArray();
       } else {
         in.beginObject();
-        while (in.hasNext()) {
+        for (int i = 0; in.hasNext(); i++) {
           JsonReaderInternalAccess.INSTANCE.promoteNameToValue(in);
-          K key = keyTypeAdapter.read(in);
-          V value = valueTypeAdapter.read(in);
+          K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
+          V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
           V replaced = map.put(key, value);
           if (replaced != null) {
             throw new JsonSyntaxException("duplicate key: " + key);
@@ -198,7 +201,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       return map;
     }
 
-    public void write(JsonWriter out, Map<K, V> map, ReferencesContext ctx) throws IOException {
+    public void write(JsonWriter out, Map<K, V> map, ReferencesContext rctx) throws IOException {
       if (map == null) {
         out.nullValue();
         return;
@@ -209,7 +212,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         int i = 0;
         for (Map.Entry<K, V> entry : map.entrySet()) {
           out.name(String.valueOf(entry.getKey()));
-          ctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
+          rctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
           i++;
         }
         out.endObject();
@@ -223,7 +226,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       int i = 0;
       for (Map.Entry<K, V> entry : map.entrySet()) {
         K key = entry.getKey();
-        JsonElement keyElement = ctx.doToJsonTree(key, keyTypeAdapter, "" + i + "-key");
+        JsonElement keyElement = rctx.doToJsonTree(key, keyTypeAdapter, keyRef(i));
         i++;
         keys.add(keyElement);
         values.add(entry.getValue());
@@ -235,7 +238,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         for (i = 0; i < keys.size(); i++) {
           out.beginArray(); // entry array
           Streams.write(keys.get(i), out);
-          ctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
+          rctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
           out.endArray();
         }
         out.endArray();
@@ -244,7 +247,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         for (i = 0; i < keys.size(); i++) {
           JsonElement keyElement = keys.get(i);
           out.name(keyToString(keyElement));
-          ctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
+          rctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
         }
         out.endObject();
       }
@@ -267,6 +270,11 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       } else {
         throw new AssertionError();
       }
+    }
+
+    @Override
+    public boolean hasSimpleJsonFor(Map<K, V> value) {
+      return false;
     }
   }
 }

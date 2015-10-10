@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import am.yagson.ReferencesContext;
 
+import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -15,9 +16,22 @@ import com.google.gson.stream.JsonWriter;
 public abstract class SimpleTypeAdapter<T> extends TypeAdapter<T> {
 
   abstract public void write(JsonWriter out, T value) throws IOException;
+  abstract public T read(JsonReader in) throws IOException;
   
+  @Override
+  public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+    T value = read(in);
+    rctx.registerObject(value, true);
+    return value;
+  }
+
   @Override
   public void write(JsonWriter out, T value, ReferencesContext refsContext) throws IOException {
     write(out, value);
+  }
+  
+  @Override
+  public boolean hasSimpleJsonFor(T value) {
+    return true;
   }
 }

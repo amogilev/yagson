@@ -62,16 +62,23 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
     this.componentType = componentType;
   }
 
-  public Object read(JsonReader in) throws IOException {
+  public Object read(JsonReader in, ReferencesContext rctx) throws IOException {
     if (in.peek() == JsonToken.NULL) {
       in.nextNull();
       return null;
     }
+    
+    List<E> referenced = rctx.checkReferenceUse(in);
+    if (referenced != null) {
+      return referenced;
+    }
 
     List<E> list = new ArrayList<E>();
+    rctx.registerObject(list, false);
     in.beginArray();
-    while (in.hasNext()) {
-      E instance = componentTypeAdapter.read(in);
+    
+    for (int i = 0; in.hasNext(); i++) {
+      E instance = rctx.doRead(in, componentTypeAdapter, Integer.toString(i));
       list.add(instance);
     }
     in.endArray();
@@ -83,7 +90,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object array, ReferencesContext ctx) throws IOException {
+  @Override public void write(JsonWriter out, Object array, ReferencesContext rctx) throws IOException {
     if (array == null) {
       out.nullValue();
       return;
@@ -92,8 +99,13 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
     out.beginArray();
     for (int i = 0, length = Array.getLength(array); i < length; i++) {
       E value = (E) Array.get(array, i);
-      ctx.doWrite(value, componentTypeAdapter, Integer.toString(i), out);
+      rctx.doWrite(value, componentTypeAdapter, Integer.toString(i), out);
     }
     out.endArray();
+  }
+
+  @Override
+  public boolean hasSimpleJsonFor(Object value) {
+    return false;
   }
 }

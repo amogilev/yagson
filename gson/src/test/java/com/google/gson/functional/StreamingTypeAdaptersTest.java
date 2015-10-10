@@ -212,7 +212,7 @@ public final class StreamingTypeAdaptersTest extends TestCase {
     passengersArray.add(jesseObject);
     truckObject.add("passengers", passengersArray);
 
-    Truck truck = truckAdapter.fromJsonTree(truckObject);
+    Truck truck = truckAdapter.fromJsonTree(truckObject, new ReferencesContext());
     assertEquals(300.0, truck.horsePower);
     assertEquals(Arrays.asList(new Person("Jesse", 30)), truck.passengers);
   }
@@ -261,6 +261,6 @@ public final class StreamingTypeAdaptersTest extends TestCase {
   private <T> T fromJson(TypeAdapter<T> typeAdapter, String json) throws IOException {
     JsonReader reader = new JsonReader(new StringReader(json));
     reader.setLenient(true); // TODO: non-lenient?
-    return typeAdapter.read(reader);
+    return typeAdapter.read(reader, new ReferencesContext());
   }
 }

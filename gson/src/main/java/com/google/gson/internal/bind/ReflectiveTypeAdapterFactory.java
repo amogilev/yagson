@@ -107,16 +107,16 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     return new ReflectiveTypeAdapterFactory.BoundField(name, serialize, deserialize) {
       final TypeAdapter<?> typeAdapter = getFieldAdapter(context, field, fieldType);
       @SuppressWarnings({"unchecked", "rawtypes"}) // the type adapter and field type always agree
-      @Override void write(JsonWriter writer, Object value, ReferencesContext ctx)
+      @Override void write(JsonWriter writer, Object value, ReferencesContext rctx)
           throws IOException, IllegalAccessException {
         Object fieldValue = field.get(value);
         TypeAdapter t =
           new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter, fieldType.getType());
-        ctx.doWrite(fieldValue, t, name, writer);
+        rctx.doWrite(fieldValue, t, name, writer);
       }
-      @Override void read(JsonReader reader, Object value)
+      @Override void read(JsonReader reader, Object value, ReferencesContext rctx)
           throws IOException, IllegalAccessException {
-        Object fieldValue = typeAdapter.read(reader);
+        Object fieldValue = rctx.doRead(reader, typeAdapter, name);
         if (fieldValue != null || !isPrimitive) {
           field.set(value, fieldValue);
         }
@@ -190,7 +190,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
     abstract boolean writeField(Object value) throws IOException, IllegalAccessException;
     abstract void write(JsonWriter writer, Object value, ReferencesContext ctx) throws IOException, IllegalAccessException;
-    abstract void read(JsonReader reader, Object value) throws IOException, IllegalAccessException;
+    abstract void read(JsonReader reader, Object value, ReferencesContext rctx) throws IOException, IllegalAccessException;
   }
 
   public static final class Adapter<T> extends TypeAdapter<T> {
@@ -202,38 +202,38 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       this.boundFields = boundFields;
     }
 
-    @Override public T read(JsonReader in) throws IOException {
+    @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
       JsonToken nextToken = in.peek();
       if (nextToken == JsonToken.NULL) {
         in.nextNull();
         return null;
       }
 
-      if (nextToken == JsonToken.BEGIN_OBJECT) {
-        try {
-          T instance = constructor.construct();
-          in.beginObject();
-          while (in.hasNext()) {
-            String name = in.nextName();
-            BoundField field = boundFields.get(name);
-            if (field == null || !field.deserialized) {
-              in.skipValue();
-            } else {
-              field.read(in, instance);
-            }
-          }
-          in.endObject();
-          return instance;
-        } catch (IllegalStateException e) {
-          throw new JsonSyntaxException(e);
-        } catch (IllegalAccessException e) {
-          throw new AssertionError(e);
-        }
-      } else if (nextToken == JsonToken.STRING) {
-        System.err.println(in.nextString());
-        return null;
+      T referenced = rctx.checkReferenceUse(in);
+      if (referenced != null) {
+        return referenced;
       }
-      return null;
+      
+      try {
+        T instance = constructor.construct();
+        rctx.registerObject(instance, false);
+        in.beginObject();
+        while (in.hasNext()) {
+          String name = in.nextName();
+          BoundField field = boundFields.get(name);
+          if (field == null || !field.deserialized) {
+            in.skipValue();
+          } else {
+            field.read(in, instance, rctx);
+          }
+        }
+        in.endObject();
+        return instance;
+      } catch (IllegalStateException e) {
+        throw new JsonSyntaxException(e);
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
     }
 
     @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
@@ -254,6 +254,10 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         throw new AssertionError();
       }
       out.endObject();
+    }
+
+    @Override public boolean hasSimpleJsonFor(T value) {
+      return false;
     }
   }
 }

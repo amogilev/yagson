@@ -53,38 +53,49 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     this.gson = gson;
   }
 
-  @Override public Object read(JsonReader in) throws IOException {
+  @Override public Object read(JsonReader in, ReferencesContext rctx) throws IOException {
     JsonToken token = in.peek();
     switch (token) {
     case BEGIN_ARRAY:
       List<Object> list = new ArrayList<Object>();
+      rctx.registerObject(list, false);
+      
       in.beginArray();
-      while (in.hasNext()) {
-        list.add(read(in));
+      for (int i = 0; in.hasNext(); i++) {
+        list.add(rctx.doRead(in, this, Integer.toString(i)));
       }
       in.endArray();
       return list;
 
     case BEGIN_OBJECT:
       Map<String, Object> map = new LinkedTreeMap<String, Object>();
+      rctx.registerObject(map, false);
+      
       in.beginObject();
-      while (in.hasNext()) {
-        map.put(in.nextName(), read(in));
+      for (int i = 0; in.hasNext(); i++) {
+        map.put(in.nextName(), rctx.doRead(in, this, "" + i + "-val"));
       }
       in.endObject();
       return map;
 
     case STRING:
-      return in.nextString();
+      String str = in.nextString();
+      rctx.registerObject(str, true);
+      return str;
 
     case NUMBER:
-      return in.nextDouble();
+      double num = in.nextDouble();
+      rctx.registerObject(num, true);
+      return num;
 
     case BOOLEAN:
-      return in.nextBoolean();
+      boolean boolValue = in.nextBoolean();
+      rctx.registerObject(boolValue, true);
+      return boolValue;
 
     case NULL:
       in.nextNull();
+      rctx.registerObject(null, true);
       return null;
 
     default:
@@ -93,7 +104,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object value, ReferencesContext ctx) throws IOException {
+  @Override public void write(JsonWriter out, Object value, ReferencesContext rctx) throws IOException {
     if (value == null) {
       out.nullValue();
       return;
@@ -106,6 +117,18 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       return;
     }
 
-    typeAdapter.write(out, value, ctx);
+    typeAdapter.write(out, value, rctx);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override public boolean hasSimpleJsonFor(Object value) {
+    if (value == null) {
+      return true;
+    }
+    TypeAdapter<Object> typeAdapter = (TypeAdapter<Object>) gson.getAdapter(value.getClass());
+    if (typeAdapter instanceof ObjectTypeAdapter) {
+      return true;
+    }
+    return typeAdapter.hasSimpleJsonFor(value);
   }
 }

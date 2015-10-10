@@ -72,23 +72,31 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
 
-    public Collection<E> read(JsonReader in) throws IOException {
-      if (in.peek() == JsonToken.NULL) {
+    public Collection<E> read(JsonReader in, ReferencesContext rctx) throws IOException {
+      JsonToken nextToken = in.peek();
+      
+      if (nextToken == JsonToken.NULL) {
         in.nextNull();
         return null;
       }
-
+      
+      Collection<E> referenced = rctx.checkReferenceUse(in);
+      if (referenced != null) {
+        return referenced;
+      }
+      
       Collection<E> collection = constructor.construct();
+      rctx.registerObject(collection, false);
       in.beginArray();
-      while (in.hasNext()) {
-        E instance = elementTypeAdapter.read(in);
+      for (int i = 0; in.hasNext(); i++) {
+        E instance = rctx.doRead(in, elementTypeAdapter, Integer.toString(i));
         collection.add(instance);
       }
       in.endArray();
       return collection;
     }
 
-    public void write(JsonWriter out, Collection<E> collection, ReferencesContext ctx) throws IOException {
+    public void write(JsonWriter out, Collection<E> collection, ReferencesContext rctx) throws IOException {
       if (collection == null) {
         out.nullValue();
         return;
@@ -97,10 +105,15 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       out.beginArray();
       int i = 0;
       for (E element : collection) {
-        ctx.doWrite(element, elementTypeAdapter, Integer.toString(i), out);
+        rctx.doWrite(element, elementTypeAdapter, Integer.toString(i), out);
         i++;
       }
       out.endArray();
+    }
+    
+    @Override
+    public boolean hasSimpleJsonFor(Collection<E> value) {
+      return false;
     }
   }
 }

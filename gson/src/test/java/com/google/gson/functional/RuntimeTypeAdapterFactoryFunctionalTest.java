@@ -161,9 +161,9 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
         labelToDelegate.put(entry.getKey(), delegate);
         subtypeToDelegate.put(entry.getValue(), delegate);
       }
-
+      
       return new TypeAdapter<R>() {
-        @Override public R read(JsonReader in) throws IOException {
+        @Override public R read(JsonReader in, ReferencesContext rctx) throws IOException {
           JsonElement jsonElement = Streams.parse(in);
           JsonElement labelJsonElement = jsonElement.getAsJsonObject().get(typeFieldName);
           if (labelJsonElement == null) {
@@ -177,7 +177,7 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
             throw new JsonParseException("cannot deserialize " + baseType + " subtype named "
                 + label + "; did you forget to register a subtype?");
           }
-          return delegate.fromJsonTree(jsonElement);
+          return delegate.fromJsonTree(jsonElement, rctx);
         }
 
         @Override public void write(JsonWriter out, R value, ReferencesContext ctx) throws IOException {
@@ -199,6 +199,17 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
             jsonObject = clone;
           }
           Streams.write(jsonObject, out);
+        }
+
+        @Override public boolean hasSimpleJsonFor(R value) {
+          Class<?> srcType = value.getClass();
+          @SuppressWarnings("unchecked") // registration requires that subtype extends T
+          TypeAdapter<R> delegate = (TypeAdapter<R>) subtypeToDelegate.get(srcType);
+          if (delegate == null) {
+            throw new JsonParseException("cannot serialize " + srcType.getName()
+                + "; did you forget to register a subtype?");
+          }
+          return delegate.hasSimpleJsonFor(value);
         }
       };
     }
