@@ -21,6 +21,7 @@ import static am.yagson.References.valRef;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
+import am.yagson.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -148,38 +149,41 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         : context.getAdapter(TypeToken.get(keyType));
   }
 
-  private final class Adapter<K, V> extends TypeAdapter<Map<K, V>> {
+  private final class Adapter<K, V> extends TypeAdvisableComplexTypeAdapter<Map<K, V>> {
     private final TypeAdapter<K> keyTypeAdapter;
     private final TypeAdapter<V> valueTypeAdapter;
     private final ObjectConstructor<? extends Map<K, V>> constructor;
+    private final Gson gson;
 
-    public Adapter(Gson context, Type keyType, TypeAdapter<K> keyTypeAdapter,
-        Type valueType, TypeAdapter<V> valueTypeAdapter,
-        ObjectConstructor<? extends Map<K, V>> constructor) {
+    public Adapter(Gson gson, Type keyType, TypeAdapter<K> keyTypeAdapter,
+                   Type valueType, TypeAdapter<V> valueTypeAdapter,
+                   ObjectConstructor<? extends Map<K, V>> constructor) {
       this.keyTypeAdapter =
-        new TypeAdapterRuntimeTypeWrapper<K>(context, keyTypeAdapter, keyType);
+        new TypeAdapterRuntimeTypeWrapper<K>(gson, keyTypeAdapter, keyType);
       this.valueTypeAdapter =
-        new TypeAdapterRuntimeTypeWrapper<V>(context, valueTypeAdapter, valueType);
+        new TypeAdapterRuntimeTypeWrapper<V>(gson, valueTypeAdapter, valueType);
       this.constructor = constructor;
+      this.gson = gson;
     }
     
-    public Map<K, V> read(JsonReader in, ReferencesReadContext rctx) throws IOException {
-      JsonToken peek = in.peek();
-      if (peek == JsonToken.NULL) {
-        in.nextNull();
-        return null;
-      }
+    @Override
+    protected Map<K, V> readOptionallyAdvisedInstance(Map<K, V> advisedInstance, JsonReader in,
+                                                 ReferencesReadContext rctx) throws IOException {
 
-      Map<K, V> map = constructor.construct();
-      rctx.registerObject(map, false);
+      Map<K, V> instance = null;
+
+      JsonToken peek = in.peek();
 
       if (peek == JsonToken.BEGIN_ARRAY) {
+        instance = advisedInstance == null ? constructor.construct() : advisedInstance;
+        rctx.registerObject(advisedInstance, false);
+
         in.beginArray();
         for (int i = 0; in.hasNext(); i++) {
           in.beginArray(); // entry array
           K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
           V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
-          V replaced = map.put(key, value);
+          V replaced = instance.put(key, value);
           if (replaced != null) {
             throw new JsonSyntaxException("duplicate key: " + key);
           }
@@ -188,18 +192,41 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         in.endArray();
       } else {
         in.beginObject();
+
+        boolean skipFirstPromotion = false;
+
+        if (in.peek() == JsonToken.NAME) {
+          // if type is advised with @type, follow that advice
+          String keyStr = in.nextName();
+          if (keyStr.equals("@type")) {
+            return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
+          } else {
+            skipFirstPromotion = true;
+            JsonReaderInternalAccess.INSTANCE.returnStringToBuffer(in, keyStr);
+          }
+        }
+
+        // otherwise use the previous @vtype advice, or the default instance
+        instance = advisedInstance == null ? constructor.construct() : advisedInstance;
+        rctx.registerObject(advisedInstance, false);
+
         for (int i = 0; in.hasNext(); i++) {
-          JsonReaderInternalAccess.INSTANCE.promoteNameToValue(in);
+          if (skipFirstPromotion) {
+            skipFirstPromotion = false;
+          } else {
+            JsonReaderInternalAccess.INSTANCE.promoteNameToValue(in);
+          }
+
           K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
           V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
-          V replaced = map.put(key, value);
+          V replaced = instance.put(key, value);
           if (replaced != null) {
             throw new JsonSyntaxException("duplicate key: " + key);
           }
         }
         in.endObject();
       }
-      return map;
+      return instance;
     }
 
     public void write(JsonWriter out, Map<K, V> map, ReferencesWriteContext rctx) throws IOException {
@@ -271,11 +298,6 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       } else {
         throw new AssertionError();
       }
-    }
-
-    @Override
-    public boolean hasSimpleJsonFor(Map<K, V> value) {
-      return false;
     }
   }
 }

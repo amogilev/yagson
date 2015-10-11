@@ -24,6 +24,7 @@ public class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesMo
 
     @Override
     protected void endObject(Object value) {
+      super.endObject(value);
       if (value != null) {
         references.remove(value);        
       }

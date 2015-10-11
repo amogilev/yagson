@@ -150,11 +150,6 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
         delegate().write(out, value, rctx);
       }
 
-      @Override
-      public boolean hasSimpleJsonFor(T value) {
-        return delegate().hasSimpleJsonFor(value);
-      }
-
       private TypeAdapter<T> delegate() {
         TypeAdapter<T> d = delegate;
         return d != null

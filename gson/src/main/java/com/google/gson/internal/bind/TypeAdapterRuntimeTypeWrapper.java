@@ -15,13 +15,13 @@
  */
 package com.google.gson.internal.bind;
 
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.*;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
@@ -41,14 +41,38 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
 
   @Override
   public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
-    return delegate.read(in, rctx);
+
+    // PROBLEM: as JsonReader does not support lookaheads for more than one token, we cannot
+    //    distinguish regular objects like "{field:value}" from type-advised primitives like
+    //    "{@type:Long, @val:1}" here.
+    //
+    // SOLUTION: all non-Simple TypeAdapters shall handle type advices themselves, so we delegate to them.
+    //     For simple delegates, if '{' found, we expect and parse type advice here, and fail otherwise
+
+    if (in.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(delegate)) {
+      return TypeUtils.readTypeAdvisedValue(context, in, rctx);
+
+    } else {
+      // no type advice, or delegate is able to process type advice itself
+      return delegate.read(in, rctx);
+    }
+
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
   public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     TypeAdapter chosen = chooseTypeAdapter(value);
-    chosen.write(out, value, rctx);
+    if (value != null && context.getTypeInfoPolicy().isEnabled() && TypeUtils.typesDiffer(type, value.getClass())) {
+      out.beginObject();
+      out.name("@type");
+      out.value(value.getClass().getName());
+      out.name("@val");
+      chosen.write(out, value, rctx);
+      out.endObject();
+    } else {
+      chosen.write(out, value, rctx);
+    }
   }
   
   @SuppressWarnings("rawtypes")
@@ -65,9 +89,10 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
       if (!(runtimeTypeAdapter instanceof ReflectiveTypeAdapterFactory.Adapter)) {
         // The user registered a type adapter for the runtime type, so we will use that
         chosen = runtimeTypeAdapter;
-      } else if (!(delegate instanceof ReflectiveTypeAdapterFactory.Adapter)) {
+      } else if (!(delegate instanceof ReflectiveTypeAdapterFactory.Adapter) && !context.getTypeInfoPolicy().isEnabled()) {
         // The user registered a type adapter for Base class, so we prefer it over the
-        // reflective type adapter for the runtime type
+        // reflective type adapter for the runtime type.
+        // NOTE: disabled when emitTypeInfo is used
         chosen = delegate;
       } else {
         // Use the type adapter for runtime type
@@ -77,13 +102,6 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     return chosen;
   }
   
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  @Override
-  public boolean hasSimpleJsonFor(T value) {
-    TypeAdapter chosen = chooseTypeAdapter(value);
-    return chosen.hasSimpleJsonFor(value);
-  }
-
   /**
    * Finds a compatible runtime type if it is more specific
    */

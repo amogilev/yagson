@@ -31,10 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.References;
-import am.yagson.ReferencesPolicy;
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.*;
 
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
@@ -145,6 +142,7 @@ public final class Gson {
   };
   
   private final ReferencesPolicy referencesPolicy;
+  private final TypeInfoPolicy typeInfoPolicy;
 
   /**
    * Constructs a Gson object with default configuration. The default configuration has the
@@ -182,10 +180,12 @@ public final class Gson {
    */
   public Gson() {
     this(Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy()), FieldNamingPolicy.IDENTITY,
-        Collections.<Type, InstanceCreator<?>>emptyMap(), false, false, DEFAULT_JSON_NON_EXECUTABLE,
+        Collections.<Type, InstanceCreator<?>>emptyMap(), false,
+        TypeInfoPolicy.defaultPolicy().isEnabled() ? true : false, // TODO default Gson is false, revert after creating YaGson!
+        DEFAULT_JSON_NON_EXECUTABLE,
         true, false, false, LongSerializationPolicy.DEFAULT,
         Collections.<TypeAdapterFactory>emptyList(),
-        References.defaultPolicy());
+        References.defaultPolicy(), TypeInfoPolicy.defaultPolicy());
   }
 
   Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingPolicy,
@@ -194,13 +194,14 @@ public final class Gson {
       boolean prettyPrinting, boolean serializeSpecialFloatingPointValues,
       LongSerializationPolicy longSerializationPolicy,
       List<TypeAdapterFactory> typeAdapterFactories,
-      ReferencesPolicy referencesPolicy) {
+      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
     this.constructorConstructor = new ConstructorConstructor(instanceCreators);
     this.serializeNulls = serializeNulls;
     this.generateNonExecutableJson = generateNonExecutableGson;
     this.htmlSafe = htmlSafe;
     this.prettyPrinting = prettyPrinting;
     this.referencesPolicy = referencesPolicy;
+    this.typeInfoPolicy = typeInfoPolicy;
 
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
 
@@ -890,7 +891,7 @@ public final class Gson {
     return (T) fromJson(new JsonTreeReader(json), typeOfT);
   }
 
-  static class FutureTypeAdapter<T> extends TypeAdapter<T> {
+  public static class FutureTypeAdapter<T> extends TypeAdapter<T> {
     private TypeAdapter<T> delegate;
 
     public void setDelegate(TypeAdapter<T> typeAdapter) {
@@ -898,6 +899,10 @@ public final class Gson {
         throw new AssertionError();
       }
       delegate = typeAdapter;
+    }
+
+    public TypeAdapter<T> getDelegate() {
+      return delegate;
     }
 
     @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
@@ -913,13 +918,14 @@ public final class Gson {
       }
       delegate.write(out, value, ctx);
     }
- 
-    @Override public boolean hasSimpleJsonFor(T value) { 
-      if (delegate == null) {
-        throw new IllegalStateException();
-      }
-      return delegate.hasSimpleJsonFor(value);
-    }
+  }
+  
+  public TypeInfoPolicy getTypeInfoPolicy() {
+    return typeInfoPolicy;
+  }
+  
+  public ConstructorConstructor getConstructorConstructor() {
+    return constructorConstructor;
   }
 
   @Override

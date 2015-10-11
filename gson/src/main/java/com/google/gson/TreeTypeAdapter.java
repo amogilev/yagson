@@ -77,15 +77,6 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     Streams.write(tree, out);
   }
 
-  @Override public boolean hasSimpleJsonFor(T value) {
-    if (serializer == null) {
-      return delegate().hasSimpleJsonFor(value);
-    } else { 
-      // FIXME(amogilev) no support for references with Gson 1.x serializers yet
-      return true; 
-    }
-  }
-
   private TypeAdapter<T> delegate() {
     TypeAdapter<T> d = delegate;
     return d != null

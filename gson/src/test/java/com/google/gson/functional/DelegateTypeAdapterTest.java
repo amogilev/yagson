@@ -88,11 +88,6 @@ public class DelegateTypeAdapterTest extends TestCase {
           ++numReads;
           return delegate.read(in, rctx);
         }
-
-        @Override
-        public boolean hasSimpleJsonFor(T value) {
-          return delegate.hasSimpleJsonFor(value);
-        }
       };
     }
   }

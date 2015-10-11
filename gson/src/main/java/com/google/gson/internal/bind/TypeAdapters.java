@@ -536,10 +536,6 @@ public final class TypeAdapters {
         @Override public void write(JsonWriter out, Timestamp value, ReferencesWriteContext rctx) throws IOException {
           dateTypeAdapter.write(out, value, rctx);
         }
-        
-        @Override public boolean hasSimpleJsonFor(Timestamp value) {
-          return dateTypeAdapter.hasSimpleJsonFor(value);
-        }
       };
     }
   };
@@ -674,7 +670,11 @@ public final class TypeAdapters {
         JsonObject object = new JsonObject();
         in.beginObject();
         while (in.hasNext()) {
-          object.add(in.nextName(), read(in));
+          String name = in.nextName();
+          JsonElement value = read(in);
+          if (!name.equals("@type") && !name.equals("@vtype")) {
+            object.add(name, value);
+          }
         }
         in.endObject();
         return object;

@@ -29,6 +29,7 @@ import java.util.Map;
 import am.yagson.References;
 import am.yagson.ReferencesPolicy;
 
+import am.yagson.TypeInfoPolicy;
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.bind.TypeAdapters;
@@ -69,7 +70,7 @@ import com.google.gson.reflect.TypeToken;
  * @author Jesse Wilson
  */
 public final class GsonBuilder {
-  private Excluder excluder = Excluder.DEFAULT;
+  private Excluder excluder = Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy());
   private LongSerializationPolicy longSerializationPolicy = LongSerializationPolicy.DEFAULT;
   private FieldNamingStrategy fieldNamingPolicy = FieldNamingPolicy.IDENTITY;
   private final Map<Type, InstanceCreator<?>> instanceCreators
@@ -81,12 +82,13 @@ public final class GsonBuilder {
   private String datePattern;
   private int dateStyle = DateFormat.DEFAULT;
   private int timeStyle = DateFormat.DEFAULT;
-  private boolean complexMapKeySerialization;
+  private boolean complexMapKeySerialization = TypeInfoPolicy.defaultPolicy().isEnabled(); // TODO: revert after YaGson
   private boolean serializeSpecialFloatingPointValues;
   private boolean escapeHtmlChars = true;
   private boolean prettyPrinting;
   private boolean generateNonExecutableJson;
   private ReferencesPolicy referencesPolicy = References.defaultPolicy();
+  private TypeInfoPolicy typeInfoPolicy = TypeInfoPolicy.defaultPolicy();
 
   /**
    * Creates a GsonBuilder instance that can be used to build Gson with various configuration
@@ -545,6 +547,17 @@ public final class GsonBuilder {
     this.excluder = excluder.forReferencesPolicy(referencesPolicy);
     return this;
   }
+  
+  /**
+   * Sets whether to emit @type elements with exact runtime types in cases when the declared
+   * types are less specific.
+   * 
+   * @since YaGson
+   */
+  public GsonBuilder setTypeInfoPolicy(TypeInfoPolicy typeInfoPolicy) {
+    this.typeInfoPolicy = typeInfoPolicy;
+    return this;
+  }
 
   /**
    * Creates a {@link Gson} instance based on the current configuration. This method is free of
@@ -563,7 +576,7 @@ public final class GsonBuilder {
         serializeNulls, complexMapKeySerialization,
         generateNonExecutableJson, escapeHtmlChars, prettyPrinting,
         serializeSpecialFloatingPointValues, longSerializationPolicy, factories,
-        referencesPolicy);
+        referencesPolicy, typeInfoPolicy);
   }
 
   private void addTypeAdaptersForDate(String datePattern, int dateStyle, int timeStyle,

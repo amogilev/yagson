@@ -19,6 +19,7 @@ package com.google.gson.internal.bind;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
+import am.yagson.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -57,44 +58,57 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
     ObjectConstructor<T> constructor = constructorConstructor.get(typeToken);
 
     @SuppressWarnings({"unchecked", "rawtypes"}) // create() doesn't define a type parameter
-    TypeAdapter<T> result = new Adapter(gson, elementType, elementTypeAdapter, constructor);
+    TypeAdapter<T> result = new Adapter(gson, elementType, elementTypeAdapter, constructor, constructorConstructor);
     return result;
   }
 
-  private static final class Adapter<E> extends TypeAdapter<Collection<E>> {
+  private static final class Adapter<E> extends TypeAdvisableComplexTypeAdapter<Collection<E>> {
     private final TypeAdapter<E> elementTypeAdapter;
     private final ObjectConstructor<? extends Collection<E>> constructor;
+    private final ConstructorConstructor constructorConstructor;
 
     public Adapter(Gson context, Type elementType,
         TypeAdapter<E> elementTypeAdapter,
-        ObjectConstructor<? extends Collection<E>> constructor) {
+        ObjectConstructor<? extends Collection<E>> constructor,
+        ConstructorConstructor constructorConstructor) {
       this.elementTypeAdapter =
           new TypeAdapterRuntimeTypeWrapper<E>(context, elementTypeAdapter, elementType);
       this.constructor = constructor;
+      this.constructorConstructor = constructorConstructor;
     }
 
-    public Collection<E> read(JsonReader in, ReferencesReadContext rctx) throws IOException {
-      JsonToken nextToken = in.peek();
-      
-      if (nextToken == JsonToken.NULL) {
-        in.nextNull();
-        return null;
+
+    @Override
+    protected Collection<E> readOptionallyAdvisedInstance(Collection<E> advisedInstance, JsonReader in, ReferencesReadContext rctx)
+        throws IOException {
+
+      Collection<E> instance = null;
+      boolean hasTypeAdvise = false;
+      if (in.peek() == JsonToken.BEGIN_OBJECT) {
+        Class typeAdvise = TypeUtils.readTypeAdvice(in);
+        if (typeAdvise.isInstance(Collection.class)) {
+          instance = (Collection<E>) constructorConstructor.get(TypeToken.get(typeAdvise)).construct();
+        }
+        TypeUtils.consumeValueField(in);
+        hasTypeAdvise = true;
       }
-      
-      Collection<E> referenced = rctx.checkReferenceUse(in);
-      if (referenced != null) {
-        return referenced;
+      if (instance == null) {
+        instance = advisedInstance == null ? constructor.construct() : advisedInstance;
       }
-      
-      Collection<E> collection = constructor.construct();
-      rctx.registerObject(collection, false);
-      in.beginArray();
-      for (int i = 0; in.hasNext(); i++) {
-        E instance = rctx.doRead(in, elementTypeAdapter, Integer.toString(i));
-        collection.add(instance);
+      rctx.registerObject(instance, false);
+
+      if (in.peek() == JsonToken.BEGIN_ARRAY) {
+        in.beginArray();
+        for (int i = 0; in.hasNext(); i++) {
+          E elementInstance = rctx.doRead(in, elementTypeAdapter, Integer.toString(i));
+          instance.add(elementInstance);
+        }
+        in.endArray();
       }
-      in.endArray();
-      return collection;
+      if (hasTypeAdvise) {
+        in.endObject();
+      }
+      return instance;
     }
 
     public void write(JsonWriter out, Collection<E> collection, ReferencesWriteContext rctx) throws IOException {
@@ -110,11 +124,6 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         i++;
       }
       out.endArray();
-    }
-    
-    @Override
-    public boolean hasSimpleJsonFor(Collection<E> value) {
-      return false;
     }
   }
 }

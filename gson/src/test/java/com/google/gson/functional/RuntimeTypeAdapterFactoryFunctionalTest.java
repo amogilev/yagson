@@ -201,17 +201,6 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
           }
           Streams.write(jsonObject, out);
         }
-
-        @Override public boolean hasSimpleJsonFor(R value) {
-          Class<?> srcType = value.getClass();
-          @SuppressWarnings("unchecked") // registration requires that subtype extends T
-          TypeAdapter<R> delegate = (TypeAdapter<R>) subtypeToDelegate.get(srcType);
-          if (delegate == null) {
-            throw new JsonParseException("cannot serialize " + srcType.getName()
-                + "; did you forget to register a subtype?");
-          }
-          return delegate.hasSimpleJsonFor(value);
-        }
       };
     }
   }

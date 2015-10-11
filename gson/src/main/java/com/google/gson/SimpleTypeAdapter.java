@@ -30,9 +30,4 @@ public abstract class SimpleTypeAdapter<T> extends TypeAdapter<T> {
   public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     write(out, value);
   }
-  
-  @Override
-  public boolean hasSimpleJsonFor(T value) {
-    return true;
-  }
 }

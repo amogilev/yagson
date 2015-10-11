@@ -21,15 +21,18 @@ import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
+import am.yagson.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.internal.$Gson$Types;
+import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -38,7 +41,7 @@ import com.google.gson.stream.JsonWriter;
 /**
  * Adapt an array of objects.
  */
-public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
+public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<Object> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
@@ -56,34 +59,48 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
 
   private final Class<E> componentType;
   private final TypeAdapter<E> componentTypeAdapter;
+  private final ConstructorConstructor constructorConstructor;
 
   public ArrayTypeAdapter(Gson context, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
     this.componentTypeAdapter =
       new TypeAdapterRuntimeTypeWrapper<E>(context, componentTypeAdapter, componentType);
     this.componentType = componentType;
+    this.constructorConstructor = context.getConstructorConstructor();
   }
 
-  public Object read(JsonReader in, ReferencesReadContext rctx) throws IOException {
-    if (in.peek() == JsonToken.NULL) {
-      in.nextNull();
-      return null;
-    }
-    
-    List<E> referenced = rctx.checkReferenceUse(in);
-    if (referenced != null) {
-      return referenced;
-    }
+  @Override
+  protected Object readOptionallyAdvisedInstance(Object advisedInstance, JsonReader in, ReferencesReadContext rctx) throws IOException {
 
     List<E> list = new ArrayList<E>();
+    // TODO(amogilev): should register the array object instead, but it is not possible as we do not know it's
+    //          size at this point! Probably need to use some placeholders with deferred Inserters...
     rctx.registerObject(list, false);
+
+    Class advisedComponentType = null;
+    boolean hasTypeAdvise = false;
+    if (in.peek() == JsonToken.BEGIN_OBJECT) {
+      Class typeAdvise = TypeUtils.readTypeAdvice(in);
+      if (typeAdvise.isArray()) {
+        advisedComponentType = typeAdvise.getComponentType();
+      }
+      TypeUtils.consumeValueField(in);
+      hasTypeAdvise = true;
+    } else if (advisedInstance != null && advisedInstance.getClass().isArray()) {
+      advisedComponentType = advisedInstance.getClass().getComponentType();
+    }
+
     in.beginArray();
-    
     for (int i = 0; in.hasNext(); i++) {
       E instance = rctx.doRead(in, componentTypeAdapter, Integer.toString(i));
       list.add(instance);
     }
     in.endArray();
-    Object array = Array.newInstance(componentType, list.size());
+
+    if (hasTypeAdvise) {
+      in.endObject();
+    }
+
+    Object array = Array.newInstance(advisedComponentType == null ? componentType : advisedComponentType, list.size());
     for (int i = 0; i < list.size(); i++) {
       Array.set(array, i, list.get(i));
     }
@@ -103,10 +120,5 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
       rctx.doWrite(value, componentTypeAdapter, Integer.toString(i), out);
     }
     out.endArray();
-  }
-
-  @Override
-  public boolean hasSimpleJsonFor(Object value) {
-    return false;
   }
 }

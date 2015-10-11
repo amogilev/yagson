@@ -19,6 +19,7 @@ package com.google.gson.internal.bind;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
+import am.yagson.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.Pack200;
 
 /**
  * Adapts types whose static type is only 'Object'. Uses getClass() on
@@ -68,17 +70,31 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       in.endArray();
       return list;
 
-    case BEGIN_OBJECT:
-      Map<String, Object> map = new LinkedTreeMap<String, Object>();
-      rctx.registerObject(map, false);
-      
+    case BEGIN_OBJECT: {
+      Object result = null;
+
       in.beginObject();
-      for (int i = 0; in.hasNext(); i++) {
-        map.put(in.nextName(), rctx.doRead(in, this, "" + i + "-val"));
+      if (in.hasNext()) {
+        LinkedTreeMap<String, Object> map = null;
+        for (int i = 0; in.hasNext(); i++) {
+          String fieldName = in.nextName();
+          if (i == 0) {
+            if (fieldName.equals("@type")) {
+              return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
+            } else {
+              result = map = new LinkedTreeMap<String, Object>();
+              rctx.registerObject(result, false);
+            }
+          }
+          map.put(fieldName, rctx.doRead(in, this, "" + i + "-val"));
+        }
+      } else {
+        result = new LinkedTreeMap<String, Object>();
+        rctx.registerObject(result, false);
       }
       in.endObject();
-      return map;
-
+      return result;
+    }
     case STRING:
       String str = in.nextString();
       rctx.registerObject(str, true);
@@ -119,17 +135,5 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     }
 
     typeAdapter.write(out, value, rctx);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override public boolean hasSimpleJsonFor(Object value) {
-    if (value == null) {
-      return true;
-    }
-    TypeAdapter<Object> typeAdapter = (TypeAdapter<Object>) gson.getAdapter(value.getClass());
-    if (typeAdapter instanceof ObjectTypeAdapter) {
-      return true;
-    }
-    return typeAdapter.hasSimpleJsonFor(value);
   }
 }

@@ -29,4 +29,11 @@ public abstract class JsonReaderInternalAccess {
    * Changes the type of the current property name token to a string value.
    */
   public abstract void promoteNameToValue(JsonReader reader) throws IOException;
+
+  /**
+   * Returns just read string back to the reader's buffer. Only works when the peek state is PEEKED_NONE,
+   * i.e. the string is read but no more actions performed on the reader. Changes the state to PEEKED_BUFFERED
+   */
+  public abstract void returnStringToBuffer(JsonReader reader, String lastReadString) throws IOException;
+
 }

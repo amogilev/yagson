@@ -128,9 +128,9 @@ public abstract class TypeAdapter<T> {
    * for {@code value}.
    *
    * @param value the Java object to write. May be null.
-   * @param refsContext references context to use
+   * @param rctx references context to use
    */
-  public abstract void write(JsonWriter out, T value, ReferencesWriteContext refsContext) throws IOException;
+  public abstract void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException;
 
   /**
    * Converts {@code value} to a JSON document and writes it to {@code out}.
@@ -204,9 +204,6 @@ public abstract class TypeAdapter<T> {
         }
         return TypeAdapter.this.read(reader, rctx);
       }
-      @Override public boolean hasSimpleJsonFor(T value) {
-        return TypeAdapter.this.hasSimpleJsonFor(value);
-      }
     };
   }
 
@@ -255,17 +252,6 @@ public abstract class TypeAdapter<T> {
    */
   public abstract T read(JsonReader in, ReferencesReadContext rctx) throws IOException;
   
-  /**
-   * Whether JSON representation of the specified object by this adapter is <i>simple</i>
-   * and may NOT contain any circular dependencies, e.g. a string or number literal.
-   * For convenience, null checks may be skipped, i.e. it does not matter what is returned
-   * for {@code null} objects, if they are serialized as nulls.
-   * <p/>
-   * If {@code false} returned, then the next value MUST be serialized as null, reference, 
-   * array or object (but not as simple string or number).
-   */
-  public abstract boolean hasSimpleJsonFor(T value);
-
   /**
    * Converts the JSON document in {@code in} to a Java object. Unlike Gson's
    * similar {@link Gson#fromJson(java.io.Reader, Class) fromJson} method, this

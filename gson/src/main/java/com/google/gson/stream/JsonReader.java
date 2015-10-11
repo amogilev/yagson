@@ -958,8 +958,10 @@ public class JsonReader implements Closeable {
     if (p == PEEKED_NUMBER) {
       peekedString = new String(buffer, pos, peekedNumberLength);
       pos += peekedNumberLength;
-    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-      peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
+    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED || p == PEEKED_BUFFERED) {
+      if (p != PEEKED_BUFFERED) {
+        peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
+      }
       try {
         long result = Long.parseLong(peekedString);
         peeked = PEEKED_NONE;
@@ -1186,8 +1188,10 @@ public class JsonReader implements Closeable {
     if (p == PEEKED_NUMBER) {
       peekedString = new String(buffer, pos, peekedNumberLength);
       pos += peekedNumberLength;
-    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-      peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
+    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED || p == PEEKED_BUFFERED) {
+      if (p != PEEKED_BUFFERED) {
+        peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
+      }
       try {
         result = Integer.parseInt(peekedString);
         peeked = PEEKED_NONE;
@@ -1618,6 +1622,21 @@ public class JsonReader implements Closeable {
               + " at line " + reader.getLineNumber() + " column " + reader.getColumnNumber()
               + " path " + reader.getPath());
         }
+      }
+
+      @Override
+      public void returnStringToBuffer(JsonReader reader, String lastReadString) throws IOException {
+        if (reader instanceof JsonTreeReader) {
+          ((JsonTreeReader)reader).pushString(lastReadString);
+          return;
+        }
+
+        if (reader.peeked != PEEKED_NONE) {
+          throw new IllegalStateException("The string may be returned to the reader's buffer only immediately " +
+                  "after the read, but the current state is " + reader.peeked);
+        }
+        reader.peekedString = lastReadString;
+        reader.peeked = PEEKED_BUFFERED;
       }
     };
   }

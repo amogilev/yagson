@@ -7,14 +7,12 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import am.yagson.AdapterUtils;
 import am.yagson.ReferencesPolicy;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.TypeAdapter;
+import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -95,7 +93,8 @@ public class ReferencesAllDuplicatesModeContext {
     }
     
     public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {
-      if (valueTypeAdapter.hasSimpleJsonFor(value)) {
+      if (value == null || AdapterUtils.isSimpleTypeAdapter(valueTypeAdapter)) {
+        // avoid creating references to simple types even in "all duplicates" mode
         return valueTypeAdapter.toJsonTree(value, this);
       }
       
@@ -110,11 +109,12 @@ public class ReferencesAllDuplicatesModeContext {
     }
     
     public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter, String pathElement, JsonWriter out) throws IOException {
-      if (valueTypeAdapter.hasSimpleJsonFor(value)) {
+      if (value == null || AdapterUtils.isSimpleTypeAdapter(valueTypeAdapter)) {
+        // avoid creating references to simple types even in "all duplicates" mode
         valueTypeAdapter.write(out, value, this);
         return;
       }
-      
+
       String ref = startObject(value, pathElement);
       if (ref != null) {
         out.value(ref);
