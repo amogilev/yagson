@@ -15,7 +15,8 @@
  */
 package com.google.gson.internal.bind;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -39,13 +40,13 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   }
 
   @Override
-  public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+  public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
     return delegate.read(in, rctx);
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
-  public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
+  public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     TypeAdapter chosen = chooseTypeAdapter(value);
     chosen.write(out, value, rctx);
   }

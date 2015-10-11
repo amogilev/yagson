@@ -16,9 +16,10 @@
 
 package com.google.gson.internal.bind;
 
-import static am.yagson.ReferencesContext.keyRef;
-import static am.yagson.ReferencesContext.valRef;
-import am.yagson.ReferencesContext;
+import static am.yagson.References.keyRef;
+import static am.yagson.References.valRef;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -162,7 +163,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
     
-    public Map<K, V> read(JsonReader in, ReferencesContext rctx) throws IOException {
+    public Map<K, V> read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       JsonToken peek = in.peek();
       if (peek == JsonToken.NULL) {
         in.nextNull();
@@ -201,7 +202,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       return map;
     }
 
-    public void write(JsonWriter out, Map<K, V> map, ReferencesContext rctx) throws IOException {
+    public void write(JsonWriter out, Map<K, V> map, ReferencesWriteContext rctx) throws IOException {
       if (map == null) {
         out.nullValue();
         return;
@@ -238,7 +239,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         for (i = 0; i < keys.size(); i++) {
           out.beginArray(); // entry array
           Streams.write(keys.get(i), out);
-          rctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
+          rctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
           out.endArray();
         }
         out.endArray();
@@ -247,7 +248,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         for (i = 0; i < keys.size(); i++) {
           JsonElement keyElement = keys.get(i);
           out.name(keyToString(keyElement));
-          rctx.doWrite(values.get(i), valueTypeAdapter, "" + i + "-val", out);
+          rctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
         }
         out.endObject();
       }

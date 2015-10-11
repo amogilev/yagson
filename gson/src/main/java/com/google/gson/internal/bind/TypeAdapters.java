@@ -34,7 +34,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -527,12 +528,12 @@ public final class TypeAdapters {
 
       final TypeAdapter<Date> dateTypeAdapter = gson.getAdapter(Date.class);
       return (TypeAdapter<T>) new TypeAdapter<Timestamp>() {
-        @Override public Timestamp read(JsonReader in, ReferencesContext rctx) throws IOException {
+        @Override public Timestamp read(JsonReader in, ReferencesReadContext rctx) throws IOException {
           Date date = dateTypeAdapter.read(in, rctx);
           return date != null ? new Timestamp(date.getTime()) : null;
         }
 
-        @Override public void write(JsonWriter out, Timestamp value, ReferencesContext rctx) throws IOException {
+        @Override public void write(JsonWriter out, Timestamp value, ReferencesWriteContext rctx) throws IOException {
           dateTypeAdapter.write(out, value, rctx);
         }
         

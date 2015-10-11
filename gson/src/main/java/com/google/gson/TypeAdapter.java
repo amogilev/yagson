@@ -16,7 +16,9 @@
 
 package com.google.gson;
 
-import am.yagson.ReferencesContext;
+import am.yagson.References;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.internal.bind.JsonTreeWriter;
 import com.google.gson.internal.bind.JsonTreeReader;
@@ -128,7 +130,7 @@ public abstract class TypeAdapter<T> {
    * @param value the Java object to write. May be null.
    * @param refsContext references context to use
    */
-  public abstract void write(JsonWriter out, T value, ReferencesContext refsContext) throws IOException;
+  public abstract void write(JsonWriter out, T value, ReferencesWriteContext refsContext) throws IOException;
 
   /**
    * Converts {@code value} to a JSON document and writes it to {@code out}.
@@ -143,7 +145,7 @@ public abstract class TypeAdapter<T> {
    */
   public final void toJson(Writer out, T value) throws IOException {
     JsonWriter writer = new JsonWriter(out);
-    write(writer, value, new ReferencesContext(value));
+    write(writer, value, References.createWriteContext(null, value));
   }
 
   /**
@@ -188,14 +190,14 @@ public abstract class TypeAdapter<T> {
    */
   public final TypeAdapter<T> nullSafe() {
     return new TypeAdapter<T>() {
-      @Override public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
+      @Override public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
         if (value == null) {
           out.nullValue();
         } else {
           TypeAdapter.this.write(out, value, rctx);
         }
       }
-      @Override public T read(JsonReader reader, ReferencesContext rctx) throws IOException {
+      @Override public T read(JsonReader reader, ReferencesReadContext rctx) throws IOException {
         if (reader.peek() == JsonToken.NULL) {
           reader.nextNull();
           return null;
@@ -235,7 +237,7 @@ public abstract class TypeAdapter<T> {
    * @return the converted JSON tree. May be {@link JsonNull}.
    * @since 2.2
    */
-  public final JsonElement toJsonTree(T value, ReferencesContext ctx) {
+  public final JsonElement toJsonTree(T value, ReferencesWriteContext ctx) {
     try {
       JsonTreeWriter jsonWriter = new JsonTreeWriter();
       write(jsonWriter, value, ctx);
@@ -251,7 +253,7 @@ public abstract class TypeAdapter<T> {
    *
    * @return the converted Java object. May be null.
    */
-  public abstract T read(JsonReader in, ReferencesContext rctx) throws IOException;
+  public abstract T read(JsonReader in, ReferencesReadContext rctx) throws IOException;
   
   /**
    * Whether JSON representation of the specified object by this adapter is <i>simple</i>
@@ -275,7 +277,7 @@ public abstract class TypeAdapter<T> {
    */
   public final T fromJson(Reader in) throws IOException {
     JsonReader reader = new JsonReader(in);
-    return read(reader, new ReferencesContext());
+    return read(reader, References.createReadContext(null));
   }
 
   /**
@@ -297,7 +299,7 @@ public abstract class TypeAdapter<T> {
    * @param jsonTree the Java object to convert. May be {@link JsonNull}.
    * @since 2.2
    */
-  public final T fromJsonTree(JsonElement jsonTree, ReferencesContext rctx) {
+  public final T fromJsonTree(JsonElement jsonTree, ReferencesReadContext rctx) {
     try {
       JsonReader jsonReader = new JsonTreeReader(jsonTree);
       return read(jsonReader, rctx);

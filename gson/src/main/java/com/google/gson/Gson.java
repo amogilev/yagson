@@ -31,7 +31,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.ReferencesContext;
+import am.yagson.References;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
@@ -117,9 +119,6 @@ public final class Gson {
   private final Map<TypeToken<?>, TypeAdapter<?>> typeTokenCache
       = Collections.synchronizedMap(new HashMap<TypeToken<?>, TypeAdapter<?>>());
   
-  final ThreadLocal<ReferencesContext> references
-      = new ThreadLocal<ReferencesContext>();
-
   private final List<TypeAdapterFactory> factories;
   private final ConstructorConstructor constructorConstructor;
 
@@ -608,7 +607,7 @@ public final class Gson {
     writer.setSerializeNulls(serializeNulls);
     
     try {
-      ((TypeAdapter<Object>) adapter).write(writer, src, new ReferencesContext(src));
+      ((TypeAdapter<Object>) adapter).write(writer, src, References.createWriteContext(this, src));
     } catch (IOException e) {
       throw new JsonIOException(e);
     } finally {
@@ -817,7 +816,7 @@ public final class Gson {
       isEmpty = false;
       TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
       TypeAdapter<T> typeAdapter = getAdapter(typeToken);
-      T object = typeAdapter.read(reader, new ReferencesContext());
+      T object = typeAdapter.read(reader, References.createReadContext(this));
       return object;
     } catch (EOFException e) {
       /*
@@ -895,14 +894,14 @@ public final class Gson {
       delegate = typeAdapter;
     }
 
-    @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+    @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       if (delegate == null) {
         throw new IllegalStateException();
       }
       return delegate.read(in, rctx);
     }
 
-    @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
+    @Override public void write(JsonWriter out, T value, ReferencesWriteContext ctx) throws IOException {
       if (delegate == null) {
         throw new IllegalStateException();
       }

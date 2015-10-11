@@ -23,7 +23,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -62,7 +63,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
     this.componentType = componentType;
   }
 
-  public Object read(JsonReader in, ReferencesContext rctx) throws IOException {
+  public Object read(JsonReader in, ReferencesReadContext rctx) throws IOException {
     if (in.peek() == JsonToken.NULL) {
       in.nextNull();
       return null;
@@ -90,7 +91,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdapter<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object array, ReferencesContext rctx) throws IOException {
+  @Override public void write(JsonWriter out, Object array, ReferencesWriteContext rctx) throws IOException {
     if (array == null) {
       out.nullValue();
       return;

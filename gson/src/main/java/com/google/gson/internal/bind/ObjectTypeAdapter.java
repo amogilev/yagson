@@ -16,7 +16,8 @@
 
 package com.google.gson.internal.bind;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -53,7 +54,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     this.gson = gson;
   }
 
-  @Override public Object read(JsonReader in, ReferencesContext rctx) throws IOException {
+  @Override public Object read(JsonReader in, ReferencesReadContext rctx) throws IOException {
     JsonToken token = in.peek();
     switch (token) {
     case BEGIN_ARRAY:
@@ -104,7 +105,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object value, ReferencesContext rctx) throws IOException {
+  @Override public void write(JsonWriter out, Object value, ReferencesWriteContext rctx) throws IOException {
     if (value == null) {
       out.nullValue();
       return;

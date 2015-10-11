@@ -16,7 +16,8 @@
 
 package com.google.gson;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Streams;
@@ -50,7 +51,7 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     this.skipPast = skipPast;
   }
 
-  @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+  @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
     if (deserializer == null) {
       return delegate().read(in, rctx);
     }
@@ -63,7 +64,7 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     return obj; 
   }
 
-  @Override public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
+  @Override public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     if (serializer == null) {
       delegate().write(out, value, rctx);
       return;

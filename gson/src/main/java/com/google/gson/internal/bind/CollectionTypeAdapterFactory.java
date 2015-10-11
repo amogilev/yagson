@@ -16,7 +16,8 @@
 
 package com.google.gson.internal.bind;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -72,7 +73,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       this.constructor = constructor;
     }
 
-    public Collection<E> read(JsonReader in, ReferencesContext rctx) throws IOException {
+    public Collection<E> read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       JsonToken nextToken = in.peek();
       
       if (nextToken == JsonToken.NULL) {
@@ -96,7 +97,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       return collection;
     }
 
-    public void write(JsonWriter out, Collection<E> collection, ReferencesContext rctx) throws IOException {
+    public void write(JsonWriter out, Collection<E> collection, ReferencesWriteContext rctx) throws IOException {
       if (collection == null) {
         out.nullValue();
         return;

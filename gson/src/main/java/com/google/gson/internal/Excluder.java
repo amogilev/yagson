@@ -16,7 +16,8 @@
 
 package com.google.gson.internal;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -124,7 +125,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       /** The delegate is lazily created because it may not be needed, and creating it may fail. */
       private TypeAdapter<T> delegate;
 
-      @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+      @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
         if (skipDeserialize) {
           in.skipValue();
           return null;
@@ -132,7 +133,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
         return delegate().read(in, rctx);
       }
 
-      @Override public void write(JsonWriter out, T value, ReferencesContext rctx) throws IOException {
+      @Override public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
         if (skipSerialize) {
           out.nullValue();
           return;

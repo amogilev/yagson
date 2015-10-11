@@ -26,7 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
@@ -107,14 +108,14 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     return new ReflectiveTypeAdapterFactory.BoundField(name, serialize, deserialize) {
       final TypeAdapter<?> typeAdapter = getFieldAdapter(context, field, fieldType);
       @SuppressWarnings({"unchecked", "rawtypes"}) // the type adapter and field type always agree
-      @Override void write(JsonWriter writer, Object value, ReferencesContext rctx)
+      @Override void write(JsonWriter writer, Object value, ReferencesWriteContext rctx)
           throws IOException, IllegalAccessException {
         Object fieldValue = field.get(value);
         TypeAdapter t =
           new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter, fieldType.getType());
         rctx.doWrite(fieldValue, t, name, writer);
       }
-      @Override void read(JsonReader reader, Object value, ReferencesContext rctx)
+      @Override void read(JsonReader reader, Object value, ReferencesReadContext rctx)
           throws IOException, IllegalAccessException {
         Object fieldValue = rctx.doRead(reader, typeAdapter, name);
         if (fieldValue != null || !isPrimitive) {
@@ -189,8 +190,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       this.deserialized = deserialized;
     }
     abstract boolean writeField(Object value) throws IOException, IllegalAccessException;
-    abstract void write(JsonWriter writer, Object value, ReferencesContext ctx) throws IOException, IllegalAccessException;
-    abstract void read(JsonReader reader, Object value, ReferencesContext rctx) throws IOException, IllegalAccessException;
+    abstract void write(JsonWriter writer, Object value, ReferencesWriteContext ctx) throws IOException, IllegalAccessException;
+    abstract void read(JsonReader reader, Object value, ReferencesReadContext rctx) throws IOException, IllegalAccessException;
   }
 
   public static final class Adapter<T> extends TypeAdapter<T> {
@@ -202,7 +203,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       this.boundFields = boundFields;
     }
 
-    @Override public T read(JsonReader in, ReferencesContext rctx) throws IOException {
+    @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       JsonToken nextToken = in.peek();
       if (nextToken == JsonToken.NULL) {
         in.nextNull();
@@ -236,7 +237,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       }
     }
 
-    @Override public void write(JsonWriter out, T value, ReferencesContext ctx) throws IOException {
+    @Override public void write(JsonWriter out, T value, ReferencesWriteContext ctx) throws IOException {
       if (value == null) {
         out.nullValue();
         return;

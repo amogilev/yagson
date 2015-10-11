@@ -20,7 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.TestCase;
-import am.yagson.ReferencesContext;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -163,7 +164,7 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
       }
       
       return new TypeAdapter<R>() {
-        @Override public R read(JsonReader in, ReferencesContext rctx) throws IOException {
+        @Override public R read(JsonReader in, ReferencesReadContext rctx) throws IOException {
           JsonElement jsonElement = Streams.parse(in);
           JsonElement labelJsonElement = jsonElement.getAsJsonObject().get(typeFieldName);
           if (labelJsonElement == null) {
@@ -180,7 +181,7 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
           return delegate.fromJsonTree(jsonElement, rctx);
         }
 
-        @Override public void write(JsonWriter out, R value, ReferencesContext ctx) throws IOException {
+        @Override public void write(JsonWriter out, R value, ReferencesWriteContext ctx) throws IOException {
           Class<?> srcType = value.getClass();
           String label = subtypeToLabel.get(srcType);
           @SuppressWarnings("unchecked") // registration requires that subtype extends T
