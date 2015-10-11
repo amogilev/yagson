@@ -16,6 +16,8 @@
 
 package com.google.gson.functional;
 
+import am.yagson.ReferencesPolicy;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -34,6 +36,7 @@ import com.google.gson.common.TestTypes.ClassWithTransientFields;
 import com.google.gson.common.TestTypes.Nested;
 import com.google.gson.common.TestTypes.PrimitiveArray;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +46,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+
 import junit.framework.TestCase;
 
 /**
@@ -58,7 +62,7 @@ public class ObjectTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    gson = new Gson();
+    gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.NONE).create();
 
     TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
     Locale.setDefault(Locale.US);

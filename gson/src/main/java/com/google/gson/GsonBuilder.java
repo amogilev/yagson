@@ -542,6 +542,7 @@ public final class GsonBuilder {
    */
   public GsonBuilder setReferencesPolicy(ReferencesPolicy referencesPolicy) {
     this.referencesPolicy = referencesPolicy;
+    this.excluder = excluder.forReferencesPolicy(referencesPolicy);
     return this;
   }
 

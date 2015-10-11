@@ -181,7 +181,7 @@ public final class Gson {
    * </ul>
    */
   public Gson() {
-    this(Excluder.DEFAULT, FieldNamingPolicy.IDENTITY,
+    this(Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy()), FieldNamingPolicy.IDENTITY,
         Collections.<Type, InstanceCreator<?>>emptyMap(), false, false, DEFAULT_JSON_NON_EXECUTABLE,
         true, false, false, LongSerializationPolicy.DEFAULT,
         Collections.<TypeAdapterFactory>emptyList(),

@@ -16,6 +16,7 @@
 
 package com.google.gson.internal;
 
+import am.yagson.ReferencesPolicy;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
@@ -61,6 +62,8 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
   private boolean requireExpose;
   private List<ExclusionStrategy> serializationStrategies = Collections.emptyList();
   private List<ExclusionStrategy> deserializationStrategies = Collections.emptyList();
+  private boolean serializeOuterReferences;
+  private boolean serializeLocalAndAnonymousClasses; // TODO(amogilev) try support
 
   @Override protected Excluder clone() {
     try {
@@ -109,6 +112,12 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
           = new ArrayList<ExclusionStrategy>(deserializationStrategies);
       result.deserializationStrategies.add(exclusionStrategy);
     }
+    return result;
+  }
+  
+  public Excluder forReferencesPolicy(ReferencesPolicy referencesPolicy) {
+    Excluder result = clone();
+    result.serializeOuterReferences = referencesPolicy != ReferencesPolicy.NONE;
     return result;
   }
 
@@ -165,7 +174,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       return true;
     }
 
-    if (field.isSynthetic()) {
+    if (field.isSynthetic() && (!serializeOuterReferences || !field.getName().startsWith("this$"))) {
       return true;
     }
 
@@ -180,7 +189,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       return true;
     }
 
-    if (isAnonymousOrLocal(field.getType())) {
+    if (!serializeLocalAndAnonymousClasses && isAnonymousOrLocal(field.getType())) {
       return true;
     }
 
