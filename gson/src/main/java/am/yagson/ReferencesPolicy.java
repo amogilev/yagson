@@ -1,6 +1,7 @@
 package am.yagson;
 
 import am.yagson.refs.impl.ReferencesAllDuplicatesModeContextFactory;
+import am.yagson.refs.impl.ReferencesCircularOnlyModeContextFactory;
 import am.yagson.refs.impl.ReferencesNoneModeContextFactory;
 
 public enum ReferencesPolicy {
@@ -9,7 +10,7 @@ public enum ReferencesPolicy {
   
   DUPLICATE_OBJECTS(new ReferencesAllDuplicatesModeContextFactory()),
   
-  CIRCULAR_ONLY(null);
+  CIRCULAR_ONLY(new ReferencesCircularOnlyModeContextFactory());
   
   private ReferencesContextFactory contextFactory;
 

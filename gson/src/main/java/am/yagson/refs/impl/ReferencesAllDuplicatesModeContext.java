@@ -29,9 +29,9 @@ public class ReferencesAllDuplicatesModeContext {
   
   static ReferencesPolicy policy = ReferencesPolicy.DUPLICATE_OBJECTS;
   
-  private Deque<String> currentPathElements = new ArrayDeque<String>();
+  protected Deque<String> currentPathElements = new ArrayDeque<String>();
   
-  private String getCurrentReference() {
+  protected String getCurrentReference() {
     // TODO: optimize - cache last, maybe keep paths in stack etc.
     StringBuilder sb = new StringBuilder();
     for (String el : currentPathElements) {
@@ -45,8 +45,8 @@ public class ReferencesAllDuplicatesModeContext {
   
   
   class WriteContext implements ReferencesWriteContext {
-    private IdentityHashMap<Object, String> references = new IdentityHashMap<Object, String>();
-    private Deque<Object> currentObjects = new ArrayDeque<Object>();
+    protected IdentityHashMap<Object, String> references = new IdentityHashMap<Object, String>();
+    protected Deque<Object> currentObjects = new ArrayDeque<Object>(); // used only for self-checks
     
     public WriteContext(Object root) {
       startObject(root, "@root");
@@ -63,7 +63,7 @@ public class ReferencesAllDuplicatesModeContext {
      * @return null if object needs to be serialized in a regular way, or a reference path 
      *    if it is already visited and so the returned reference shall be used instead  
      */
-    private String startObject(Object value, String pathElement) {
+    protected String startObject(Object value, String pathElement) {
       if (value != null) {
         String ref = references.get(value);
         if (ref != null) {
@@ -84,7 +84,7 @@ public class ReferencesAllDuplicatesModeContext {
      *    
      * @param value the object which serialization has been completed
      */
-    private void endObject(Object value) {
+    protected void endObject(Object value) {
       if (value != null) {
         Object last = currentObjects.pollLast();
         if (last != value) {
@@ -169,14 +169,14 @@ public class ReferencesAllDuplicatesModeContext {
       }
     }
     
-    private Object registerReferenceUse(String reference) {
+    protected Object registerReferenceUse(String reference) {
       Object value = getObjectByReference(reference);
       // the object may now be reference both with the used and the current reference 
       registerObject(value, false);
       return value;
     }
 
-    private void afterObjectRead() {
+    protected void afterObjectRead() {
       if (awaitsObjectRead) {
         throw new IllegalStateException("afterObjectRead() without corresponding registerObject(): " + getCurrentReference());
       }
@@ -184,7 +184,7 @@ public class ReferencesAllDuplicatesModeContext {
     }
     
     
-    private Object getObjectByReference(String reference) throws JsonSyntaxException {
+    protected Object getObjectByReference(String reference) throws JsonSyntaxException {
       Object value = objectsByReference.get(reference);
       if (value == null) {
         throw new JsonSyntaxException("Missing reference '" + reference + "'");

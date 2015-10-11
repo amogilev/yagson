@@ -5,7 +5,7 @@ public final class References {
   // forbidden
   private References() {}
   
-  private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.DUPLICATE_OBJECTS;    
+  private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.CIRCULAR_ONLY;    
   
   public static String keyRef(int i) {
     return "" + i + "-key"; 
