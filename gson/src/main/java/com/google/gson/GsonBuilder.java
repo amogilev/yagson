@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import am.yagson.References;
+import am.yagson.ReferencesPolicy;
+
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.bind.TypeAdapters;
@@ -83,6 +86,7 @@ public final class GsonBuilder {
   private boolean escapeHtmlChars = true;
   private boolean prettyPrinting;
   private boolean generateNonExecutableJson;
+  private ReferencesPolicy referencesPolicy = References.defaultPolicy();
 
   /**
    * Creates a GsonBuilder instance that can be used to build Gson with various configuration
@@ -528,6 +532,18 @@ public final class GsonBuilder {
     this.serializeSpecialFloatingPointValues = true;
     return this;
   }
+  
+  /**
+   * Sets the references policy to be used by Gson - whether to use references only
+   * for detected circular dependencies, for all duplicate objects (except of simple types),
+   * or never.
+   * 
+   * @since YaGson
+   */
+  public GsonBuilder setReferencesPolicy(ReferencesPolicy referencesPolicy) {
+    this.referencesPolicy = referencesPolicy;
+    return this;
+  }
 
   /**
    * Creates a {@link Gson} instance based on the current configuration. This method is free of
@@ -545,7 +561,8 @@ public final class GsonBuilder {
     return new Gson(excluder, fieldNamingPolicy, instanceCreators,
         serializeNulls, complexMapKeySerialization,
         generateNonExecutableJson, escapeHtmlChars, prettyPrinting,
-        serializeSpecialFloatingPointValues, longSerializationPolicy, factories);
+        serializeSpecialFloatingPointValues, longSerializationPolicy, factories,
+        referencesPolicy);
   }
 
   private void addTypeAdaptersForDate(String datePattern, int dateStyle, int timeStyle,

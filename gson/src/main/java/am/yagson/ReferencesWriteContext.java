@@ -8,8 +8,10 @@ import com.google.gson.stream.JsonWriter;
 
 public interface ReferencesWriteContext {
   
-  public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement);
+  <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement);
   
-  public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter, String pathElement, JsonWriter out) throws IOException;
+  <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter, String pathElement, JsonWriter out) throws IOException;
+  
+  ReferencesPolicy getPolicy();
 
 }

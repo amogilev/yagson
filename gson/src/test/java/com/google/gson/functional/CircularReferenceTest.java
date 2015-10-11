@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import junit.framework.TestCase;
+import am.yagson.ReferencesPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,7 +42,7 @@ public class CircularReferenceTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    gson = new Gson();
+    gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.NONE).create();
   }
 
   public void testCircularSerialization() throws Exception {
@@ -52,9 +53,8 @@ public class CircularReferenceTest extends TestCase {
     try {
       String json = gson.toJson(a);
       assertNotNull(json);
-      // fail("Circular types should not get printed!"); // now allowed with refs!
+      fail("Circular types should not get printed!");
     } catch (StackOverflowError expected) {
-      fail("Circular types should be printed without errors!");
     }
   }
 
@@ -63,8 +63,7 @@ public class CircularReferenceTest extends TestCase {
     objA.ref = objA;
 
     String json = gson.toJson(objA);
-//    assertFalse(json.contains("ref")); // self-reference is ignored
-    assertTrue(json.contains("ref")); // self-reference are supported now!
+    assertFalse(json.contains("ref")); // self-reference is ignored
   }
 
   public void testSelfReferenceArrayFieldSerialization() throws Exception {
@@ -73,9 +72,8 @@ public class CircularReferenceTest extends TestCase {
 
     try {
       gson.toJson(objA);
-      // fail("Circular reference to self can not be serialized!");  // now allowed with refs!
+       fail("Circular reference to self can not be serialized!");
     } catch (StackOverflowError expected) {
-      fail("Circular types should be printed without errors!");
     }
   }
 

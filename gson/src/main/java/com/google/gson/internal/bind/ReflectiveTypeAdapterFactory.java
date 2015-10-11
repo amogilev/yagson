@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import am.yagson.ReferencesPolicy;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
@@ -122,12 +123,16 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           field.set(value, fieldValue);
         }
       }
-      public boolean writeField(Object value) throws IOException, IllegalAccessException {
+      public boolean writeField(Object value, ReferencesWriteContext rctx) throws IOException, IllegalAccessException {
         if (!serialized) return false;
-        // YaGson PATCH: always write fields, but sometimes as references
-        // Object fieldValue = field.get(value);
-        // return fieldValue != value; // avoid recursion for example for Throwable.cause
-        return true;
+        
+        // circular references are allowed by YaGson in all reference policies except NONE 
+        if (rctx.getPolicy() == ReferencesPolicy.NONE) {
+          Object fieldValue = field.get(value);
+          return fieldValue != value; // avoid recursion for example for Throwable.cause
+        } else {
+          return true;
+        }
       }
     };
   }
@@ -189,7 +194,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       this.serialized = serialized;
       this.deserialized = deserialized;
     }
-    abstract boolean writeField(Object value) throws IOException, IllegalAccessException;
+    abstract boolean writeField(Object value, ReferencesWriteContext rctx) throws IOException, IllegalAccessException;
     abstract void write(JsonWriter writer, Object value, ReferencesWriteContext ctx) throws IOException, IllegalAccessException;
     abstract void read(JsonReader reader, Object value, ReferencesReadContext rctx) throws IOException, IllegalAccessException;
   }
@@ -237,7 +242,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       }
     }
 
-    @Override public void write(JsonWriter out, T value, ReferencesWriteContext ctx) throws IOException {
+    @Override public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
       if (value == null) {
         out.nullValue();
         return;
@@ -246,9 +251,9 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       out.beginObject();
       try {
         for (BoundField boundField : boundFields.values()) {
-          if (boundField.writeField(value)) {
+          if (boundField.writeField(value, rctx)) {
             out.name(boundField.name);
-            boundField.write(out, value, ctx);
+            boundField.write(out, value, rctx);
           }
         }
       } catch (IllegalAccessException e) {

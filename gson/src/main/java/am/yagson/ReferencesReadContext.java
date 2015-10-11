@@ -19,4 +19,6 @@ public interface ReferencesReadContext {
   <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement) throws IOException;
   
   <T> T checkReferenceUse(JsonReader in) throws IOException;
+  
+  ReferencesPolicy getPolicy();
 }

@@ -1,4 +1,8 @@
-package am.yagson;
+package am.yagson.refs.impl;
+
+import am.yagson.ReferencesContextFactory;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 public class ReferencesAllDuplicatesModeContextFactory implements ReferencesContextFactory {
 

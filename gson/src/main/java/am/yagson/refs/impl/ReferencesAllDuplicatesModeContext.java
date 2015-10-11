@@ -1,4 +1,4 @@
-package am.yagson;
+package am.yagson.refs.impl;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -6,6 +6,10 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
+
+import am.yagson.ReferencesPolicy;
+import am.yagson.ReferencesReadContext;
+import am.yagson.ReferencesWriteContext;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
@@ -23,6 +27,8 @@ import com.google.gson.stream.JsonWriter;
  */
 public class ReferencesAllDuplicatesModeContext {
   
+  static ReferencesPolicy policy = ReferencesPolicy.DUPLICATE_OBJECTS;
+  
   private Deque<String> currentPathElements = new ArrayDeque<String>();
   
   private String getCurrentReference() {
@@ -36,6 +42,7 @@ public class ReferencesAllDuplicatesModeContext {
     }
     return sb.toString();
   }
+  
   
   class WriteContext implements ReferencesWriteContext {
     private IdentityHashMap<Object, String> references = new IdentityHashMap<Object, String>();
@@ -119,6 +126,10 @@ public class ReferencesAllDuplicatesModeContext {
     
     private JsonElement makeReferenceElement(String ref) {
       return new JsonPrimitive(ref);
+    }
+
+    public ReferencesPolicy getPolicy() {
+      return policy;
     }
   }
   
@@ -204,6 +215,10 @@ public class ReferencesAllDuplicatesModeContext {
       }
       
       return null;
+    }
+    
+    public ReferencesPolicy getPolicy() {
+      return policy;
     }
   }
 }

@@ -1,13 +1,11 @@
 package am.yagson;
 
-import com.google.gson.Gson;
-
 public final class References {
   
   // forbidden
   private References() {}
   
-  private static final ReferencesContextFactory defaultContextFactory = new ReferencesAllDuplicatesModeContextFactory();    
+  private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.DUPLICATE_OBJECTS;    
   
   public static String keyRef(int i) {
     return "" + i + "-key"; 
@@ -17,12 +15,23 @@ public final class References {
     return "" + i + "-val"; 
   }
   
-  public static ReferencesReadContext createReadContext(Gson gson) {
-    // TODO: select implementation based on the enabled features
-    return defaultContextFactory.createReadContext();
+  public static ReferencesReadContext createReadContext(ReferencesPolicy policy) {
+    if (policy == null) {
+      policy = defaultPolicy;
+    }
+    
+    return policy.getContextFactory().createReadContext();
   }
   
-  public static ReferencesWriteContext createWriteContext(Gson gson, Object root) {
-    return defaultContextFactory.createWriteContext(root);
+  public static ReferencesWriteContext createWriteContext(ReferencesPolicy policy, Object root) {
+    if (policy == null) {
+      policy = defaultPolicy;
+    }
+    
+    return policy.getContextFactory().createWriteContext(root);
+  }
+
+  public static ReferencesPolicy defaultPolicy() {
+    return defaultPolicy;
   }
 }

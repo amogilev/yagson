@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import am.yagson.References;
+import am.yagson.ReferencesPolicy;
 import am.yagson.ReferencesReadContext;
 import am.yagson.ReferencesWriteContext;
 
@@ -142,6 +143,8 @@ public final class Gson {
       return toJsonTree(src, typeOfSrc);
     }
   };
+  
+  private final ReferencesPolicy referencesPolicy;
 
   /**
    * Constructs a Gson object with default configuration. The default configuration has the
@@ -181,7 +184,8 @@ public final class Gson {
     this(Excluder.DEFAULT, FieldNamingPolicy.IDENTITY,
         Collections.<Type, InstanceCreator<?>>emptyMap(), false, false, DEFAULT_JSON_NON_EXECUTABLE,
         true, false, false, LongSerializationPolicy.DEFAULT,
-        Collections.<TypeAdapterFactory>emptyList());
+        Collections.<TypeAdapterFactory>emptyList(),
+        References.defaultPolicy());
   }
 
   Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingPolicy,
@@ -189,12 +193,14 @@ public final class Gson {
       boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
       boolean prettyPrinting, boolean serializeSpecialFloatingPointValues,
       LongSerializationPolicy longSerializationPolicy,
-      List<TypeAdapterFactory> typeAdapterFactories) {
+      List<TypeAdapterFactory> typeAdapterFactories,
+      ReferencesPolicy referencesPolicy) {
     this.constructorConstructor = new ConstructorConstructor(instanceCreators);
     this.serializeNulls = serializeNulls;
     this.generateNonExecutableJson = generateNonExecutableGson;
     this.htmlSafe = htmlSafe;
     this.prettyPrinting = prettyPrinting;
+    this.referencesPolicy = referencesPolicy;
 
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
 
@@ -607,7 +613,7 @@ public final class Gson {
     writer.setSerializeNulls(serializeNulls);
     
     try {
-      ((TypeAdapter<Object>) adapter).write(writer, src, References.createWriteContext(this, src));
+      ((TypeAdapter<Object>) adapter).write(writer, src, References.createWriteContext(referencesPolicy, src));
     } catch (IOException e) {
       throw new JsonIOException(e);
     } finally {
@@ -816,7 +822,7 @@ public final class Gson {
       isEmpty = false;
       TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
       TypeAdapter<T> typeAdapter = getAdapter(typeToken);
-      T object = typeAdapter.read(reader, References.createReadContext(this));
+      T object = typeAdapter.read(reader, References.createReadContext(referencesPolicy));
       return object;
     } catch (EOFException e) {
       /*
