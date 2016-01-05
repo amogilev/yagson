@@ -31,8 +31,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.*;
-
+import am.yagson.refs.References;
+import am.yagson.refs.ReferencesPolicy;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.types.TypeInfoPolicy;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.Primitives;
@@ -99,8 +102,8 @@ import com.google.gson.stream.MalformedJsonException;
  * @author Joel Leitch
  * @author Jesse Wilson
  */
-public final class Gson {
-  static final boolean DEFAULT_JSON_NON_EXECUTABLE = false;
+public class Gson {
+  protected static final boolean DEFAULT_JSON_NON_EXECUTABLE = false;
 
   private static final String JSON_NON_EXECUTABLE_PREFIX = ")]}'\n";
 
@@ -176,19 +179,20 @@ public final class Gson {
    *   <li>By default, Gson excludes <code>transient</code> or <code>static</code> fields from
    *   consideration for serialization and deserialization. You can change this behavior through
    *   {@link GsonBuilder#excludeFieldsWithModifiers(int...)}.</li>
+   *   <li>By default, all YaGson's features like support of references and type info are disabled</li>
    * </ul>
    */
   public Gson() {
-    this(Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy()), FieldNamingPolicy.IDENTITY,
+    this(Excluder.DEFAULT.forReferencesPolicy(ReferencesPolicy.DISABLED), FieldNamingPolicy.IDENTITY,
         Collections.<Type, InstanceCreator<?>>emptyMap(), false,
-        TypeInfoPolicy.defaultPolicy().isEnabled() ? true : false, // TODO default Gson is false, revert after creating YaGson!
+        false,
         DEFAULT_JSON_NON_EXECUTABLE,
         true, false, false, LongSerializationPolicy.DEFAULT,
         Collections.<TypeAdapterFactory>emptyList(),
-        References.defaultPolicy(), TypeInfoPolicy.defaultPolicy());
+        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED);
   }
 
-  Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingPolicy,
+  protected Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingPolicy,
       final Map<Type, InstanceCreator<?>> instanceCreators, boolean serializeNulls,
       boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
       boolean prettyPrinting, boolean serializeSpecialFloatingPointValues,

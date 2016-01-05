@@ -26,8 +26,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.*;
-
+import am.yagson.refs.ReferencesPolicy;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.types.AdapterUtils;
+import am.yagson.types.TypeInfoPolicy;
+import am.yagson.types.TypeUtils;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -137,8 +141,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       public boolean writeField(Object value, ReferencesWriteContext rctx) throws IOException, IllegalAccessException {
         if (!serialized) return false;
         
-        // circular references are allowed by YaGson in all reference policies except NONE 
-        if (rctx.getPolicy() == ReferencesPolicy.NONE) {
+        // circular references are allowed by YaGson in all reference policies except DISABLED
+        if (rctx.getPolicy() == ReferencesPolicy.DISABLED) {
           Object fieldValue = field.get(value);
           return fieldValue != value; // avoid recursion for example for Throwable.cause
         } else {

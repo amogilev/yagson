@@ -2,8 +2,8 @@ package com.google.gson;
 
 import java.io.IOException;
 
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;

@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import am.yagson.AdapterUtils;
-import am.yagson.ReferencesPolicy;
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.types.AdapterUtils;
+import am.yagson.refs.ReferencesPolicy;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;

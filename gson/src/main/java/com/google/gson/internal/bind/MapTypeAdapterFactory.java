@@ -16,12 +16,12 @@
 
 package com.google.gson.internal.bind;
 
-import static am.yagson.References.keyRef;
-import static am.yagson.References.valRef;
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import static am.yagson.refs.References.keyRef;
+import static am.yagson.refs.References.valRef;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 
-import am.yagson.TypeUtils;
+import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;

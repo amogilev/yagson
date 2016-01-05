@@ -1,4 +1,4 @@
-package am.yagson;
+package am.yagson.refs;
 
 public interface ReferencesContextFactory {
   

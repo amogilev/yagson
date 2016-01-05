@@ -16,7 +16,7 @@
 
 package com.google.gson.functional;
 
-import am.yagson.ReferencesPolicy;
+import am.yagson.refs.ReferencesPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -42,7 +42,7 @@ public class FieldExclusionTest extends TestCase {
   }
 
   public void testDefaultInnerClassExclusion() throws Exception {
-    Gson gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.NONE).create();
+    Gson gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.DISABLED).create();
     Outer.Inner target = outer.new Inner(VALUE);
     String result = gson.toJson(target);
     assertEquals(target.toJson(), result);
@@ -61,7 +61,7 @@ public class FieldExclusionTest extends TestCase {
   }
 
   public void testDefaultNestedStaticClassIncluded() throws Exception {
-    Gson gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.NONE).create();
+    Gson gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.DISABLED).create();
     Outer.Inner target = outer.new Inner(VALUE);
     String result = gson.toJson(target);
     assertEquals(target.toJson(), result);

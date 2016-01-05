@@ -1,11 +1,11 @@
-package am.yagson;
+package am.yagson.refs;
 
 public final class References {
   
   // forbidden
   private References() {}
   
-  private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.CIRCULAR_ONLY;    
+  private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.CIRCULAR_ONLY;
   
   public static String keyRef(int i) {
     return "" + i + "-key"; 

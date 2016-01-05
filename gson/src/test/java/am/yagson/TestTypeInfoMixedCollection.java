@@ -2,19 +2,22 @@ package am.yagson;
 
 import java.math.BigDecimal;
 
+import am.yagson.types.TypeInfoPolicy;
 import junit.framework.TestCase;
+
+import static am.yagson.TestingUtils.jsonStr;
 
 public class TestTypeInfoMixedCollection extends TestCase {
 
-	public static final String EXPECTED = "{\"@vtype\":\"java.util.ArrayList\",\"l\":[" +
-			"{\"@type\":\"java.lang.Integer\",\"@val\":1},{\"@type\":\"java.lang.Long\",\"@val\":2}," +
-			"{\"@type\":\"java.lang.Float\",\"@val\":3.01},{\"@type\":\"java.lang.Double\",\"@val\":4.02}," +
-			"{\"@type\":\"java.math.BigDecimal\",\"@val\":1}]}";
+	public static final String EXPECTED = jsonStr("{'@vtype':'java.util.ArrayList','l':[" +
+			"{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.Long','@val':2}," +
+			"{'@type':'java.lang.Float','@val':3.01},{'@type':'java.lang.Double','@val':4.02}," +
+			"{'@type':'java.math.BigDecimal','@val':1}]}");
 
-	public static final String JSON_ALT = "{\"l\":{\"@type\":\"java.util.ArrayList\", \"@val\":[" +
-			"{\"@type\":\"java.lang.Integer\",\"@val\":1},{\"@type\":\"java.lang.Long\",\"@val\":2}," +
-			"{\"@type\":\"java.lang.Float\",\"@val\":3.01},{\"@type\":\"java.lang.Double\",\"@val\":4.02}," +
-			"{\"@type\":\"java.math.BigDecimal\",\"@val\":1}]}}\n";
+	public static final String JSON_ALT = jsonStr("{'l':{'@type':'java.util.ArrayList', '@val':[" +
+			"{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.Long','@val':2}," +
+			"{'@type':'java.lang.Float','@val':3.01},{'@type':'java.lang.Double','@val':4.02}," +
+			"{'@type':'java.math.BigDecimal','@val':1}]}}\n");
 
 	private ClassWithMixedCollection objToTest() {
 		ClassWithMixedCollection obj = new ClassWithMixedCollection();
@@ -38,7 +41,7 @@ public class TestTypeInfoMixedCollection extends TestCase {
 
 	public void testAltDeserialize() {
 		ClassWithMixedCollection obj = objToTest();
-		TestingUtils.testDeserialize(JSON_ALT, obj);
+		TestingUtils.testDeserialize(new YaGson(), JSON_ALT, obj);
 	}
 
 	

@@ -16,9 +16,9 @@
 
 package com.google.gson.internal;
 
-import am.yagson.ReferencesPolicy;
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.refs.ReferencesPolicy;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -117,7 +117,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
   
   public Excluder forReferencesPolicy(ReferencesPolicy referencesPolicy) {
     Excluder result = clone();
-    result.serializeOuterReferences = referencesPolicy != ReferencesPolicy.NONE;
+    result.serializeOuterReferences = referencesPolicy != ReferencesPolicy.DISABLED;
     return result;
   }
 

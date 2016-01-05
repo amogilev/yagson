@@ -1,29 +1,19 @@
 package am.yagson;
 
+import am.yagson.types.TypeInfoPolicy;
 import junit.framework.TestCase;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+import static am.yagson.TestingUtils.jsonStr;
+
 public class TestTypeInfoMixedMap extends TestCase {
-    private static final String EXPECTED_EMPTY_VTYPE = "{\"@vtype\":\"java.util.HashMap\"," +
-            "\"map\":{}}";
-    private static final String EXPECTED_EMPTY_WRAPPER = "{\"map\":{\"@type\":\"java.util.HashMap\"," +
-        "\"@val\":{}}}";
 
-    private static final String EXPECTED_NUMS_VTYPE = "{\"@vtype\":\"java.util.HashMap\",\"map\":[" +
-            "[{\"@type\":\"java.lang.Integer\",\"@val\":1},{\"@type\":\"java.lang.String\",\"@val\":\"int\"}]," +
-            "[{\"@type\":\"java.lang.Long\",\"@val\":2},{\"@type\":\"java.lang.String\",\"@val\":\"long\"}]," +
-            "[{\"@type\":\"java.math.BigDecimal\",\"@val\":1},{\"@type\":\"java.lang.Integer\",\"@val\":1}]]}";
-    private static final String EXPECTED_NUMS_WRAPPER = "{\"map\":{\"@type\":\"java.util.HashMap\",\"@val\":[" +
-            "[{\"@type\":\"java.lang.Integer\",\"@val\":1},{\"@type\":\"java.lang.String\",\"@val\":\"int\"}]," +
-            "[{\"@type\":\"java.lang.Long\",\"@val\":2},{\"@type\":\"java.lang.String\",\"@val\":\"long\"}]," +
-            "[{\"@type\":\"java.math.BigDecimal\",\"@val\":1},{\"@type\":\"java.lang.Integer\",\"@val\":1}]]}}";
-
-    private static final String EXPECTED_COMPLEX_VTYPE = "{\"@vtype\":\"java.util.HashMap\",\"map\":[" +
-            "[{\"@type\":\"am.yagson.Person\",\"@val\":{\"name\":\"John\",\"family\":\"Doe\"}},{\"@type\":\"java.lang.String\",\"@val\":\"M\"}]," +
-            "[{\"@type\":\"am.yagson.Person\",\"@val\":{\"name\":\"Jane\",\"family\":\"Doe\"}},{\"@type\":\"java.lang.String\",\"@val\":\"F\"}]]}";
+    private static final String EXPECTED_COMPLEX_VTYPE = jsonStr("{'@vtype':'java.util.HashMap','map':[" +
+            "[{'@type':'am.yagson.Person','@val':{'name':'John','family':'Doe'}},{'@type':'java.lang.String','@val':'M'}]," +
+            "[{'@type':'am.yagson.Person','@val':{'name':'Jane','family':'Doe'}},{'@type':'java.lang.String','@val':'F'}]]}");
 
     private ClassWithMixedMap objToTestWithEmptyMap() {
         Map<Object, Object> map = new HashMap<Object, Object>();
@@ -53,21 +43,31 @@ public class TestTypeInfoMixedMap extends TestCase {
 
     public void testMixedEmptyMapVtype() {
         ClassWithMixedMap obj = objToTestWithEmptyMap();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, EXPECTED_EMPTY_VTYPE);
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
+                "{'@vtype':'java.util.HashMap','map':{}}"));
     }
     public void testMixedEmptyMapWrapper() {
         ClassWithMixedMap obj = objToTestWithEmptyMap();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, EXPECTED_EMPTY_WRAPPER);
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr(
+                "{'map':{'@type':'java.util.HashMap','@val':{}}}"));
     }
 
     public void testMixedNumbersMapVtype() {
         ClassWithMixedMap obj = objToTest();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, EXPECTED_NUMS_VTYPE);
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
+                "{'@vtype':'java.util.HashMap','map':[" +
+                "[{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.String','@val':'int'}]," +
+                "[{'@type':'java.lang.Long','@val':2},{'@type':'java.lang.String','@val':'long'}]," +
+                "[{'@type':'java.math.BigDecimal','@val':1},{'@type':'java.lang.Integer','@val':1}]]}"));
     }
 
     public void testMixedNumbersMapWrapper() {
         ClassWithMixedMap obj = objToTest();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, EXPECTED_NUMS_WRAPPER);
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr(
+                "{'map':{'@type':'java.util.HashMap','@val':[" +
+                "[{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.String','@val':'int'}]," +
+                "[{'@type':'java.lang.Long','@val':2},{'@type':'java.lang.String','@val':'long'}]," +
+                "[{'@type':'java.math.BigDecimal','@val':1},{'@type':'java.lang.Integer','@val':1}]]}}"));
     }
 
     //
@@ -80,7 +80,7 @@ public class TestTypeInfoMixedMap extends TestCase {
     public void testIntIntMap() {
         IntIntMap obj = new IntIntMap();
         obj.put(1, 2);
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, "{\"1\":2}");
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr("{'1':2}"));
     }
 
     public static class WithIntIntMap {
@@ -105,7 +105,8 @@ public class TestTypeInfoMixedMap extends TestCase {
     public void testWithIntIntMap() {
         WithIntIntMap obj = new WithIntIntMap();
         obj.map.put(1, 2);
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, "{\"map\":{\"1\":2}}");
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
+                "{'map':{'1':2}}"));
     }
 
 
@@ -115,7 +116,7 @@ public class TestTypeInfoMixedMap extends TestCase {
     public void testLongLongMap() {
         LongLongMap obj = new LongLongMap();
         obj.put(1L, 2L);
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, "{\"1\":2}");
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr("{'1':2}"));
     }
 
     public static class BoolBoolMap extends HashMap<Boolean, Boolean> {
@@ -124,7 +125,7 @@ public class TestTypeInfoMixedMap extends TestCase {
     public void testBoolBoolLongMap() {
         BoolBoolMap obj = new BoolBoolMap();
         obj.put(false, true);
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, "{\"false\":true}");
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr("{'false':true}"));
     }
 
     public static class PersonBoolMap extends HashMap<Person, Boolean> {
@@ -133,8 +134,8 @@ public class TestTypeInfoMixedMap extends TestCase {
     public void testPersonBoolLongMap() {
         PersonBoolMap obj = new PersonBoolMap();
         obj.put(new Person("John", "Doe"), true);
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES,
-                "[[{\"name\":\"John\",\"family\":\"Doe\"},true]]");
+        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
+                "[[{'name':'John','family':'Doe'},true]]"));
     }
 
 

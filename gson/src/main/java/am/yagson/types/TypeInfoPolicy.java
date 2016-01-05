@@ -1,11 +1,11 @@
-package am.yagson;
+package am.yagson.types;
 
 public enum TypeInfoPolicy {
 
     /**
      * No type information emitted
      */
-    NONE,
+    DISABLED,
 
     /**
      * Emits required type info as type/val wrapper object, like <pre>{"@type":"org.my.MyType", "@val":orig_value}</pre>
@@ -30,7 +30,7 @@ public enum TypeInfoPolicy {
      * Whether type info is emitted (no matter how exactly)
      */
     public boolean isEnabled() {
-        return this != NONE;
+        return this != DISABLED;
     }
 
     public static TypeInfoPolicy defaultPolicy() {

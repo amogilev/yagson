@@ -1,5 +1,7 @@
 package am.yagson;
 
+import am.yagson.types.TypeUtils;
+
 import java.util.Arrays;
 
 public class ClassWithPersonArray {

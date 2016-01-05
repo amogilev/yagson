@@ -1,4 +1,4 @@
-package am.yagson;
+package am.yagson.types;
 
 import com.google.gson.Gson;
 import com.google.gson.SimpleTypeAdapter;

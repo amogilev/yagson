@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import junit.framework.TestCase;
-import am.yagson.ReferencesPolicy;
+import am.yagson.refs.ReferencesPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -42,7 +42,7 @@ public class CircularReferenceTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.NONE).create();
+    gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.DISABLED).create();
   }
 
   public void testCircularSerialization() throws Exception {

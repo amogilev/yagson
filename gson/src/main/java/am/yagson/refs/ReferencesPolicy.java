@@ -1,4 +1,4 @@
-package am.yagson;
+package am.yagson.refs;
 
 import am.yagson.refs.impl.ReferencesAllDuplicatesModeContextFactory;
 import am.yagson.refs.impl.ReferencesCircularOnlyModeContextFactory;
@@ -6,7 +6,7 @@ import am.yagson.refs.impl.ReferencesNoneModeContextFactory;
 
 public enum ReferencesPolicy {
   
-  NONE(new ReferencesNoneModeContextFactory()),
+  DISABLED(new ReferencesNoneModeContextFactory()),
   
   DUPLICATE_OBJECTS(new ReferencesAllDuplicatesModeContextFactory()),
   

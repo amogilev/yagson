@@ -16,7 +16,7 @@
 
 package com.google.gson.functional;
 
-import am.yagson.ReferencesPolicy;
+import am.yagson.refs.ReferencesPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -62,7 +62,7 @@ public class ObjectTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.NONE).create();
+    gson = new GsonBuilder().setReferencesPolicy(ReferencesPolicy.DISABLED).create();
 
     TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
     Locale.setDefault(Locale.US);

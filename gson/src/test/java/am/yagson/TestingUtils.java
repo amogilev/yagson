@@ -1,5 +1,6 @@
 package am.yagson;
 
+import am.yagson.types.TypeInfoPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -8,18 +9,27 @@ import static junit.framework.Assert.assertNotNull;
 
 public class TestingUtils {
 	
-	@SuppressWarnings("unchecked")
-	public static <T> T testJsonWithoutEquals(T obj) {
-		return testJsonWithoutEquals(obj, null, null, false, false);
+	private static YaGson buildGson() {
+		return buildGson(null);
 	}
 
-	private static <T> T testJsonWithoutEquals(T obj, TypeInfoPolicy typeInfoPolicy, String expected,
-											   boolean cmpObjectsByToString, boolean cmpObjectsByEquals) {
-		GsonBuilder gb = new GsonBuilder();
-		if (typeInfoPolicy != null) {
-			gb.setTypeInfoPolicy(typeInfoPolicy);
+	private static YaGson buildGson(TypeInfoPolicy typeInfoPolicy) {
+		if (typeInfoPolicy == null) {
+			return new YaGson();
+		} else {
+			return new YaGsonBuilder()
+					.setTypeInfoPolicy(typeInfoPolicy)
+					.create();
 		}
-		Gson gson = gb.create();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T testJsonWithoutEquals(T obj, String expected) {
+		return testJsonWithoutEquals(buildGson(), obj, expected, false, false);
+	}
+
+	private static <T> T testJsonWithoutEquals(Gson gson, T obj, String expected,
+											   boolean cmpObjectsByToString, boolean cmpObjectsByEquals) {
 
 		String str = gson.toJson(obj);
 		assertNotNull(str);
@@ -28,7 +38,7 @@ public class TestingUtils {
 		}
 
 		Class<? extends T> objClass = (Class<? extends T>) obj.getClass();
-		T obj2 = deserialize(str, objClass);
+		T obj2 = deserialize(gson, str, objClass);
 		assertNotNull(obj2);
 
 		if (cmpObjectsByEquals) {
@@ -47,15 +57,14 @@ public class TestingUtils {
 		return obj2;
 	}
 
-	private static <T> T deserialize(String json, Class<T> objClass) {
-		Gson gson = new Gson();
+	private static <T> T deserialize(Gson gson, String json, Class<T> objClass) {
 		T obj2 = gson.fromJson(json, objClass);
 		return obj2;
 	}
 
-	public static <T> T testDeserialize(String json, T obj) {
+	public static <T> T testDeserialize(Gson gson, String json, T obj) {
 		Class<? extends T> objClass = (Class<? extends T>) obj.getClass();
-		T obj2 = deserialize(json, objClass);
+		T obj2 = deserialize(gson, json, objClass);
 		assertEquals(obj, obj2);
 		return obj2;
 	}
@@ -65,16 +74,40 @@ public class TestingUtils {
 		return testFully(obj, null, null);
 	}
 
+	public static <T> T testFully(T obj, String expected) {
+		return testFully(obj, null, expected);
+	}
+
 	public static <T> T testFully(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testJsonWithoutEquals(obj, typeInfoPolicy, expected, false, true);
+		return testJsonWithoutEquals(buildGson(typeInfoPolicy), obj, expected, false, true);
+	}
+
+	public static <T> T testFully(Gson gson, T obj, String expected) {
+		return testJsonWithoutEquals(gson, obj, expected, false, true);
 	}
 
 	public static <T> T testFullyByToString(T obj) {
 		return testFullyByToString(obj, null, null);
 	}
 
-	public static <T> T testFullyByToString(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testJsonWithoutEquals(obj, typeInfoPolicy, expected, true, false);
+	public static <T> T testFullyByToString(T obj, String expected) {
+		return testFullyByToString(obj, null, expected);
 	}
 
+	public static <T> T testFullyByToString(Gson gson, T obj, String expected) {
+		return testJsonWithoutEquals(gson, obj, expected, true, false);
+	}
+
+	public static <T> T testFullyByToString(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
+		return testJsonWithoutEquals(buildGson(typeInfoPolicy), obj, expected, true, false);
+	}
+
+	/**
+	 * Replaces all single quotations marks characters (') to double (") and returns the resulting string.
+	 * <p/>
+	 * Used to make the expected JSON strings more readable in Java sources.
+     */
+	public static String jsonStr(String s) {
+		return s.replace('\'', '"');
+	}
 }

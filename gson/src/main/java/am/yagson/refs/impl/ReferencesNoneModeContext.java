@@ -3,13 +3,15 @@ package am.yagson.refs.impl;
 import java.io.IOException;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import am.yagson.ReferencesPolicy;
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.refs.ReferencesPolicy;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 
 public class ReferencesNoneModeContext implements ReferencesReadContext, ReferencesWriteContext {
 
@@ -35,11 +37,15 @@ public class ReferencesNoneModeContext implements ReferencesReadContext, Referen
   }
 
   public <T> T checkReferenceUse(JsonReader in) throws IOException {
+    if (in.peek() == JsonToken.STRING) {
+      throw new JsonSyntaxException("The reference cannot be read, as the current policy is ReferencesPolicy." +
+              ReferencesPolicy.DISABLED + ": '" + in.nextString() + "'");
+    }
     return null;
   }
 
   public ReferencesPolicy getPolicy() {
-    return ReferencesPolicy.NONE;
+    return ReferencesPolicy.DISABLED;
   }
 
 }

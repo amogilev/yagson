@@ -26,10 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.References;
-import am.yagson.ReferencesPolicy;
+import am.yagson.refs.ReferencesPolicy;
+import am.yagson.types.TypeInfoPolicy;
 
-import am.yagson.TypeInfoPolicy;
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.bind.TypeAdapters;
@@ -69,26 +68,26 @@ import com.google.gson.reflect.TypeToken;
  * @author Joel Leitch
  * @author Jesse Wilson
  */
-public final class GsonBuilder {
-  private Excluder excluder = Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy());
-  private LongSerializationPolicy longSerializationPolicy = LongSerializationPolicy.DEFAULT;
-  private FieldNamingStrategy fieldNamingPolicy = FieldNamingPolicy.IDENTITY;
-  private final Map<Type, InstanceCreator<?>> instanceCreators
+public class GsonBuilder {
+  protected Excluder excluder = Excluder.DEFAULT;
+  protected LongSerializationPolicy longSerializationPolicy = LongSerializationPolicy.DEFAULT;
+  protected FieldNamingStrategy fieldNamingPolicy = FieldNamingPolicy.IDENTITY;
+  protected final Map<Type, InstanceCreator<?>> instanceCreators
       = new HashMap<Type, InstanceCreator<?>>();
   private final List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
   /** tree-style hierarchy factories. These come after factories for backwards compatibility. */
   private final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<TypeAdapterFactory>();
-  private boolean serializeNulls;
+  protected boolean serializeNulls;
   private String datePattern;
   private int dateStyle = DateFormat.DEFAULT;
   private int timeStyle = DateFormat.DEFAULT;
-  private boolean complexMapKeySerialization = TypeInfoPolicy.defaultPolicy().isEnabled(); // TODO: revert after YaGson
-  private boolean serializeSpecialFloatingPointValues;
-  private boolean escapeHtmlChars = true;
-  private boolean prettyPrinting;
-  private boolean generateNonExecutableJson;
-  private ReferencesPolicy referencesPolicy = References.defaultPolicy();
-  private TypeInfoPolicy typeInfoPolicy = TypeInfoPolicy.defaultPolicy();
+  protected boolean complexMapKeySerialization;
+  protected boolean serializeSpecialFloatingPointValues;
+  protected boolean escapeHtmlChars = true;
+  protected boolean prettyPrinting;
+  protected boolean generateNonExecutableJson;
+  protected ReferencesPolicy referencesPolicy = ReferencesPolicy.DISABLED;
+  protected TypeInfoPolicy typeInfoPolicy = TypeInfoPolicy.DISABLED;
 
   /**
    * Creates a GsonBuilder instance that can be used to build Gson with various configuration
@@ -549,8 +548,8 @@ public final class GsonBuilder {
   }
   
   /**
-   * Sets whether to emit @type elements with exact runtime types in cases when the declared
-   * types are less specific.
+   * Sets whether to emit the information about the exact runtime types in cases when the declared
+   * types are less specific, and how exactly.
    * 
    * @since YaGson
    */
@@ -566,17 +565,23 @@ public final class GsonBuilder {
    * @return an instance of Gson configured with the options currently set in this builder
    */
   public Gson create() {
+    return new Gson(excluder, fieldNamingPolicy, instanceCreators,
+        serializeNulls, complexMapKeySerialization,
+        generateNonExecutableJson, escapeHtmlChars, prettyPrinting,
+        serializeSpecialFloatingPointValues, longSerializationPolicy,
+        createTypeAdapterFactories(),
+        referencesPolicy, typeInfoPolicy);
+  }
+
+  protected List<TypeAdapterFactory> createTypeAdapterFactories() {
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
+
     factories.addAll(this.factories);
     Collections.reverse(factories);
     factories.addAll(this.hierarchyFactories);
     addTypeAdaptersForDate(datePattern, dateStyle, timeStyle, factories);
 
-    return new Gson(excluder, fieldNamingPolicy, instanceCreators,
-        serializeNulls, complexMapKeySerialization,
-        generateNonExecutableJson, escapeHtmlChars, prettyPrinting,
-        serializeSpecialFloatingPointValues, longSerializationPolicy, factories,
-        referencesPolicy, typeInfoPolicy);
+    return factories;
   }
 
   private void addTypeAdaptersForDate(String datePattern, int dateStyle, int timeStyle,

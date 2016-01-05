@@ -15,8 +15,10 @@
  */
 package com.google.gson.internal.bind;
 
-import am.yagson.*;
-
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.types.AdapterUtils;
+import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;

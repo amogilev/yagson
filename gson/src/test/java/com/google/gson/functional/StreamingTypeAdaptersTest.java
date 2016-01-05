@@ -16,7 +16,7 @@
 
 package com.google.gson.functional;
 
-import am.yagson.References;
+import am.yagson.refs.References;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -16,8 +16,8 @@
 
 package com.google.gson;
 
-import am.yagson.ReferencesReadContext;
-import am.yagson.ReferencesWriteContext;
+import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Streams;

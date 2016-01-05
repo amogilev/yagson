@@ -1,5 +1,6 @@
-package am.yagson;
+package am.yagson.types;
 
+import am.yagson.refs.ReferencesReadContext;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.$Gson$Types;
