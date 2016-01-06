@@ -31,7 +31,7 @@ public class TestingUtils {
 	private static <T> T testJsonWithoutEquals(Gson gson, T obj, String expected,
 											   boolean cmpObjectsByToString, boolean cmpObjectsByEquals) {
 
-		String str = gson.toJson(obj);
+		String str = gson.toJson(obj, obj.getClass());
 		assertNotNull(str);
 		if (expected != null) {
 			assertEquals("toJson(obj) differs from the expected", expected, str);
@@ -50,7 +50,7 @@ public class TestingUtils {
 		}
 
 		// additionally compare the first and the second serialization strings
-		String str2 = gson.toJson(obj2);
+		String str2 = gson.toJson(obj2, obj.getClass());
 		assertEquals("First toJson() differs from the toJson() of deserialized object",
 				str, str2);
 

@@ -22,9 +22,9 @@ public class TestTypeInfoMixedArray extends TestCase {
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
                 "{'@vtype':'[Ljava.lang.Number;','arr':[null," +
                 "{'@type':'java.lang.Integer','@val':1}," +
-                "{'@type':'java.lang.Long','@val':2}," +
+                "2," +
                 "{'@type':'java.lang.Float','@val':3.01}," +
-                "{'@type':'java.lang.Double','@val':4.02}," +
+                "4.02," +
                 "{'@type':'java.math.BigDecimal','@val':1}]}"));
     }
 
@@ -34,9 +34,9 @@ public class TestTypeInfoMixedArray extends TestCase {
                 "{'@type':'[Ljava.lang.Number;'," +
                 "'@val':[null," +
                 "{'@type':'java.lang.Integer','@val':1}," +
-                "{'@type':'java.lang.Long','@val':2}," +
+                "2," +
                 "{'@type':'java.lang.Float','@val':3.01}," +
-                "{'@type':'java.lang.Double','@val':4.02}," +
+                "4.02," +
                 "{'@type':'java.math.BigDecimal','@val':1}]}}"));
     }
 
@@ -44,9 +44,9 @@ public class TestTypeInfoMixedArray extends TestCase {
         ClassWithMixedArray obj = objToTestWithObjectArray();
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr("{'arr':[null," +
                 "{'@type':'java.lang.Integer','@val':1}," +
-                "{'@type':'java.lang.Long','@val':2}," +
+                "2," +
                 "{'@type':'java.lang.Float','@val':3.01}," +
-                "{'@type':'java.lang.Double','@val':4.02}," +
+                "4.02," +
                 "{'@type':'java.math.BigDecimal','@val':1}]}"));
     }
 
@@ -54,9 +54,9 @@ public class TestTypeInfoMixedArray extends TestCase {
         ClassWithMixedArray obj = objToTestWithObjectArray();
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr("{'arr':[null," +
                 "{'@type':'java.lang.Integer','@val':1}," +
-                "{'@type':'java.lang.Long','@val':2}," +
+                "2," +
                 "{'@type':'java.lang.Float','@val':3.01}," +
-                "{'@type':'java.lang.Double','@val':4.02}," +
+                "4.02," +
                 "{'@type':'java.math.BigDecimal','@val':1}]}"));
     }
 

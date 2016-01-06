@@ -31,4 +31,11 @@ public class PersonEx extends Person {
         result = 31 * result + (address != null ? address.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "PersonEx{" +
+                "address='" + address + ", name=" + name + ", family=" + family +
+                "}";
+    }
 }

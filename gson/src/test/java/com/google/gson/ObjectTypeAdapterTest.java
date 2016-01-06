@@ -28,8 +28,8 @@ public final class ObjectTypeAdapterTest extends TestCase {
 
   public void testDeserialize() throws Exception {
     Map<?, ?> map = (Map<?, ?>) adapter.fromJson("{\"a\":5,\"b\":[1,2,null],\"c\":{\"x\":\"y\"}}");
-    assertEquals(5.0, map.get("a"));
-    assertEquals(Arrays.asList(1.0, 2.0, null), map.get("b"));
+    assertEquals(5L, map.get("a"));
+    assertEquals(Arrays.asList(1L, 2L, null), map.get("b"));
     assertEquals(Collections.singletonMap("x", "y"), map.get("c"));
     assertEquals(3, map.size());
   }

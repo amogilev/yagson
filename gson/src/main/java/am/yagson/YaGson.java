@@ -3,9 +3,14 @@ package am.yagson;
 import am.yagson.refs.References;
 import am.yagson.refs.ReferencesPolicy;
 import am.yagson.types.TypeInfoPolicy;
+import am.yagson.types.TypeUtils;
 import com.google.gson.*;
 import com.google.gson.internal.Excluder;
+import com.google.gson.internal.bind.JsonTreeWriter;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +24,7 @@ import java.util.Map;
  * <p/>
  * If any non-default features are required, use {@link YaGsonBuilder} to create {@link YaGson}
  * instance.
+ * // TODO: describe guarantee
  */
 public class YaGson extends Gson {
 
@@ -85,5 +91,154 @@ public class YaGson extends Gson {
         super(excluder, fieldNamingPolicy, instanceCreators, serializeNulls, complexMapKeySerialization,
                 generateNonExecutableGson, htmlSafe, prettyPrinting, serializeSpecialFloatingPointValues,
                 longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy);
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation, provided that
+     * the de-serialization type is not known at this time.
+     * <p/>
+     * By default, the root type information is emitted, unless the object is a string, long, double or boolean, so
+     * the resulting JSON string may be successfully de-serialized into the similar object using
+     * {@code fromJson(str, Object.class)}. If the object will be de-serialized using some other type than
+     * {@code Object.class}, use {@link #toJson(Object, Type)} instead, and the root type information will be
+     * emitted only when necessary, i.e. if the de-serialization type differs from the actual one.
+     * <p/>
+     * If you want to write out the object to a {@link Writer}, use {@link #toJson(Object, Appendable)} instead.
+     *
+     * @param src the object for which Json representation is to be created
+     * @return Json representation of {@code src}.
+     */
+    @Override
+    public String toJson(Object src) {
+        return toJson(src, Object.class);
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation, given that the
+     * de-serialization type is known.
+     * <p/>
+     * The root type information is emitted only if necessary, i.e. if the specified de-serialization type differs from
+     * the actual object's class. It is guaranteed that the resulting string may be de-serialized to the similar object
+     * using {@code fromJson(json, deserializationType)}, unless some YaGson's features are disabled.
+     * <p/>
+     * If you want to write out the object to a {@link Appendable}, use {@link #toJson(Object, Type, Appendable)}
+     * instead.
+     *
+     * @param src       the object for which JSON representation is to be created
+     * @param deserializationType The type which will be used for de-serialization of the resulting JSON representation
+     * @return Json representation of {@code src}
+     */
+    @Override
+    public String toJson(Object src, Type deserializationType) {
+        StringWriter writer = new StringWriter();
+        toJson(src, deserializationType, writer);
+        return writer.toString();
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation, provided that
+     * the de-serialization type is not known at this time.
+     * <p/>
+     * By default, the root type information is emitted, unless the object is a string, long, double or boolean, so
+     * the resulting JSON string may be successfully de-serialized into the similar object using
+     * {@code fromJson(str, Object.class)}. If the object will be de-serialized using some other type than
+     * {@code Object.class}, use {@link #toJson(Object, Type, Appendable)} instead, and the root type information
+     * will be emitted only when necessary, i.e. if the de-serialization type differs from the actual one.
+     *
+     * @param src    the object for which Json representation is to be created
+     * @param writer Writer to which the Json representation needs to be written
+     * @throws JsonIOException if there was a problem writing to the writer
+     * @since 1.2
+     */
+    @Override
+    public void toJson(Object src, Appendable writer) throws JsonIOException {
+        toJson(src, Object.class, writer);
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation, given that the
+     * de-serialization type is known, and writes it to the provided {@link Appendable}.
+     * <p/>
+     * The root type information is emitted only if necessary, i.e. if the specified de-serialization type differs from
+     * the actual object's class. It is guaranteed that the resulting JSON representation may be de-serialized to the
+     * similar object using {@code fromJson(json, deserializationType)}, unless some YaGson's features are disabled.
+     *
+     * @param src       the object for which JSON representation is to be created
+     * @param deserializationType The type which will be used for de-serialization of the resulting JSON representation
+     * @param writer    Writer to which the Json representation of src needs to be written.
+     * @throws JsonIOException if there was a problem writing to the writer
+     * @since 1.2
+     */
+    @Override
+    public void toJson(Object src, Type deserializationType, Appendable writer) throws JsonIOException {
+        // forwards to {@link #toJson(Object, Type, JsonWriter)}
+        super.toJson(src, deserializationType, writer);
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation, given that the
+     * de-serialization type is known, and writes it to the provided {@link JsonWriter}.
+     * <p/>
+     * The root type information is emitted only if necessary, i.e. if the specified de-serialization type differs from
+     * the actual object's class. It is guaranteed that the resulting JSON representation may be de-serialized to the
+     * similar object using {@code fromJson(json, deserializationType)}, unless some YaGson's features are disabled.
+     *
+     * @param src       the object for which JSON representation is to be created
+     * @param deserializationType The type which will be used for de-serialization of the resulting JSON representation
+     * @param writer    Writer to which the Json representation of src needs to be written.
+     * @throws JsonIOException if there was a problem writing to the writer
+     * @since 1.2
+     */
+    @Override
+    public void toJson(Object src, Type deserializationType, JsonWriter writer) throws JsonIOException {
+        if (src == null) {
+            toJson(JsonNull.INSTANCE, writer);
+            return;
+        }
+
+        boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType);
+        super.toJson(src, src.getClass(), writer, isRootTypeRequired);
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation as a tree of
+     * {@link JsonElement}s, provided that the de-serialization type is not known at this time.
+     * <p/>
+     * By default, the root type information is emitted, unless the object is a string, long, double or boolean, so
+     * the resulting JSON string may be successfully de-serialized into the similar object using
+     * {@code fromJson(str, Object.class)}. If the object will be de-serialized using some other type than
+     * {@code Object.class}, use {@link #toJsonTree(Object, Type)} instead, and the root type information will be
+     * emitted only when necessary, i.e. if the de-serialization type differs from the actual one.
+     *
+     * @param src the object for which Json representation is to be created
+     * @return Json representation of {@code src}.
+     */
+    @Override
+    public JsonElement toJsonTree(Object src) {
+        return toJsonTree(src, Object.class);
+    }
+
+    /**
+     * This method serializes the specified object into its equivalent Json representation as a tree of
+     * {@link JsonElement}s, given that the de-serialization type is known.
+     * <p/>
+     * The root type information is emitted only if necessary, i.e. if the specified de-serialization type differs from
+     * the actual object's class. It is guaranteed that the resulting string may be de-serialized to the similar object
+     * using {@code fromJson(json, deserializationType)}, unless some YaGson's features are disabled.
+     *
+     * @param src       the object for which JSON representation is to be created
+     * @param deserializationType The type which will be used for de-serialization of the resulting JSON representation
+     * @return Json representation of {@code src}
+     */
+    @Override
+    public JsonElement toJsonTree(Object src, Type deserializationType) {
+        if (src == null) {
+            return JsonNull.INSTANCE;
+        }
+
+        boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType);
+        JsonTreeWriter writer = new JsonTreeWriter();
+        super.toJson(src, src.getClass(), writer, isRootTypeRequired);
+        return writer.get();
     }
 }

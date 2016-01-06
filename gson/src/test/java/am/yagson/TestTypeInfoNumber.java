@@ -15,12 +15,12 @@ public class TestTypeInfoNumber extends TestCase {
 	
 	public void testLong() {
 		TestingUtils.testFully(new ClassWithNumber(12l), jsonStr(
-				"{'@vtype':'java.lang.Long','num':12}"));
+				"{'num':12}"));
 	}
 	
 	public void testDouble() {
 		TestingUtils.testFully(new ClassWithNumber(12.01), jsonStr(
-				"{'@vtype':'java.lang.Double','num':12.01}"));
+				"{'num':12.01}"));
 	}
 	
 	public void testBigDecimal() {

@@ -314,7 +314,8 @@ public final class TypeAdapters {
         in.nextNull();
         return null;
       case NUMBER:
-        return new LazilyParsedNumber(in.nextString());
+        return in.nextNumber();
+        // return new LazilyParsedNumber(in.nextString());
       default:
         throw new JsonSyntaxException("Expecting number, got: " + jsonToken);
       }
@@ -540,7 +541,7 @@ public final class TypeAdapters {
     }
   };
 
-  public static final TypeAdapter<Calendar> CALENDAR = new SimpleTypeAdapter<Calendar>() {
+  public static final TypeAdapter<Calendar> CALENDAR = new TypeAdapter<Calendar>() {
     private static final String YEAR = "year";
     private static final String MONTH = "month";
     private static final String DAY_OF_MONTH = "dayOfMonth";
@@ -549,7 +550,13 @@ public final class TypeAdapters {
     private static final String SECOND = "second";
 
     @Override
-    public Calendar read(JsonReader in) throws IOException {
+    public Calendar read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+      Calendar value = read(in);
+      rctx.registerObject(value, true);
+      return value;
+    }
+
+    private Calendar read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return  null;
@@ -583,7 +590,7 @@ public final class TypeAdapters {
     }
 
     @Override
-    public void write(JsonWriter out, Calendar value) throws IOException {
+    public void write(JsonWriter out, Calendar value, ReferencesWriteContext rctx) throws IOException {
       if (value == null) {
         out.nullValue();
         return;
@@ -645,8 +652,16 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory LOCALE_FACTORY = newFactory(Locale.class, LOCALE);
 
-  public static final SimpleTypeAdapter<JsonElement> JSON_ELEMENT = new SimpleTypeAdapter<JsonElement>() {
-    @Override public JsonElement read(JsonReader in) throws IOException {
+  public static final TypeAdapter<JsonElement> JSON_ELEMENT = new TypeAdapter<JsonElement>() {
+
+    @Override
+    public JsonElement read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+      JsonElement value = read(in);
+      rctx.registerObject(value, true);
+      return value;
+    }
+
+    private JsonElement read(JsonReader in) throws IOException {
       switch (in.peek()) {
       case STRING:
         return new JsonPrimitive(in.nextString());
@@ -687,7 +702,7 @@ public final class TypeAdapters {
       }
     }
 
-    @Override public void write(JsonWriter out, JsonElement value) throws IOException {
+    @Override public void write(JsonWriter out, JsonElement value, ReferencesWriteContext rctx) throws IOException {
       if (value == null || value.isJsonNull()) {
         out.nullValue();
       } else if (value.isJsonPrimitive()) {
@@ -703,7 +718,7 @@ public final class TypeAdapters {
       } else if (value.isJsonArray()) {
         out.beginArray();
         for (JsonElement e : value.getAsJsonArray()) {
-          write(out, e);
+          write(out, e, rctx);
         }
         out.endArray();
 
@@ -711,7 +726,7 @@ public final class TypeAdapters {
         out.beginObject();
         for (Map.Entry<String, JsonElement> e : value.getAsJsonObject().entrySet()) {
           out.name(e.getKey());
-          write(out, e.getValue());
+          write(out, e.getValue(), rctx);
         }
         out.endObject();
 

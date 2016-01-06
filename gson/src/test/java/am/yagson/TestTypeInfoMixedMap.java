@@ -12,8 +12,8 @@ import static am.yagson.TestingUtils.jsonStr;
 public class TestTypeInfoMixedMap extends TestCase {
 
     private static final String EXPECTED_COMPLEX_VTYPE = jsonStr("{'@vtype':'java.util.HashMap','map':[" +
-            "[{'@type':'am.yagson.Person','@val':{'name':'John','family':'Doe'}},{'@type':'java.lang.String','@val':'M'}]," +
-            "[{'@type':'am.yagson.Person','@val':{'name':'Jane','family':'Doe'}},{'@type':'java.lang.String','@val':'F'}]]}");
+            "[{'@type':'am.yagson.Person','@val':{'name':'John','family':'Doe'}},'M']," +
+            "[{'@type':'am.yagson.Person','@val':{'name':'Jane','family':'Doe'}},'F']]}");
 
     private ClassWithMixedMap objToTestWithEmptyMap() {
         Map<Object, Object> map = new HashMap<Object, Object>();
@@ -56,8 +56,8 @@ public class TestTypeInfoMixedMap extends TestCase {
         ClassWithMixedMap obj = objToTest();
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
                 "{'@vtype':'java.util.HashMap','map':[" +
-                "[{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.String','@val':'int'}]," +
-                "[{'@type':'java.lang.Long','@val':2},{'@type':'java.lang.String','@val':'long'}]," +
+                "[{'@type':'java.lang.Integer','@val':1},'int']," +
+                "[2,'long']," +
                 "[{'@type':'java.math.BigDecimal','@val':1},{'@type':'java.lang.Integer','@val':1}]]}"));
     }
 
@@ -65,8 +65,8 @@ public class TestTypeInfoMixedMap extends TestCase {
         ClassWithMixedMap obj = objToTest();
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr(
                 "{'map':{'@type':'java.util.HashMap','@val':[" +
-                "[{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.String','@val':'int'}]," +
-                "[{'@type':'java.lang.Long','@val':2},{'@type':'java.lang.String','@val':'long'}]," +
+                "[{'@type':'java.lang.Integer','@val':1},'int']," +
+                "[2,'long']," +
                 "[{'@type':'java.math.BigDecimal','@val':1},{'@type':'java.lang.Integer','@val':1}]]}}"));
     }
 

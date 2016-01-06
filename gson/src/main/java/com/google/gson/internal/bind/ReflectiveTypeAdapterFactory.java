@@ -148,7 +148,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       boolean writeTypeInfoIfNeeded(JsonWriter writer, Object value) throws IOException, IllegalAccessException {
         if (context.getTypeInfoPolicy() == TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES) {
           Object fieldValue = field.get(value);
-          if (fieldValue != null && TypeUtils.typesDiffer(fieldType, fieldValue.getClass())) {
+          if (fieldValue != null && TypeUtils.isTypeInfoRequired(fieldValue.getClass(), fieldType.getRawType())) {
             writer.name("@vtype");
             writer.value(fieldValue.getClass().getName());
             return true;

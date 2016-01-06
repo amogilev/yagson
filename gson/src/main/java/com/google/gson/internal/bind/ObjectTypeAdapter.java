@@ -99,7 +99,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       return str;
 
     case NUMBER:
-      double num = in.nextDouble();
+      Number num = in.nextNumber();
       rctx.registerObject(num, true);
       return num;
 

@@ -1,17 +1,19 @@
 package am.yagson.types;
 
 import am.yagson.refs.ReferencesReadContext;
+import am.yagson.refs.ReferencesWriteContext;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.TypeAdapter;
 import com.google.gson.internal.$Gson$Types;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class TypeUtils {
 
@@ -78,7 +80,7 @@ public class TypeUtils {
         return readTypeAdviceAfterTypeField(in);
     }
 
-    private static Class readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
+    public static Class readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
         // Check whether next tokens are type advise, fail if not
         String advisedTypeStr = in.nextString();
         Class valueType;
@@ -122,5 +124,63 @@ public class TypeUtils {
         }
     }
 
+    /**
+     * Determines whether the type information is necessary for successful de-serialization of the
+     * object of the given actual class using the specified de-serialization type.
+     * <p/>
+     * Usually, the type information is <b>not</b> needed when the de-serialization type matches
+     * the actual type, or if the actual type is <i>default</i> for the corresponding JSON representation.
+     *
+     * @param actualClass the actual class of the object being serialized
+     * @param deserializationType the type which will be used for de-serialization, or {@code null} if not known
+     *
+     * @return whether the root type information is necessary
+     */
+    public static boolean isTypeInfoRequired(Class<?> actualClass, Type deserializationType) {
+        if (isDefaultDeserializationClass(actualClass, deserializationType)) {
+            return false;
+        } else if (deserializationType == null) {
+            return true;
+        } else {
+            return typesDiffer(deserializationType, actualClass);
+        }
+    }
 
+    /**
+     * Returns whether the actual class of an object is the default class for the corresponding
+     * JSON representation, and so the type info may be skipped.
+     */
+    public static boolean isDefaultDeserializationClass(Class<?> actualClass, Type deserializationType) {
+        if (actualClass == String.class || actualClass == Object.class ||
+                actualClass == Double.class || actualClass == double.class ||
+                actualClass == Boolean.class || actualClass == boolean.class ||
+                actualClass == Long.class || actualClass == long.class) {
+            // default for all types
+            return true;
+        }
+
+        if (deserializationType == null) {
+            return false;
+        }
+
+        // MUST be in sync with ConstructorConstructor.newDefaultImplementationConstructor() && ObjectTypeAdapter
+        // only the most common cases are processed here
+        Class<?> rawType = $Gson$Types.getRawType(deserializationType);
+        if (actualClass == ArrayList.class &&
+                (rawType == Object.class || rawType == Collection.class || rawType == List.class)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static <T> void writeTypeWrapperAndValue(JsonWriter out, T value, TypeAdapter adapter,
+                                                    ReferencesWriteContext rctx) throws IOException {
+        out.beginObject();
+        out.name("@type");
+        out.value(value.getClass().getName());
+        out.name("@val");
+        adapter.write(out, value, rctx);
+        out.endObject();
+    }
 }

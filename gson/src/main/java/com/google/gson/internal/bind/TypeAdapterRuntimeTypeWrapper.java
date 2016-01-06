@@ -68,13 +68,8 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     TypeAdapter chosen = chooseTypeAdapter(value);
     if (value != null && !typeInfoEmitted && context.getTypeInfoPolicy().isEnabled() &&
-            TypeUtils.typesDiffer(type, value.getClass())) {
-      out.beginObject();
-      out.name("@type");
-      out.value(value.getClass().getName());
-      out.name("@val");
-      chosen.write(out, value, rctx);
-      out.endObject();
+            TypeUtils.isTypeInfoRequired(value.getClass(), type)) {
+      TypeUtils.writeTypeWrapperAndValue(out, value, chosen, rctx);
     } else {
       chosen.write(out, value, rctx);
     }

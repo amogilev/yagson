@@ -20,16 +20,16 @@ public class TestTypeInfoObject extends TestCase {
 	
 	public void testDouble() {
 		TestingUtils.testFully(new ClassWithObject(12.0), EMIT_WRAPPERS_OR_VTYPES, jsonStr(
-				"{'@vtype':'java.lang.Double','obj':12.0}"));
+				"{'obj':12.0}"));
 		TestingUtils.testFully(new ClassWithObject(12.0), EMIT_TYPE_WRAPPERS, jsonStr(
-				"{'obj':{'@type':'java.lang.Double','@val':12.0}}"));
+				"{'obj':12.0}"));
 	}
 	
 	public void testString() {
 		TestingUtils.testFully(new ClassWithObject("foo"), EMIT_WRAPPERS_OR_VTYPES, jsonStr(
-				"{'@vtype':'java.lang.String','obj':'foo'}"));
+				"{'obj':'foo'}"));
 		TestingUtils.testFully(new ClassWithObject("foo"), EMIT_TYPE_WRAPPERS, jsonStr(
-				"{'obj':{'@type':'java.lang.String','@val':'foo'}}"));
+				"{'obj':'foo'}"));
 	}
 	
 	public void testBigDecimal() {

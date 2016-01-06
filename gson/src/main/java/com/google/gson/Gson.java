@@ -35,23 +35,14 @@ import am.yagson.refs.References;
 import am.yagson.refs.ReferencesPolicy;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.types.AdapterUtils;
 import am.yagson.types.TypeInfoPolicy;
+import am.yagson.types.TypeUtils;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.Primitives;
 import com.google.gson.internal.Streams;
-import com.google.gson.internal.bind.ArrayTypeAdapter;
-import com.google.gson.internal.bind.CollectionTypeAdapterFactory;
-import com.google.gson.internal.bind.DateTypeAdapter;
-import com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory;
-import com.google.gson.internal.bind.JsonTreeReader;
-import com.google.gson.internal.bind.JsonTreeWriter;
-import com.google.gson.internal.bind.MapTypeAdapterFactory;
-import com.google.gson.internal.bind.ObjectTypeAdapter;
-import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
-import com.google.gson.internal.bind.SqlDateTypeAdapter;
-import com.google.gson.internal.bind.TimeTypeAdapter;
-import com.google.gson.internal.bind.TypeAdapters;
+import com.google.gson.internal.bind.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -607,9 +598,14 @@ public class Gson {
    * {@code writer}.
    * @throws JsonIOException if there was a problem writing to the writer
    */
-  @SuppressWarnings("unchecked")
   public void toJson(Object src, Type typeOfSrc, JsonWriter writer) throws JsonIOException {
-    TypeAdapter<?> adapter = getAdapter(TypeToken.get(typeOfSrc));
+    toJson(src, typeOfSrc, writer, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  protected void toJson(Object src, Type typeOfSrc, JsonWriter writer, boolean isRootTypeRequired)
+          throws JsonIOException {
+    TypeAdapter<Object> adapter = (TypeAdapter<Object>) getAdapter(TypeToken.get(typeOfSrc));
     boolean oldLenient = writer.isLenient();
     writer.setLenient(true);
     boolean oldHtmlSafe = writer.isHtmlSafe();
@@ -618,7 +614,12 @@ public class Gson {
     writer.setSerializeNulls(serializeNulls);
     
     try {
-      ((TypeAdapter<Object>) adapter).write(writer, src, References.createWriteContext(referencesPolicy, src));
+      ReferencesWriteContext rctx = References.createWriteContext(referencesPolicy, src);
+      if (isRootTypeRequired && typeInfoPolicy.isEnabled()) {
+        TypeUtils.writeTypeWrapperAndValue(writer, src, adapter, rctx);
+      } else {
+        adapter.write(writer, src, rctx);
+      }
     } catch (IOException e) {
       throw new JsonIOException(e);
     } finally {
@@ -827,8 +828,14 @@ public class Gson {
       isEmpty = false;
       TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
       TypeAdapter<T> typeAdapter = getAdapter(typeToken);
-      T object = typeAdapter.read(reader, References.createReadContext(referencesPolicy));
-      return object;
+
+      ReferencesReadContext rctx = References.createReadContext(referencesPolicy);
+      if (reader.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(typeAdapter)) {
+        return TypeUtils.readTypeAdvisedValue(this, reader, rctx);
+      } else {
+        T object = typeAdapter.read(reader, rctx);
+        return object;
+      }
     } catch (EOFException e) {
       /*
        * For compatibility with JSON 1.5 and earlier, we return null for empty

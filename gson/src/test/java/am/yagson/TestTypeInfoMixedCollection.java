@@ -9,15 +9,21 @@ import static am.yagson.TestingUtils.jsonStr;
 
 public class TestTypeInfoMixedCollection extends TestCase {
 
-	public static final String EXPECTED = jsonStr("{'@vtype':'java.util.ArrayList','l':[" +
-			"{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.Long','@val':2}," +
-			"{'@type':'java.lang.Float','@val':3.01},{'@type':'java.lang.Double','@val':4.02}," +
+	public static final String EXPECTED = jsonStr("{'l':[" +
+			"{'@type':'java.lang.Integer','@val':1},2," +
+			"{'@type':'java.lang.Float','@val':3.01},4.02," +
 			"{'@type':'java.math.BigDecimal','@val':1}]}");
 
 	public static final String JSON_ALT = jsonStr("{'l':{'@type':'java.util.ArrayList', '@val':[" +
-			"{'@type':'java.lang.Integer','@val':1},{'@type':'java.lang.Long','@val':2}," +
-			"{'@type':'java.lang.Float','@val':3.01},{'@type':'java.lang.Double','@val':4.02}," +
+			"{'@type':'java.lang.Integer','@val':1},2," +
+			"{'@type':'java.lang.Float','@val':3.01},4.02," +
 			"{'@type':'java.math.BigDecimal','@val':1}]}}\n");
+
+	public static final String JSON_ALT2 = jsonStr("{'@vtype':'java.util.ArrayList','l':[" +
+			"{'@type':'java.lang.Integer','@val':1},2," +
+			"{'@type':'java.lang.Float','@val':3.01},4.02," +
+			"{'@type':'java.math.BigDecimal','@val':1}]}");
+
 
 	private ClassWithMixedCollection objToTest() {
 		ClassWithMixedCollection obj = new ClassWithMixedCollection();
@@ -39,12 +45,16 @@ public class TestTypeInfoMixedCollection extends TestCase {
 		TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, EXPECTED);
 	}
 
-	public void testAltDeserialize() {
+	public void testAlt1Deserialize() {
 		ClassWithMixedCollection obj = objToTest();
 		TestingUtils.testDeserialize(new YaGson(), JSON_ALT, obj);
 	}
 
-	
+	public void testAlt2Deserialize() {
+		ClassWithMixedCollection obj = objToTest();
+		TestingUtils.testDeserialize(new YaGson(), JSON_ALT2, obj);
+	}
+
 	public void testMixedPersonString() {
 		ClassWithMixedCollection obj = new ClassWithMixedCollection();
 		obj.add(new Person("foo", "bar"));

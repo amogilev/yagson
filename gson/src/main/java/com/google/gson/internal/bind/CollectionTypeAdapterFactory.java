@@ -86,7 +86,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       boolean hasTypeAdvise = false;
       if (in.peek() == JsonToken.BEGIN_OBJECT) {
         Class typeAdvise = TypeUtils.readTypeAdvice(in);
-        if (typeAdvise.isInstance(Collection.class)) {
+        if (Collection.class.isAssignableFrom(typeAdvise)) {
           instance = (Collection<E>) constructorConstructor.get(TypeToken.get(typeAdvise)).construct();
         }
         TypeUtils.consumeValueField(in);
