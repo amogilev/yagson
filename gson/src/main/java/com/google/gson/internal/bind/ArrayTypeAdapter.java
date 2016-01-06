@@ -62,7 +62,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
 
   public ArrayTypeAdapter(Gson context, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
     this.componentTypeAdapter =
-      new TypeAdapterRuntimeTypeWrapper<E>(context, componentTypeAdapter, componentType);
+      new TypeAdapterRuntimeTypeWrapper<E>(context, componentTypeAdapter, componentType, false);
     this.componentType = componentType;
     this.constructorConstructor = context.getConstructorConstructor();
   }

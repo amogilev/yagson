@@ -3,6 +3,7 @@ package am.yagson.types;
 import com.google.gson.Gson;
 import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.internal.bind.TypeAdvisableComplexTypeAdapter;
 
 /**
@@ -37,6 +38,16 @@ public class AdapterUtils {
             return toTypeAdvisable(((Gson.FutureTypeAdapter)typeAdapter).getDelegate());
         } else {
             throw new IllegalStateException("Not TypeAdvisableComplexTypeAdapter: " + typeAdapter);
+        }
+    }
+
+    public static <T> boolean isReflective(TypeAdapter<T> typeAdapter) {
+        if (typeAdapter instanceof ReflectiveTypeAdapterFactory.Adapter) {
+            return true;
+        } else if (typeAdapter instanceof Gson.FutureTypeAdapter) {
+            return isReflective(((Gson.FutureTypeAdapter)typeAdapter).getDelegate());
+        } else {
+            return false;
         }
     }
 }

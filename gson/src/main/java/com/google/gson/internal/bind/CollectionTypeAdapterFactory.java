@@ -72,7 +72,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         ObjectConstructor<? extends Collection<E>> constructor,
         ConstructorConstructor constructorConstructor) {
       this.elementTypeAdapter =
-          new TypeAdapterRuntimeTypeWrapper<E>(context, elementTypeAdapter, elementType);
+          new TypeAdapterRuntimeTypeWrapper<E>(context, elementTypeAdapter, elementType, false);
       this.constructor = constructor;
       this.constructorConstructor = constructorConstructor;
     }

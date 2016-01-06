@@ -30,15 +30,17 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
-final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
+public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   private final Gson context;
   private final TypeAdapter<T> delegate;
   private final Type type;
+  private final boolean typeInfoEmitted;
 
-  TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type) {
+  public TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type, boolean typeInfoEmitted) {
     this.context = context;
     this.delegate = delegate;
     this.type = type;
+    this.typeInfoEmitted = typeInfoEmitted;
   }
 
   @Override
@@ -65,7 +67,8 @@ final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   @Override
   public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     TypeAdapter chosen = chooseTypeAdapter(value);
-    if (value != null && context.getTypeInfoPolicy().isEnabled() && TypeUtils.typesDiffer(type, value.getClass())) {
+    if (value != null && !typeInfoEmitted && context.getTypeInfoPolicy().isEnabled() &&
+            TypeUtils.typesDiffer(type, value.getClass())) {
       out.beginObject();
       out.name("@type");
       out.value(value.getClass().getName());

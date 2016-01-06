@@ -159,9 +159,9 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
                    Type valueType, TypeAdapter<V> valueTypeAdapter,
                    ObjectConstructor<? extends Map<K, V>> constructor) {
       this.keyTypeAdapter =
-        new TypeAdapterRuntimeTypeWrapper<K>(gson, keyTypeAdapter, keyType);
+        new TypeAdapterRuntimeTypeWrapper<K>(gson, keyTypeAdapter, keyType, false);
       this.valueTypeAdapter =
-        new TypeAdapterRuntimeTypeWrapper<V>(gson, valueTypeAdapter, valueType);
+        new TypeAdapterRuntimeTypeWrapper<V>(gson, valueTypeAdapter, valueType, false);
       this.constructor = constructor;
       this.gson = gson;
     }

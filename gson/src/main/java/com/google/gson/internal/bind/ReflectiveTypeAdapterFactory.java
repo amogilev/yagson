@@ -21,10 +21,7 @@ import static com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFact
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import am.yagson.refs.ReferencesPolicy;
 import am.yagson.refs.ReferencesReadContext;
@@ -100,7 +97,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     ObjectConstructor<T> constructor = constructorConstructor.get(type);
-    return new Adapter<T>(constructor, getBoundFields(gson, type, raw));
+    return new Adapter<T>(gson, constructor, getBoundFields(gson, type, raw));
   }
 
   private ReflectiveTypeAdapterFactory.BoundField createBoundField(
@@ -115,8 +112,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           throws IOException, IllegalAccessException {
         Object fieldValue = field.get(value);
         TypeAdapter t =
-          new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter,
-                  typeInfoEmitted && fieldValue != null ? fieldValue.getClass() : fieldType.getType());
+          new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter, fieldType.getType(), typeInfoEmitted);
         rctx.doWrite(fieldValue, t, name, writer);
       }
       @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -124,7 +120,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           throws IOException, IllegalAccessException {
         TypeAdapter<?> fieldTypeAdapter = typeAdapter; 
         if (fieldAdvisedClass != null) {
-          if (AdapterUtils.isTypeAdvisable(fieldTypeAdapter)) {
+          if (AdapterUtils.isTypeAdvisable(fieldTypeAdapter) && !AdapterUtils.isReflective(fieldTypeAdapter)) {
             // this adapter can handle type advices, use it
             TypeAdvisableComplexTypeAdapter complexTypeAdapter = AdapterUtils.toTypeAdvisable(fieldTypeAdapter);
             fieldTypeAdapter = complexTypeAdapter.new Delegate(fieldAdvisedClass, context);
@@ -226,34 +222,34 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     abstract boolean writeTypeInfoIfNeeded(JsonWriter writer, Object value) throws IOException, IllegalAccessException;
   }
 
-  public static final class Adapter<T> extends TypeAdapter<T> {
+  public static final class Adapter<T> extends TypeAdvisableComplexTypeAdapter<T> {
+    private final Gson gson;
     private final ObjectConstructor<T> constructor;
     private final Map<String, BoundField> boundFields;
 
-    private Adapter(ObjectConstructor<T> constructor, Map<String, BoundField> boundFields) {
+    private Adapter(Gson gson, ObjectConstructor<T> constructor, Map<String, BoundField> boundFields) {
+      this.gson = gson;
       this.constructor = constructor;
       this.boundFields = boundFields;
     }
 
-    @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
-      JsonToken nextToken = in.peek();
-      if (nextToken == JsonToken.NULL) {
-        in.nextNull();
-        return null;
-      }
-
-      T referenced = rctx.checkReferenceUse(in);
-      if (referenced != null) {
-        return referenced;
-      }
-      
+    @Override
+    protected T readOptionallyAdvisedInstance(T advisedInstance, JsonReader in, ReferencesReadContext rctx) throws IOException {
       try {
-        T instance = constructor.construct();
-        rctx.registerObject(instance, false);
-        Class<?> nextFieldAdvisedClass = null;
         in.beginObject();
+
+        T instance = null;
+
+        Class<?> nextFieldAdvisedClass = null;
         while (in.hasNext()) {
           String name = in.nextName();
+          if (name.equals("@type") && instance == null) {
+            return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
+          }
+
+          if (instance == null) {
+            instance = getInstance(advisedInstance, rctx);
+          }
           if (name.equals("@vtype")) {
             String advisedTypeStr = in.nextString();
             nextFieldAdvisedClass = Class.forName(advisedTypeStr);
@@ -267,6 +263,9 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
             nextFieldAdvisedClass = null;
           }
         }
+        if (instance == null) {
+          instance = getInstance(advisedInstance, rctx);
+        }
         in.endObject();
         return instance;
       } catch (IllegalStateException e) {
@@ -276,6 +275,12 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       } catch (ClassNotFoundException e) {
         throw new JsonSyntaxException("Missing class specified in @vtype info", e);
       }
+    }
+
+    private T getInstance(T advisedInstance, ReferencesReadContext rctx) {
+      T instance = advisedInstance == null ? constructor.construct() : advisedInstance;
+      rctx.registerObject(instance, false);
+      return instance;
     }
 
     @Override public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
