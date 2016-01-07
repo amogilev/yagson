@@ -1,5 +1,8 @@
 package am.yagson;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
 public class ClassWithObject {
 	
 	Object obj;
@@ -18,19 +21,21 @@ public class ClassWithObject {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(Object o) {
+		if (this == o)
 			return true;
-		if (obj == null)
+		if (o == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (getClass() != o.getClass())
 			return false;
-		ClassWithObject other = (ClassWithObject) obj;
-		if (this.obj == null) {
-			if (other.obj != null)
-				return false;
-		} else if (!this.obj.equals(other.obj))
-			return false;
-		return true;
+		ClassWithObject other = (ClassWithObject) o;
+		return TestingUtils.objectsEqual(this.obj, other.obj);
+	}
+
+	@Override
+	public String toString() {
+		return "ClassWithObject{" +
+				"obj=" + (obj == null ? "null" : obj.getClass().isArray() ? Arrays.deepToString((Object[])obj) : obj) +
+				'}';
 	}
 }

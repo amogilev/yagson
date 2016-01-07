@@ -2,7 +2,7 @@ package am.yagson;
 
 public class MinedDefaultConstrClass {
 	
-	String str;
+	final String str;
 	
 	public MinedDefaultConstrClass() {
 		throw new Error("BOOOOM!!!"); 

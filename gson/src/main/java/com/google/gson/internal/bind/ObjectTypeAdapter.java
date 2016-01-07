@@ -16,6 +16,8 @@
 
 package com.google.gson.internal.bind;
 
+import am.yagson.refs.PlaceholderUse;
+import am.yagson.refs.ReferencePlaceholder;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
 
@@ -58,12 +60,24 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     JsonToken token = in.peek();
     switch (token) {
     case BEGIN_ARRAY:
-      List<Object> list = new ArrayList<Object>();
+      final List<Object> list = new ArrayList<Object>();
       rctx.registerObject(list, false);
       
       in.beginArray();
       for (int i = 0; in.hasNext(); i++) {
-        list.add(rctx.doRead(in, this, Integer.toString(i)));
+        Object elementInstance = rctx.doRead(in, this, Integer.toString(i));
+        ReferencePlaceholder<Object> elementPlaceholder;
+        if (elementInstance == null && ((elementPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+          final int fi = i;
+          elementPlaceholder.registerUse(new PlaceholderUse<Object>() {
+            public void applyActualObject(Object actualObject) {
+              list.set(fi, actualObject);
+            }
+          });
+          // null will be added to the list now, and it will be replaced to an actual object in future
+        }
+
+        list.add(elementInstance);
       }
       in.endArray();
       return list;
@@ -75,7 +89,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       if (in.hasNext()) {
         LinkedTreeMap<String, Object> map = null;
         for (int i = 0; in.hasNext(); i++) {
-          String fieldName = in.nextName();
+          final String fieldName = in.nextName();
           if (i == 0) {
             if (fieldName.equals("@type")) {
               return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
@@ -84,7 +98,18 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
               rctx.registerObject(result, false);
             }
           }
-          map.put(fieldName, rctx.doRead(in, this, "" + i + "-val"));
+          ReferencePlaceholder<Object> valuePlaceholder;
+          Object value = rctx.doRead(in, this, "" + i + "-val");
+          if (value == null && ((valuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+            final LinkedTreeMap<String, Object> fmap = map;
+            valuePlaceholder.registerUse(new PlaceholderUse<Object>() {
+              public void applyActualObject(Object actualObject) {
+                fmap.put(fieldName, actualObject);
+              }
+            });
+          } else {
+            map.put(fieldName, value);
+          }
         }
       } else {
         result = new LinkedTreeMap<String, Object>();
@@ -95,8 +120,12 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     }
     case STRING:
       String str = in.nextString();
-      rctx.registerObject(str, true);
-      return str;
+      if (rctx.isReferenceString(str)) {
+        return rctx.getReferencedObject(str);
+      } else {
+        rctx.registerObject(str, true);
+        return str;
+      }
 
     case NUMBER:
       Number num = in.nextNumber();

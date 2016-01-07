@@ -18,9 +18,13 @@ package com.google.gson.internal.bind;
 
 import static am.yagson.refs.References.keyRef;
 import static am.yagson.refs.References.valRef;
+
+import am.yagson.refs.PlaceholderUse;
+import am.yagson.refs.ReferencePlaceholder;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
 
+import am.yagson.refs.impl.MapPlaceholderUse;
 import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -172,20 +176,46 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       Map<K, V> instance = null;
 
+      // supplementary list, for each map's entry contains either the key, or its placeholder (until resolved)
+      List<Object> keys = new ArrayList<Object>();
+      // supplementary list, for each map's entry contains either the value, or its placeholder (until resolved)
+      List<Object> values = new ArrayList<Object>();
+
       JsonToken peek = in.peek();
 
       if (peek == JsonToken.BEGIN_ARRAY) {
         instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-        rctx.registerObject(advisedInstance, false);
+        rctx.registerObject(instance, false);
 
         in.beginArray();
         for (int i = 0; in.hasNext(); i++) {
+          ReferencePlaceholder<K> keyPlaceholder = null;
+          ReferencePlaceholder<V> valuePlaceholder = null;
+
           in.beginArray(); // entry array
           K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
+          if (key == null && (keyPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+            keys.add(keyPlaceholder);
+            PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i);
+            keyPlaceholder.registerUse(keyUse);
+          } else {
+            keys.add(key);
+          }
+
           V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
-          V replaced = instance.put(key, value);
-          if (replaced != null) {
-            throw new JsonSyntaxException("duplicate key: " + key);
+          if (value == null && (valuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+            values.add(valuePlaceholder);
+            PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i);
+            valuePlaceholder.registerUse(valueUse);
+          } else {
+            values.add(value);
+          }
+
+          if (keyPlaceholder == null && valuePlaceholder == null) {
+            V replaced = instance.put(key, value);
+            if (replaced != null) {
+              throw new JsonSyntaxException("duplicate key: " + key);
+            }
           }
           in.endArray();
         }
@@ -208,7 +238,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
         // otherwise use the previous @vtype advice, or the default instance
         instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-        rctx.registerObject(advisedInstance, false);
+        rctx.registerObject(instance, false);
 
         for (int i = 0; in.hasNext(); i++) {
           if (skipFirstPromotion) {
@@ -217,11 +247,32 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
             JsonReaderInternalAccess.INSTANCE.promoteNameToValue(in);
           }
 
+          ReferencePlaceholder<K> keyPlaceholder = null;
+          ReferencePlaceholder<V> valuePlaceholder = null;
+
           K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
+          if (key == null && (keyPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+            keys.add(keyPlaceholder);
+            PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i);
+            keyPlaceholder.registerUse(keyUse);
+          } else {
+            keys.add(key);
+          }
+
           V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
-          V replaced = instance.put(key, value);
-          if (replaced != null) {
-            throw new JsonSyntaxException("duplicate key: " + key);
+          if (value == null && (valuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+            values.add(valuePlaceholder);
+            PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i);
+            valuePlaceholder.registerUse(valueUse);
+          } else {
+            values.add(value);
+          }
+
+          if (keyPlaceholder == null && valuePlaceholder == null) {
+            V replaced = instance.put(key, value);
+            if (replaced != null) {
+              throw new JsonSyntaxException("duplicate key: " + key);
+            }
           }
         }
         in.endObject();

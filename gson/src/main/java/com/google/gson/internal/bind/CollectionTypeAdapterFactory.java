@@ -16,6 +16,8 @@
 
 package com.google.gson.internal.bind;
 
+import am.yagson.refs.PlaceholderUse;
+import am.yagson.refs.ReferencePlaceholder;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
 
@@ -32,8 +34,9 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * Adapt a homogeneous collection of objects.
@@ -96,11 +99,32 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         instance = advisedInstance == null ? constructor.construct() : advisedInstance;
       }
       rctx.registerObject(instance, false);
+      final Collection<E> finstance = instance;
 
       if (in.peek() == JsonToken.BEGIN_ARRAY) {
         in.beginArray();
         for (int i = 0; in.hasNext(); i++) {
           E elementInstance = rctx.doRead(in, elementTypeAdapter, Integer.toString(i));
+          ReferencePlaceholder<E> elementPlaceholder;
+          if (elementInstance == null && ((elementPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+            final int fi = i;
+            elementPlaceholder.registerUse(new PlaceholderUse<E>() {
+              public void applyActualObject(E actualObject) {
+                if (finstance instanceof List) {
+                  ((List<E>)finstance).set(fi, actualObject);
+                } else  {
+                  // no set() method available, have to re-build the collection to ensure the right order
+                  List<E> l = new ArrayList<E>(finstance);
+                  finstance.clear();
+                  finstance.addAll(l.subList(0, fi));
+                  finstance.add(actualObject);
+                  finstance.addAll(l.subList(fi + 1, l.size()));
+                }
+              }
+            });
+            // null will be added to the list now, and it will be replaced to an actual object in future
+          }
+
           instance.add(elementInstance);
         }
         in.endArray();
@@ -108,6 +132,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       if (hasTypeAdvise) {
         in.endObject();
       }
+
       return instance;
     }
 

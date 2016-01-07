@@ -19,13 +19,12 @@ package com.google.gson.internal.bind;
 import static com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory.getTypeAdapter;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import am.yagson.refs.ReferencesPolicy;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.refs.*;
 import am.yagson.types.AdapterUtils;
 import am.yagson.types.TypeInfoPolicy;
 import am.yagson.types.TypeUtils;
@@ -116,7 +115,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         rctx.doWrite(fieldValue, t, name, writer);
       }
       @SuppressWarnings({ "rawtypes", "unchecked" })
-      @Override void read(JsonReader reader, Object value, Class<?> fieldAdvisedClass, ReferencesReadContext rctx)
+      @Override void read(JsonReader reader, final Object value, Class<?> fieldAdvisedClass, ReferencesReadContext rctx)
           throws IOException, IllegalAccessException {
         TypeAdapter<?> fieldTypeAdapter = typeAdapter; 
         if (fieldAdvisedClass != null) {
@@ -130,7 +129,18 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           }
         }
         Object fieldValue = rctx.doRead(reader, fieldTypeAdapter, name);
-        if (fieldValue != null || !isPrimitive) {
+        ReferencePlaceholder<Object> fieldValuePlaceholder;
+        if (fieldValue == null && ((fieldValuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+          fieldValuePlaceholder.registerUse(new PlaceholderUse<Object>() {
+            public void applyActualObject(Object actualObject) throws IOException {
+              try {
+                field.set(value, actualObject);
+              } catch (IllegalAccessException e) {
+                throw new AssertionError(e);
+              }
+            }
+          });
+        } else if (fieldValue != null || !isPrimitive) {
           field.set(value, fieldValue);
         }
       }

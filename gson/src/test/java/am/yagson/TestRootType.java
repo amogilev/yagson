@@ -8,7 +8,6 @@ import java.util.*;
 
 import static am.yagson.TestingUtils.jsonStr;
 
-// TODO
 public class TestRootType extends TestCase {
 
     private <T> void testWithRootType(T obj, Class<? super T> deserializationType, String expected) {

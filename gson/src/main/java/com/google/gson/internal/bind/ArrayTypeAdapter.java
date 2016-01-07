@@ -22,7 +22,10 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
+import am.yagson.refs.PlaceholderUse;
+import am.yagson.refs.ReferencePlaceholder;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
 
@@ -57,6 +60,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   };
 
   private final Class<E> componentType;
+  private final Class<E[]> arrayType;
   private final TypeAdapter<E> componentTypeAdapter;
   private final ConstructorConstructor constructorConstructor;
 
@@ -64,16 +68,36 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     this.componentTypeAdapter =
       new TypeAdapterRuntimeTypeWrapper<E>(context, componentTypeAdapter, componentType, false);
     this.componentType = componentType;
+    arrayType = (Class<E[]>) Array.newInstance(componentType, 0).getClass();
     this.constructorConstructor = context.getConstructorConstructor();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  protected Object readOptionallyAdvisedInstance(Object advisedInstance, JsonReader in, ReferencesReadContext rctx) throws IOException {
+  protected Object readOptionallyAdvisedInstance(Object advisedInstance, JsonReader in,
+                                                 ReferencesReadContext rctx) throws IOException {
 
     List<E> list = new ArrayList<E>();
+
+    ReferencePlaceholder<E[]> arrayPlaceholder = new ReferencePlaceholder<E[]>(arrayType);
+    // TODO maybe change to custom or just E[][1]
+    final AtomicReference<E[]> futureArray = new AtomicReference<E[]>();
     // TODO(amogilev): should register the array object instead, but it is not possible as we do not know it's
     //          size at this point! Probably need to use some placeholders with deferred Inserters...
-    rctx.registerObject(list, false);
+
+    // 2support: fields, key/value in maps, element in array or collection
+    /* How to support?
+
+    V1: In usage places: if returned is ReferencePlaceholder<T>
+    ReferencePlaceholder.add(PlaceholderApplier)
+    Use null instead
+    At end of the array: ReferencePlaceholder.replaceWith(actualObject)
+    foreach (PlaceholderApplier) { apply(actualObject); }
+
+    V2: ???
+
+     */
+    rctx.registerObject(arrayPlaceholder, false);
 
     Class advisedComponentType = null;
     boolean hasTypeAdvise = false;
@@ -90,7 +114,20 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
 
     in.beginArray();
     for (int i = 0; in.hasNext(); i++) {
+      ReferencePlaceholder<E> elementPlaceholder;
+
       E instance = rctx.doRead(in, componentTypeAdapter, Integer.toString(i));
+
+      if (instance == null && ((elementPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+        final int fi = i;
+        elementPlaceholder.registerUse(new PlaceholderUse<E>() {
+          public void applyActualObject(E actualObject) {
+            Array.set(futureArray.get(), fi, actualObject);
+          }
+        });
+        // null will be added to the list now, and it will be replaced to an actual object in future
+      }
+
       list.add(instance);
     }
     in.endArray();
@@ -103,6 +140,9 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     for (int i = 0; i < list.size(); i++) {
       Array.set(array, i, list.get(i));
     }
+    futureArray.set(arrayType.cast(array));
+    arrayPlaceholder.applyActualObject(futureArray.get());
+
     return array;
   }
 

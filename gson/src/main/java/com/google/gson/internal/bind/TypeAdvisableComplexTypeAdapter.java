@@ -14,12 +14,12 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> {
-  
+
   class Delegate extends TypeAdapter<T> {
-    
+
     private final Class<T> advisedType;
     private final Gson context;
-    
+
     public Delegate(Class<T> advisedType, Gson context) {
       this.advisedType = advisedType;
       this.context = context;
@@ -33,17 +33,17 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
     @Override
     public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       JsonToken nextToken = in.peek();
-      
+
       if (nextToken == JsonToken.NULL) {
         in.nextNull();
         return null;
-      }
-      
-      T referenced = rctx.checkReferenceUse(in);
-      if (referenced != null) {
+      } else if (nextToken == JsonToken.STRING) {
+        // for complex type adapters, each string is a reference, no isReferenceString() match required
+        String reference = in.nextString();
+        T referenced = rctx.getReferencedObject(reference);
         return referenced;
       }
-      
+
       T instance;
       if (advisedType.isArray()) {
         Class<?> advisedComponentType = advisedType.getComponentType();
@@ -58,14 +58,14 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
 
   public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
     JsonToken nextToken = in.peek();
-    
+
     if (nextToken == JsonToken.NULL) {
       in.nextNull();
       return null;
-    }
-    
-    T referenced = rctx.checkReferenceUse(in);
-    if (referenced != null) {
+    } else if (nextToken == JsonToken.STRING) {
+      // for complex type adapters, each string is a reference, no isReferenceString() match required
+      String reference = in.nextString();
+      T referenced = rctx.getReferencedObject(reference);
       return referenced;
     }
 
@@ -85,5 +85,5 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
    */
   protected abstract T readOptionallyAdvisedInstance(T advisedInstance, JsonReader in,
                                                      ReferencesReadContext rctx) throws IOException;
-    
+
 }
