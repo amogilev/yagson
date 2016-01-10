@@ -37,17 +37,7 @@ import java.util.UUID;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.SimpleTypeAdapter;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.LazilyParsedNumber;
 import com.google.gson.reflect.TypeToken;
@@ -85,7 +75,42 @@ public final class TypeAdapters {
       }
     }
   };
-  public static final TypeAdapterFactory CLASS_FACTORY = newFactory(Class.class, CLASS);
+
+  @SuppressWarnings("rawtypes")
+  public static final TypeAdapter<Class> CLASS_NEW = new TypeAdapter<Class>() {
+
+    @Override
+    public void write(JsonWriter out, Class value, ReferencesWriteContext rctx) throws IOException {
+      if (value == null) {
+        out.nullValue();
+      } else {
+        out.value(value.getName());
+      }
+    }
+
+    @Override
+    public Class read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+      if (in.peek() == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      } else {
+        String str = in.nextString();
+        if (rctx.isReferenceString(str)) {
+          return rctx.getReferencedObject(str);
+        } else {
+          try {
+            Class c = Class.forName(str);
+            rctx.registerObject(c);
+            return c;
+          } catch (ClassNotFoundException e) {
+            throw new JsonSyntaxException("Missing class", e);
+          }
+        }
+      }
+    }
+  };
+
+  public static final TypeAdapterFactory CLASS_FACTORY = newFactory(Class.class, CLASS_NEW);
 
   public static final TypeAdapter<BitSet> BIT_SET = new SimpleTypeAdapter<BitSet>() {
     public BitSet read(JsonReader in) throws IOException {
@@ -552,7 +577,7 @@ public final class TypeAdapters {
     @Override
     public Calendar read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       Calendar value = read(in);
-      rctx.registerObject(value, true);
+      rctx.registerObject(value);
       return value;
     }
 
@@ -657,7 +682,7 @@ public final class TypeAdapters {
     @Override
     public JsonElement read(JsonReader in, ReferencesReadContext rctx) throws IOException {
       JsonElement value = read(in);
-      rctx.registerObject(value, true);
+      rctx.registerObject(value);
       return value;
     }
 

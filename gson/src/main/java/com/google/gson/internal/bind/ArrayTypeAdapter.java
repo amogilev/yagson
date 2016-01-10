@@ -89,7 +89,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     // where this reference is used, a PlaceholderUse is created and registered. When the
     // final array object is created, it is sent to all registered uses, which insert it
     // into the places of use.
-    rctx.registerObject(arrayPlaceholder, false);
+    rctx.registerObject(arrayPlaceholder);
 
     Class advisedComponentType = null;
     boolean hasTypeAdvise = false;

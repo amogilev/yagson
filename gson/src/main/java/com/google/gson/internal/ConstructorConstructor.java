@@ -20,10 +20,7 @@ import com.google.gson.InstanceCreator;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -43,9 +40,11 @@ import java.util.TreeSet;
  */
 public final class ConstructorConstructor {
   private final Map<Type, InstanceCreator<?>> instanceCreators;
+  private final boolean isTypeInfoEnabled;
 
-  public ConstructorConstructor(Map<Type, InstanceCreator<?>> instanceCreators) {
+  public ConstructorConstructor(Map<Type, InstanceCreator<?>> instanceCreators, boolean isTypeInfoEnabled) {
     this.instanceCreators = instanceCreators;
+    this.isTypeInfoEnabled = isTypeInfoEnabled;
   }
 
   public <T> ObjectConstructor<T> get(TypeToken<T> typeToken) {
@@ -81,9 +80,12 @@ public final class ConstructorConstructor {
       return newConstructorWithUnsafeBackup(defaultConstructor, type, rawType);
     }
 
-    ObjectConstructor<T> defaultImplementation = newDefaultImplementationConstructor(type, rawType);
-    if (defaultImplementation != null) {
-      return defaultImplementation;
+    if (!isTypeInfoEnabled || Modifier.isAbstract(rawType.getModifiers())) {
+      // if type info is enabled and available, use the class instance instead of the default implementation
+      ObjectConstructor<T> defaultImplementation = newDefaultImplementationConstructor(type, rawType);
+      if (defaultImplementation != null) {
+        return defaultImplementation;
+      }
     }
 
     // finally try unsafe

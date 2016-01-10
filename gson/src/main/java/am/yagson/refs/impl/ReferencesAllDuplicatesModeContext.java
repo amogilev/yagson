@@ -7,15 +7,14 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import am.yagson.refs.ReferencePlaceholder;
+import am.yagson.refs.*;
 import am.yagson.types.AdapterUtils;
-import am.yagson.refs.ReferencesPolicy;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
+import static am.yagson.refs.References.REF_ROOT;
 
 /**
  * Used to find circular dependencies and duplicate references during the 
@@ -49,7 +48,7 @@ public class ReferencesAllDuplicatesModeContext {
         protected Deque<Object> currentObjects = new ArrayDeque<Object>(); // used only for self-checks
 
         public WriteContext(Object root) {
-            startObject(root, "@root");
+            startObject(root, REF_ROOT);
         }
 
         /**
@@ -143,7 +142,7 @@ public class ReferencesAllDuplicatesModeContext {
         protected Map<String, Object> objectsByReference = new HashMap<String, Object>();
 
         public ReadContext() {
-            currentPathElements.add("@root");
+            currentPathElements.add(REF_ROOT);
             awaitsObjectRead = true;
         }
 
@@ -163,16 +162,14 @@ public class ReferencesAllDuplicatesModeContext {
          * Registers an object corresponding to the path built by previous {@link #beforeObjectRead(String)} call.
          *
          * @param value the object created by de-serializers, optionally without fields/contents yet
-         * @param isSimple whether the object is known to not contain any circular dependencies, and so
-         *    there will be no references to it
          */
-        public void registerObject(Object value, boolean isSimple) {
+        public void registerObject(Object value) {
             if (!awaitsObjectRead) {
                 throw new IllegalStateException("registerObject() without corresponding beforeObjectRead(): " +
                         getCurrentReference());
             }
             awaitsObjectRead = false;
-            if (!isSimple && value != null) {
+            if (value != null) {
                 objectsByReference.put(getCurrentReference(), value);
             }
         }
@@ -180,7 +177,7 @@ public class ReferencesAllDuplicatesModeContext {
         private Object registerReferenceUse(String reference) {
             Object value = getObjectByReference(reference);
             // the object may now be reference both with the used and the current reference
-            registerObject(value, false);
+            registerObject(value);
             return value;
         }
 
@@ -213,7 +210,7 @@ public class ReferencesAllDuplicatesModeContext {
         }
 
         public boolean isReferenceString(String str) {
-            return str.startsWith("@root") && objectsByReference.containsKey(str);
+            return str.startsWith(REF_ROOT) && objectsByReference.containsKey(str);
         }
 
         @SuppressWarnings("unchecked")

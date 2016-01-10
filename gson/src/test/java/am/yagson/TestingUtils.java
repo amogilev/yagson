@@ -81,9 +81,14 @@ public class TestingUtils {
 		return obj2;
 	}
 
-	public static <T> T testDeserialize(Gson gson, String json, T obj) {
-		Class<? extends T> objClass = (Class<? extends T>) obj.getClass();
-		T obj2 = deserialize(gson, json, objClass);
+	public static <T> T testDeserialize(Gson gson, String json, T obj, TypeToken deserializationTypeOrNull) {
+		Type deserializationType;
+		if (deserializationTypeOrNull == null) {
+			deserializationType = obj.getClass();
+		} else {
+			deserializationType = deserializationTypeOrNull.getType();
+		}
+		T obj2 = deserialize(gson, json, deserializationType);
 		assertEquals(obj, obj2);
 		return obj2;
 	}

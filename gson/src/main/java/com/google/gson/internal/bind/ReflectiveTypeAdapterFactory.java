@@ -24,6 +24,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import am.yagson.refs.*;
+import am.yagson.refs.impl.PlaceholderUtils;
 import am.yagson.types.AdapterUtils;
 import am.yagson.types.TypeInfoPolicy;
 import am.yagson.types.TypeUtils;
@@ -34,13 +35,10 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.$Gson$Types;
-import com.google.gson.internal.ConstructorConstructor;
-import com.google.gson.internal.Excluder;
-import com.google.gson.internal.ObjectConstructor;
-import com.google.gson.internal.Primitives;
+import com.google.gson.internal.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -108,15 +106,39 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       @Override void write(JsonWriter writer, Object value, ReferencesWriteContext rctx, boolean typeInfoEmitted)
           throws IOException, IllegalAccessException {
         Object fieldValue = field.get(value);
+
+        // special support for hashcodes - use '@.hash' reference instead of the value
+        if (isPrimitive && context.getReferencesPolicy().isEnabled() && name.equalsIgnoreCase("hashcode") &&
+                fieldType.getRawType().equals(int.class) && fieldValue != null && fieldValue.equals(value.hashCode())) {
+          writer.value(References.REF_HASH);
+          return;
+        }
+
         TypeAdapter t =
           new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter, fieldType.getType(),
                   typeInfoEmitted ? TypeUtils.TYPE_INFO_SKIP : TypeUtils.getEmitTypeInfoRule(context, false));
         rctx.doWrite(fieldValue, t, name, writer);
       }
       @SuppressWarnings({ "rawtypes", "unchecked" })
-      @Override void read(JsonReader reader, final Object value, Class<?> fieldAdvisedClass, ReferencesReadContext rctx)
+      @Override void read(JsonReader reader, final Object value, Class<?> fieldAdvisedClass,
+                          ReferencesReadContext rctx, Set<ReferencePlaceholder> placeholders)
           throws IOException, IllegalAccessException {
-        TypeAdapter<?> fieldTypeAdapter = typeAdapter; 
+
+        // special support for hashcodes - use '@hash' reference instead of the value
+        if (isPrimitive && name.equalsIgnoreCase("hashcode") &&
+                fieldType.getRawType().equals(int.class) && reader.peek() == JsonToken.STRING) {
+          String token = reader.nextString();
+          if (References.REF_HASH.equals(token)) {
+            HashReferencePlaceholder hashPlaceholder = new HashReferencePlaceholder(field);
+            hashPlaceholder.registerUse(new FieldPlaceholderUse<Integer>(field, value));
+            placeholders.add(hashPlaceholder);
+            return;
+          } else {
+            JsonReaderInternalAccess.INSTANCE.returnStringToBuffer(reader, token);
+          }
+        }
+
+        TypeAdapter<?> fieldTypeAdapter = typeAdapter;
         if (fieldAdvisedClass != null) {
           if (AdapterUtils.isTypeAdvisable(fieldTypeAdapter) && !AdapterUtils.isReflective(fieldTypeAdapter)) {
             // this adapter can handle type advices, use it
@@ -127,18 +149,12 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
             fieldTypeAdapter = context.getAdapter(fieldAdvisedClass);
           }
         }
+
         Object fieldValue = rctx.doRead(reader, fieldTypeAdapter, name);
         ReferencePlaceholder<Object> fieldValuePlaceholder;
         if (fieldValue == null && ((fieldValuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
-          fieldValuePlaceholder.registerUse(new PlaceholderUse<Object>() {
-            public void applyActualObject(Object actualObject) throws IOException {
-              try {
-                field.set(value, actualObject);
-              } catch (IllegalAccessException e) {
-                throw new AssertionError(e);
-              }
-            }
-          });
+          placeholders.add(fieldValuePlaceholder);
+          fieldValuePlaceholder.registerUse(new FieldPlaceholderUse<Object>(field, value));
         } else if (fieldValue != null || !isPrimitive) {
           field.set(value, fieldValue);
         }
@@ -166,6 +182,24 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         return false;
       }
     };
+  }
+
+  private static class FieldPlaceholderUse<T> implements PlaceholderUse<T> {
+    private final Field field;
+    private final Object instance;
+
+    public FieldPlaceholderUse(Field field, Object instance) {
+      this.field = field;
+      this.instance = instance;
+    }
+
+    public void applyActualObject(T actualObject) throws IOException {
+      try {
+        field.set(instance, actualObject);
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
   }
 
   private TypeAdapter<?> getFieldAdapter(Gson gson, Field field, TypeToken<?> fieldType) {
@@ -227,7 +261,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
     abstract boolean writeField(Object value, ReferencesWriteContext rctx) throws IOException, IllegalAccessException;
     abstract void write(JsonWriter writer, Object value, ReferencesWriteContext ctx, boolean typeInfoEmitted) throws IOException, IllegalAccessException;
-    abstract void read(JsonReader reader, Object value, Class<?> fieldAdvisedClass, ReferencesReadContext rctx) throws IOException, IllegalAccessException;
+    abstract void read(JsonReader reader, Object value, Class<?> fieldAdvisedClass, ReferencesReadContext rctx, Set<ReferencePlaceholder> placeholders) throws IOException, IllegalAccessException;
     abstract boolean writeTypeInfoIfNeeded(JsonWriter writer, Object value) throws IOException, IllegalAccessException;
   }
 
@@ -250,6 +284,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         in.beginObject();
 
         T instance = null;
+        final Set<ReferencePlaceholder> placeholders = new HashSet<ReferencePlaceholder>();
 
         Class<?> nextFieldAdvisedClass = null;
         while (in.hasNext()) {
@@ -269,13 +304,17 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
             if (field == null || !field.deserialized) {
               in.skipValue();
             } else {
-              field.read(in, instance, nextFieldAdvisedClass, rctx);
+              field.read(in, instance, nextFieldAdvisedClass, rctx, placeholders);
             }
             nextFieldAdvisedClass = null;
           }
         }
         if (instance == null) {
           instance = getInstance(advisedInstance, rctx);
+        }
+
+        if (!placeholders.isEmpty()) {
+          PlaceholderUtils.applyOrDeferHashPlaceholders(instance, placeholders);
         }
         in.endObject();
         return instance;
@@ -290,7 +329,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
 
     private T getInstance(T advisedInstance, ReferencesReadContext rctx) {
       T instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-      rctx.registerObject(instance, false);
+      rctx.registerObject(instance);
       return instance;
     }
 

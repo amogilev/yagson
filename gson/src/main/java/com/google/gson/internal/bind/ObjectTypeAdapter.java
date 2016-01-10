@@ -61,7 +61,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     switch (token) {
     case BEGIN_ARRAY:
       final List<Object> list = new ArrayList<Object>();
-      rctx.registerObject(list, false);
+      rctx.registerObject(list);
       
       in.beginArray();
       for (int i = 0; in.hasNext(); i++) {
@@ -95,7 +95,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
               return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, null, rctx);
             } else {
               result = map = new LinkedTreeMap<String, Object>();
-              rctx.registerObject(result, false);
+              rctx.registerObject(result);
             }
           }
           ReferencePlaceholder<Object> valuePlaceholder;
@@ -113,7 +113,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
         }
       } else {
         result = new LinkedTreeMap<String, Object>();
-        rctx.registerObject(result, false);
+        rctx.registerObject(result);
       }
       in.endObject();
       return result;
@@ -123,23 +123,23 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       if (rctx.isReferenceString(str)) {
         return rctx.getReferencedObject(str);
       } else {
-        rctx.registerObject(str, true);
+        rctx.registerObject(str);
         return str;
       }
 
     case NUMBER:
       Number num = in.nextNumber();
-      rctx.registerObject(num, true);
+      rctx.registerObject(num);
       return num;
 
     case BOOLEAN:
       boolean boolValue = in.nextBoolean();
-      rctx.registerObject(boolValue, true);
+      rctx.registerObject(boolValue);
       return boolValue;
 
     case NULL:
       in.nextNull();
-      rctx.registerObject(null, true);
+      rctx.registerObject(null);
       return null;
 
     default:

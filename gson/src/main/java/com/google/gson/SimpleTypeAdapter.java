@@ -22,7 +22,7 @@ public abstract class SimpleTypeAdapter<T> extends TypeAdapter<T> {
   @Override
   public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
     T value = read(in);
-    rctx.registerObject(value, true);
+    rctx.registerObject(null); // pass null as optimization - value is not available for referencing
     return value;
   }
 

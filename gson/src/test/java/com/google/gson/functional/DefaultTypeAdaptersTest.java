@@ -96,7 +96,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
   public void testClassDeserialization() {
     try {
       gson.fromJson("String.class", String.class.getClass());  
-    } catch (UnsupportedOperationException expected) {}
+    } catch (Exception expected) {}
     // Override with a custom type adapter for class.
     gson = new GsonBuilder().registerTypeAdapter(Class.class, new MyClassTypeAdapter()).create();
     assertEquals(String.class, gson.fromJson("java.lang.String", Class.class));  

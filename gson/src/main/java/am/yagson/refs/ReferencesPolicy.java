@@ -21,4 +21,6 @@ public enum ReferencesPolicy {
   public ReferencesContextFactory getContextFactory() {
     return contextFactory;
   }
+
+  public boolean isEnabled() { return this != DISABLED; }
 }

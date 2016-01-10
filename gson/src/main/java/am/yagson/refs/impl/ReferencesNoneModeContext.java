@@ -28,7 +28,7 @@ public class ReferencesNoneModeContext implements ReferencesReadContext, Referen
         valueTypeAdapter.write(out, value, this);
     }
 
-    public void registerObject(Object value, boolean isSimple) {
+    public void registerObject(Object value) {
         // do nothing
     }
 

@@ -1,9 +1,11 @@
 package am.yagson.refs;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
+import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.stream.JsonReader;
 
 public interface ReferencesReadContext {
@@ -11,11 +13,11 @@ public interface ReferencesReadContext {
     /**
      * Registers an object corresponding to the path built by previous {@link #beforeObjectRead()} call.
      *
-     * @param value the object created by de-serializers, optionally without fields/contents yet
-     * @param isSimple whether the object is known to not contain any circular dependencies, and so
-     *    there will be no references to it
+     * @param value the object created by de-serializers, optionally without fields/contents yet. If the
+     *              adapter that created the object is {@link SimpleTypeAdapter}, it may pass {@code null}
+     *              as a note that the object cannot be referenced
      */
-    void registerObject(Object value, boolean isSimple);
+    void registerObject(Object value);
 
     <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement) throws IOException;
 
@@ -45,5 +47,4 @@ public interface ReferencesReadContext {
      * Returns the policy implemented by this context.
      */
     ReferencesPolicy getPolicy();
-
 }

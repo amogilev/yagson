@@ -63,7 +63,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
   private List<ExclusionStrategy> serializationStrategies = Collections.emptyList();
   private List<ExclusionStrategy> deserializationStrategies = Collections.emptyList();
   private boolean serializeOuterReferences;
-  private boolean serializeLocalAndAnonymousClasses; // TODO(amogilev) try support
+  private boolean serializeLocalAndAnonymousClasses;
 
   @Override protected Excluder clone() {
     try {
@@ -118,6 +118,10 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
   public Excluder forReferencesPolicy(ReferencesPolicy referencesPolicy) {
     Excluder result = clone();
     result.serializeOuterReferences = referencesPolicy != ReferencesPolicy.DISABLED;
+
+    // local and anonymous classes may have access to the final members of the enclosing class, so
+    // require outer references support
+    result.serializeLocalAndAnonymousClasses = result.serializeOuterReferences;
     return result;
   }
 
@@ -211,7 +215,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       return true;
     }
 
-    if (isAnonymousOrLocal(clazz)) {
+    if (!serializeLocalAndAnonymousClasses && isAnonymousOrLocal(clazz)) {
       return true;
     }
 

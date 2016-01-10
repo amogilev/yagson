@@ -1,5 +1,6 @@
 package am.yagson;
 
+import am.yagson.types.TypeInfoPolicy;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.TestCase;
 
@@ -158,5 +159,13 @@ public class TestRootType extends TestCase {
                 "{'@type':'[Ljava.lang.Object;','@val':['foo',1]}"));
         TestingUtils.testFully(arr, Object[].class, jsonStr(
                 "['foo',1]"));
+    }
+
+    public void testRootEnum() {
+        TypeInfoPolicy obj = TypeInfoPolicy.DISABLED;
+        TestingUtils.testFully(obj, Object.class, jsonStr(
+                "{'@type':'am.yagson.types.TypeInfoPolicy','@val':'DISABLED'}"));
+        TestingUtils.testFully(obj, TypeInfoPolicy.class, jsonStr(
+                "'DISABLED'"));
     }
 }

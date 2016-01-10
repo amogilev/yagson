@@ -190,7 +190,7 @@ public class Gson {
       LongSerializationPolicy longSerializationPolicy,
       List<TypeAdapterFactory> typeAdapterFactories,
       ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
-    this.constructorConstructor = new ConstructorConstructor(instanceCreators);
+    this.constructorConstructor = new ConstructorConstructor(instanceCreators, typeInfoPolicy.isEnabled());
     this.serializeNulls = serializeNulls;
     this.generateNonExecutableJson = generateNonExecutableGson;
     this.htmlSafe = htmlSafe;
@@ -934,7 +934,11 @@ public class Gson {
   public TypeInfoPolicy getTypeInfoPolicy() {
     return typeInfoPolicy;
   }
-  
+
+  public ReferencesPolicy getReferencesPolicy() {
+    return referencesPolicy;
+  }
+
   public ConstructorConstructor getConstructorConstructor() {
     return constructorConstructor;
   }

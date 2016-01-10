@@ -37,7 +37,8 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   private final Type type;
   private final EmitTypeInfoPredicate emitTypeInfoPredicate;
 
-  public TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type,
+  public
+  TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type,
                                        EmitTypeInfoPredicate emitTypeInfoPredicate) {
     this.context = context;
     this.delegate = delegate;

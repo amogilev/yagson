@@ -60,7 +60,7 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
       return null;
     }
     T obj = deserializer.deserialize(value, typeToken.getType(), gson.deserializationContext);
-    rctx.registerObject(obj, false);
+    rctx.registerObject(obj);
     return obj; 
   }
 

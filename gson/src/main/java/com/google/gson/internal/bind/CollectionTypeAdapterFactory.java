@@ -52,6 +52,8 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
     Type type = typeToken.getType();
 
     Class<? super T> rawType = typeToken.getRawType();
+    // TODO: if type info is available, limit this to only "simple" and "known" collections.
+    // TODO: Others should be processed by ReflectiveTypeAdapter
     if (!Collection.class.isAssignableFrom(rawType)) {
       return null;
     }
@@ -99,7 +101,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       if (instance == null) {
         instance = advisedInstance == null ? constructor.construct() : advisedInstance;
       }
-      rctx.registerObject(instance, false);
+      rctx.registerObject(instance);
       final Collection<E> finstance = instance;
 
       if (in.peek() == JsonToken.BEGIN_ARRAY) {

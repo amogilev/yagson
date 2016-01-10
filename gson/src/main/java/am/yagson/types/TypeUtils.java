@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
 
-import static java.util.Collections.singleton;
-
 public class TypeUtils {
 
     static Map<String, Class<?>> primitiveWrappers = new HashMap<String, Class<?>>();
@@ -219,25 +217,96 @@ public class TypeUtils {
     }
 
     /**
-     * Returns whether the class or one of its superclasses contains a field assignable to either of the specified
-     * classes.
+     * Find in the given class and all its superclasses all non-static fields assignable to the specified
+     * classes to find, except of the specified 'except' classes, and returns such fields as a list.
      *
      * @param c the class to check
-     * @param fieldClassesToCheck the supposed classes for the fields of the class to check
-     * @return if any field of the class to check belongs to any of the supposed field classes, return {@code true}
+     * @param allowTransient whether to check transient fields
+     * @param max the max number of the fields to return, or 0 if unlimited
+     * @param fieldClassesToFind the field classes to find
+     * @param exceptClasses the field classes to skip from search
+     *
+     * @return all fields of the supposed field classes
      */
-    public static boolean containsField(Class<?> c, Class<?>...fieldClassesToCheck) {
+    private static List<Field> findFields(Class<?> c, boolean allowTransient, int max,
+                                          Iterable<Class<?>> fieldClassesToFind,
+                                          Iterable<Class<?>> exceptClasses) {
+        List<Field> result = new ArrayList<Field>(max > 0 && max < 10 ? max : 10);
         while (c != Object.class && c != null) {
             for (Field field : c.getDeclaredFields()) {
-                for (Class<?> fc : fieldClassesToCheck) {
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+                if (!allowTransient && Modifier.isTransient(field.getModifiers())) {
+                    continue;
+                }
+                findClassesLoop:
+                for (Class<?> fc : fieldClassesToFind) {
                     if (fc.isAssignableFrom(field.getType())) {
-                        return true;
+                        if (exceptClasses != null) {
+                            for (Class ec : exceptClasses) {
+                                if (ec == field.getType()) {
+                                    continue findClassesLoop;
+                                }
+                            }
+                        }
+                        result.add(field);
+                        break;
                     }
                 }
             }
-            c = c.getEnclosingClass();
+            c = c.getSuperclass();
+
+            // TODO: maybe also check enclosing class for non-static local classes, but it complicates reflective gets
         }
-        return false;
+        return result;
+    }
+
+    /**
+     * Find in the given class and all its superclasses all fields assignable to the specified
+     * classes to find, and returns such fields as a list.
+     *
+     * @param c the class to check
+     * @param fieldClassesToFind the field classes to find
+     * @param exceptClasses the field classes to skip from search
+     * @return all fields of the supposed field classes
+     */
+    public static List<Field> findFields(Class<?> c, boolean allowTransient, Iterable<Class<?>> fieldClassesToFind,
+                                         Iterable<Class<?>> exceptClasses) {
+        return findFields(c, allowTransient, 0, fieldClassesToFind, exceptClasses);
+    }
+
+    /**
+     * Returns whether the class or one of its superclasses contains a non-static field assignable to
+     * one of the specified 'find' classes, but except of the specified 'except' classes.
+     *
+     * @param c the class to check
+     * @param allowTransient whether to check transient fields
+     * @param fieldClassesToFind the field classes to find
+     * @param exceptClasses the field classes to skip from search
+     * @return if any field of the class to check belongs to any of the supposed field classes, return {@code true}
+     */
+    public static boolean containsField(Class<?> c, boolean allowTransient,
+                                        Iterable<Class<?>> fieldClassesToFind,
+                                        Iterable<Class<?>> exceptClasses) {
+        List<Field> found = findFields(c, allowTransient, 1, fieldClassesToFind, exceptClasses);
+        return !found.isEmpty();
+     }
+
+    /**
+     * Returns whether the class overrides the specified method, i.e. the class or one of its superclasses until
+     * the declaring class of the method, contains the method with the same signature.
+     *
+     * @param c the class to check
+     * @param m the method to check
+     *
+     * @return if the method is overridden
+     */
+    public static boolean isOverridden(Class<?> c, Method m) throws NoSuchMethodException {
+        Method foundMethod = c.getMethod(m.getName(), m.getParameterTypes());
+        return foundMethod != null && !m.equals(foundMethod)
+                && !Modifier.isAbstract(foundMethod.getModifiers())
+                && m.getDeclaringClass().isAssignableFrom(foundMethod.getDeclaringClass());
     }
 
     /**
@@ -371,5 +440,13 @@ public class TypeUtils {
     public static EmitTypeInfoPredicate getEmitTypeInfoRule(Gson context, boolean isMapKey) {
         return !context.getTypeInfoPolicy().isEnabled() ? TYPE_INFO_SKIP :
                 (isMapKey ? TYPE_INFO_MAP_KEY_RULE : TYPE_INFO_GENERAL_RULE);
+    }
+
+    public static Iterable<Class<?>> classOf(Class<?> c) {
+        return Collections.<Class<?>>singleton(c);
+    }
+
+    public static Iterable<Class<?>> classes(Class<?>...classes) {
+        return Arrays.asList(classes);
     }
 }
