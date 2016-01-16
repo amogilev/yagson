@@ -2,12 +2,15 @@ package am.yagson;
 
 import am.yagson.types.TypeInfoPolicy;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 
 public class TestingUtils {
 	
@@ -25,23 +28,29 @@ public class TestingUtils {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <T> T testJsonWithoutEquals(T obj, String expected) {
-		return testJsonWithoutEquals(buildGson(), obj, expected, false, false);
-	}
+	private static <T> T testBinding(Gson gson, T obj, TypeToken deserializationType, String expected,
+									 boolean cmpObjectsByToString, boolean cmpObjectsByEquals) {
 
-	private static <T> T testJsonWithoutEquals(Gson gson, T obj, String expected,
-											   boolean cmpObjectsByToString, boolean cmpObjectsByEquals) {
-
-		String json = gson.toJson(obj, obj.getClass());
+		if (deserializationType == null) {
+			deserializationType = TypeToken.get(obj.getClass());
+		}
+		String json = gson.toJson(obj, deserializationType.getType());
 		assertNotNull(json);
 		if (expected != null) {
 			assertEquals("toJson(obj) differs from the expected", expected, json);
 		}
 
+		Object obj2 = deserialize(gson, json, deserializationType.getType());
+		if (obj == null) {
+			assertNull(obj2);
+			return null;
+		}
+
 		Class<? extends T> objClass = (Class<? extends T>) obj.getClass();
-		T obj2 = deserialize(gson, json, objClass);
 		assertNotNull(obj2);
+		if (obj2.getClass() != obj.getClass()) {
+			assertEquals("Deserialized object's class is not equal to the original", obj.getClass(), obj2.getClass());
+		}
 
 		if (cmpObjectsByEquals && !objectsEqual(obj, obj2)) {
 			assertEquals("Deserialized object is not equal to the original", obj, obj2);
@@ -60,15 +69,15 @@ public class TestingUtils {
 		}
 
 		// additionally compare the first and the second serialization strings
-		String str2 = gson.toJson(obj2, obj.getClass());
+		String str2 = gson.toJson(obj2, deserializationType.getType());
 		assertEquals("First toJson() differs from the toJson() of deserialized object",
 				json, str2);
 
-		return obj2;
+		return (T)obj2;
 	}
 
-	private static <T> T deserialize(Gson gson, String json, Class<T> objClass) {
-		T obj2 = gson.fromJson(json, objClass);
+	private static <T> T deserialize(Gson gson, String json, Type objType) {
+		T obj2 = gson.fromJson(json, objType);
 		return obj2;
 	}
 
@@ -81,19 +90,27 @@ public class TestingUtils {
 
 
 	public static <T> T testFully(T obj) {
-		return testFully(obj, null, null);
+		return testFully(obj, (TypeInfoPolicy) null, null);
 	}
 
 	public static <T> T testFully(T obj, String expected) {
-		return testFully(obj, null, expected);
+		return testFully(obj, (TypeInfoPolicy) null, expected);
+	}
+
+	public static <T> T testFully(T obj, Class<?> deserializationType, String expected) {
+		return testBinding(buildGson(null), obj, TypeToken.get(deserializationType), expected, false, true);
+	}
+
+	public static <T> T testFully(T obj, TypeToken typeToken, String expected) {
+		return testBinding(buildGson(null), obj, typeToken, expected, false, true);
 	}
 
 	public static <T> T testFully(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testJsonWithoutEquals(buildGson(typeInfoPolicy), obj, expected, false, true);
+		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, false, true);
 	}
 
 	public static <T> T testFully(Gson gson, T obj, String expected) {
-		return testJsonWithoutEquals(gson, obj, expected, false, true);
+		return testBinding(gson, obj, null, expected, false, true);
 	}
 
 	public static <T> T testFullyByToString(T obj) {
@@ -105,11 +122,11 @@ public class TestingUtils {
 	}
 
 	public static <T> T testFullyByToString(Gson gson, T obj, String expected) {
-		return testJsonWithoutEquals(gson, obj, expected, true, false);
+		return testBinding(gson, obj, null, expected, true, false);
 	}
 
 	public static <T> T testFullyByToString(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testJsonWithoutEquals(buildGson(typeInfoPolicy), obj, expected, true, false);
+		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, true, false);
 	}
 
 	/**

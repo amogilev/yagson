@@ -92,7 +92,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
           final String fieldName = in.nextName();
           if (i == 0) {
             if (fieldName.equals("@type")) {
-              return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
+              return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, null, rctx);
             } else {
               result = map = new LinkedTreeMap<String, Object>();
               rctx.registerObject(result, false);

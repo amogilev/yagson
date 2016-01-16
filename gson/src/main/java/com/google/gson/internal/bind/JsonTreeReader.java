@@ -224,7 +224,7 @@ public final class JsonTreeReader extends JsonReader {
     stack.add(new JsonPrimitive((String)entry.getKey()));
   }
 
-  public void pushString(String str) {
-    stack.add(new JsonPrimitive(str));
+  public void push(JsonPrimitive element) {
+    stack.add(element);
   }
 }

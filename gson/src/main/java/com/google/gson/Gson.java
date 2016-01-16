@@ -831,7 +831,7 @@ public class Gson {
 
       ReferencesReadContext rctx = References.createReadContext(referencesPolicy);
       if (reader.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(typeAdapter)) {
-        return TypeUtils.readTypeAdvisedValue(this, reader, rctx);
+        return TypeUtils.readTypeAdvisedValue(this, reader, typeToken.getType(), rctx);
       } else {
         T object = typeAdapter.read(reader, rctx);
         return object;

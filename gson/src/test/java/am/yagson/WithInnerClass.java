@@ -8,6 +8,14 @@ public class WithInnerClass {
 		public String getOuterStr() {
 			return WithInnerClass.this.outerStr;
 		}
+
+		@Override
+		public String toString() {
+			return "Inner{" +
+					"outerStr='" + outerStr + '\'' +
+					"innerStr='" + innerStr +
+					'}';
+		}
 	}
 	
 	public String outerStr;
@@ -21,6 +29,14 @@ public class WithInnerClass {
 	public void makeInner(String str) {
 		inner = new Inner();
 		inner.innerStr = str;
+	}
+
+	@Override
+	public String toString() {
+		return "WithInnerClass{" +
+				"outerStr='" + outerStr + '\'' +
+				", innerStr=" + inner.innerStr +
+				'}';
 	}
 
 	@Override

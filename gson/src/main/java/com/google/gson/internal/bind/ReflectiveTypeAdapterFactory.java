@@ -19,7 +19,6 @@ package com.google.gson.internal.bind;
 import static com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory.getTypeAdapter;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -42,7 +41,6 @@ import com.google.gson.internal.ObjectConstructor;
 import com.google.gson.internal.Primitives;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -96,7 +94,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     ObjectConstructor<T> constructor = constructorConstructor.get(type);
-    return new Adapter<T>(gson, constructor, getBoundFields(gson, type, raw));
+    return new Adapter<T>(gson, type.getType(), constructor, getBoundFields(gson, type, raw));
   }
 
   private ReflectiveTypeAdapterFactory.BoundField createBoundField(
@@ -111,7 +109,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           throws IOException, IllegalAccessException {
         Object fieldValue = field.get(value);
         TypeAdapter t =
-          new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter, fieldType.getType(), typeInfoEmitted);
+          new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter, fieldType.getType(),
+                  typeInfoEmitted ? TypeUtils.TYPE_INFO_SKIP : TypeUtils.getEmitTypeInfoRule(context, false));
         rctx.doWrite(fieldValue, t, name, writer);
       }
       @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -158,7 +157,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       boolean writeTypeInfoIfNeeded(JsonWriter writer, Object value) throws IOException, IllegalAccessException {
         if (context.getTypeInfoPolicy() == TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES) {
           Object fieldValue = field.get(value);
-          if (fieldValue != null && TypeUtils.isTypeInfoRequired(fieldValue.getClass(), fieldType.getRawType())) {
+          if (fieldValue != null && TypeUtils.isTypeInfoRequired(fieldValue.getClass(), fieldType.getRawType(), false)) {
             writer.name("@vtype");
             writer.value(fieldValue.getClass().getName());
             return true;
@@ -236,9 +235,11 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     private final Gson gson;
     private final ObjectConstructor<T> constructor;
     private final Map<String, BoundField> boundFields;
+    private final Type objType;
 
-    private Adapter(Gson gson, ObjectConstructor<T> constructor, Map<String, BoundField> boundFields) {
+    private Adapter(Gson gson, Type objType, ObjectConstructor<T> constructor, Map<String, BoundField> boundFields) {
       this.gson = gson;
+      this.objType = objType;
       this.constructor = constructor;
       this.boundFields = boundFields;
     }
@@ -254,7 +255,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         while (in.hasNext()) {
           String name = in.nextName();
           if (name.equals("@type") && instance == null) {
-            return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
+            return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, objType, rctx);
           }
 
           if (instance == null) {

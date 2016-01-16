@@ -62,14 +62,12 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   private final Class<E> componentType;
   private final Class<E[]> arrayType;
   private final TypeAdapter<E> componentTypeAdapter;
-  private final ConstructorConstructor constructorConstructor;
 
   public ArrayTypeAdapter(Gson context, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
-    this.componentTypeAdapter =
-      new TypeAdapterRuntimeTypeWrapper<E>(context, componentTypeAdapter, componentType, false);
+    this.componentTypeAdapter = new TypeAdapterRuntimeTypeWrapper<E>(context,
+            componentTypeAdapter, componentType, TypeUtils.getEmitTypeInfoRule(context, false));
     this.componentType = componentType;
     arrayType = (Class<E[]>) Array.newInstance(componentType, 0).getClass();
-    this.constructorConstructor = context.getConstructorConstructor();
   }
 
   @SuppressWarnings("unchecked")
@@ -80,23 +78,17 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     List<E> list = new ArrayList<E>();
 
     ReferencePlaceholder<E[]> arrayPlaceholder = new ReferencePlaceholder<E[]>(arrayType);
-    // TODO maybe change to custom or just E[][1]
     final AtomicReference<E[]> futureArray = new AtomicReference<E[]>();
-    // TODO(amogilev): should register the array object instead, but it is not possible as we do not know it's
-    //          size at this point! Probably need to use some placeholders with deferred Inserters...
 
-    // 2support: fields, key/value in maps, element in array or collection
-    /* How to support?
-
-    V1: In usage places: if returned is ReferencePlaceholder<T>
-    ReferencePlaceholder.add(PlaceholderApplier)
-    Use null instead
-    At end of the array: ReferencePlaceholder.replaceWith(actualObject)
-    foreach (PlaceholderApplier) { apply(actualObject); }
-
-    V2: ???
-
-     */
+    // PROBLEM: we should register the created array instance before reading the element,
+    // but it is not possible as the array size is not known untul all elements are read.
+    // If the temporary List is registered instead, self-referenced arrays are not de-serialized
+    // correctly.
+    //
+    // SOLUTION: ReferencePlaceholder is registered instead of the array. At every place
+    // where this reference is used, a PlaceholderUse is created and registered. When the
+    // final array object is created, it is sent to all registered uses, which insert it
+    // into the places of use.
     rctx.registerObject(arrayPlaceholder, false);
 
     Class advisedComponentType = null;

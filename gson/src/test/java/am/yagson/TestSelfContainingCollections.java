@@ -40,7 +40,7 @@ public class TestSelfContainingCollections extends TestCase {
 
     public void testSelfContainingMap1() {
         Map<Object, Object> m = new LinkedHashMap<Object, Object>();
-        m.put(1L, m);
+        m.put("1", m);
 
         TestingUtils.testFullyByToString(m, jsonStr("{'1':'@root'}"));
     }

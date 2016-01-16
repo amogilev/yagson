@@ -16,6 +16,7 @@
 
 package com.google.gson.stream;
 
+import com.google.gson.JsonPrimitive;
 import com.google.gson.internal.JsonReaderInternalAccess;
 import com.google.gson.internal.bind.JsonTreeReader;
 import java.io.Closeable;
@@ -1650,7 +1651,7 @@ public class JsonReader implements Closeable {
       @Override
       public void returnStringToBuffer(JsonReader reader, String lastReadString) throws IOException {
         if (reader instanceof JsonTreeReader) {
-          ((JsonTreeReader)reader).pushString(lastReadString);
+          ((JsonTreeReader)reader).push(new JsonPrimitive(lastReadString));
           return;
         }
 
@@ -1660,6 +1661,21 @@ public class JsonReader implements Closeable {
         }
         reader.peekedString = lastReadString;
         reader.peeked = PEEKED_BUFFERED;
+      }
+
+      @Override
+      public void returnLongToBuffer(JsonReader reader, long l) {
+        if (reader instanceof JsonTreeReader) {
+          ((JsonTreeReader)reader).push(new JsonPrimitive(l));
+          return;
+        }
+
+        if (reader.peeked != PEEKED_NONE) {
+          throw new IllegalStateException("The string may be returned to the reader's buffer only immediately " +
+                  "after the read, but the current state is " + reader.peeked);
+        }
+        reader.peekedLong = l;
+        reader.peeked = PEEKED_LONG;
       }
     };
   }

@@ -36,4 +36,10 @@ public abstract class JsonReaderInternalAccess {
    */
   public abstract void returnStringToBuffer(JsonReader reader, String lastReadString) throws IOException;
 
+  /**
+   * Returns just read string back to the reader as the buffered long value. Only works when the peek
+   * state is PEEKED_NONE, i.e. the string is read but no more actions performed on the reader.
+   * Changes the state to PEEKED_LONG
+   */
+  public abstract void returnLongToBuffer(JsonReader in, long l);
 }

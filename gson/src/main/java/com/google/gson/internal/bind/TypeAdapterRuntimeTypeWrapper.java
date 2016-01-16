@@ -18,6 +18,7 @@ package com.google.gson.internal.bind;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
 import am.yagson.types.AdapterUtils;
+import am.yagson.types.EmitTypeInfoPredicate;
 import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -34,13 +35,14 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   private final Gson context;
   private final TypeAdapter<T> delegate;
   private final Type type;
-  private final boolean typeInfoEmitted;
+  private final EmitTypeInfoPredicate emitTypeInfoPredicate;
 
-  public TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type, boolean typeInfoEmitted) {
+  public TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type,
+                                       EmitTypeInfoPredicate emitTypeInfoPredicate) {
     this.context = context;
     this.delegate = delegate;
     this.type = type;
-    this.typeInfoEmitted = typeInfoEmitted;
+    this.emitTypeInfoPredicate = emitTypeInfoPredicate;
   }
 
   @Override
@@ -54,7 +56,7 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     //     For simple delegates, if '{' found, we expect and parse type advice here, and fail otherwise
 
     if (in.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(delegate)) {
-      return TypeUtils.readTypeAdvisedValue(context, in, rctx);
+      return TypeUtils.readTypeAdvisedValue(context, in, type, rctx);
 
     } else {
       // no type advice, or delegate is able to process type advice itself
@@ -67,8 +69,9 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   @Override
   public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
     TypeAdapter chosen = chooseTypeAdapter(value);
-    if (value != null && !typeInfoEmitted && context.getTypeInfoPolicy().isEnabled() &&
-            TypeUtils.isTypeInfoRequired(value.getClass(), type)) {
+    // TODO: move context.getTypeInfoPolicy().isEnabled() to predicates
+    if (value != null && context.getTypeInfoPolicy().isEnabled() &&
+            emitTypeInfoPredicate.apply(value.getClass(), type)) {
       TypeUtils.writeTypeWrapperAndValue(out, value, chosen, rctx);
     } else {
       chosen.write(out, value, rctx);

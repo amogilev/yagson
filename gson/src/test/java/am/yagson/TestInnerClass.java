@@ -23,7 +23,7 @@ public class TestInnerClass extends TestCase {
 		obj.outerStr = "bar";
 		obj.makeInner("foo");
 		
-		Inner found = (Inner)TestingUtils.testJsonWithoutEquals(obj.inner, jsonStr(
+		Inner found = TestingUtils.testFullyByToString(obj.inner, jsonStr(
 				"{'innerStr':'foo','this$0':{'outerStr':'bar','inner':'@root'}}"));
 
 		assertEquals("foo", found.innerStr);

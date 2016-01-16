@@ -156,6 +156,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
   private final class Adapter<K, V> extends TypeAdvisableComplexTypeAdapter<Map<K, V>> {
     private final TypeAdapter<K> keyTypeAdapter;
     private final TypeAdapter<V> valueTypeAdapter;
+    private final Class<?> rawKeyType;
+    private final Type mapType;
     private final ObjectConstructor<? extends Map<K, V>> constructor;
     private final Gson gson;
 
@@ -163,9 +165,13 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
                    Type valueType, TypeAdapter<V> valueTypeAdapter,
                    ObjectConstructor<? extends Map<K, V>> constructor) {
       this.keyTypeAdapter =
-        new TypeAdapterRuntimeTypeWrapper<K>(gson, keyTypeAdapter, keyType, false);
+        new TypeAdapterRuntimeTypeWrapper<K>(gson, keyTypeAdapter, keyType,
+                TypeUtils.getEmitTypeInfoRule(gson, true));
       this.valueTypeAdapter =
-        new TypeAdapterRuntimeTypeWrapper<V>(gson, valueTypeAdapter, valueType, false);
+        new TypeAdapterRuntimeTypeWrapper<V>(gson, valueTypeAdapter, valueType,
+                TypeUtils.getEmitTypeInfoRule(gson, false));
+      this.mapType = $Gson$Types.newParameterizedTypeWithOwner(null, Map.class, keyType, valueType);
+      this.rawKeyType = $Gson$Types.getRawType(keyType);
       this.constructor = constructor;
       this.gson = gson;
     }
@@ -229,10 +235,23 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           // if type is advised with @type, follow that advice
           String keyStr = in.nextName();
           if (keyStr.equals("@type")) {
-            return TypeUtils.readTypeAdvicedValueAfterTypeField(gson, in, rctx);
+            return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, mapType, rctx);
           } else {
+            // we need to return the read string to JsonReader. In all cases except of 'long' value,
+            // it may be returned as BUFFERED string, but long literals shall be returned as longs
+            boolean longReturned = false;
+            if (rawKeyType.equals(Long.class) || rawKeyType.equals(Number.class)) {
+              Long val = TypeUtils.parseNumberIfLong(keyStr);
+              if (val != null) {
+                JsonReaderInternalAccess.INSTANCE.returnLongToBuffer(in, val.longValue());
+                longReturned = true;
+              }
+            }
+            if (!longReturned) {
+              // for other cases (including boolean and double) return as string
+              JsonReaderInternalAccess.INSTANCE.returnStringToBuffer(in, keyStr);
+            }
             skipFirstPromotion = true;
-            JsonReaderInternalAccess.INSTANCE.returnStringToBuffer(in, keyStr);
           }
         }
 
@@ -304,8 +323,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       List<V> values = new ArrayList<V>(map.size());
       int i = 0;
       for (Map.Entry<K, V> entry : map.entrySet()) {
-        K key = entry.getKey();
-        JsonElement keyElement = rctx.doToJsonTree(key, keyTypeAdapter, keyRef(i));
+        JsonElement keyElement = rctx.doToJsonTree(entry.getKey(), keyTypeAdapter, keyRef(i));
         i++;
         keys.add(keyElement);
         values.add(entry.getValue());

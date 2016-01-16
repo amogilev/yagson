@@ -57,7 +57,7 @@ public class TestTypeInfoMixedMap extends TestCase {
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
                 "{'@vtype':'java.util.HashMap','map':[" +
                 "[{'@type':'java.lang.Integer','@val':1},'int']," +
-                "[2,'long']," +
+                "[{'@type':'java.lang.Long','@val':2},'long']," +
                 "[{'@type':'java.math.BigDecimal','@val':1},{'@type':'java.lang.Integer','@val':1}]]}"));
     }
 
@@ -66,7 +66,7 @@ public class TestTypeInfoMixedMap extends TestCase {
         TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr(
                 "{'map':{'@type':'java.util.HashMap','@val':[" +
                 "[{'@type':'java.lang.Integer','@val':1},'int']," +
-                "[2,'long']," +
+                "[{'@type':'java.lang.Long','@val':2},'long']," +
                 "[{'@type':'java.math.BigDecimal','@val':1},{'@type':'java.lang.Integer','@val':1}]]}}"));
     }
 

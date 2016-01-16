@@ -196,8 +196,12 @@ public class YaGson extends Gson {
             return;
         }
 
-        boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType);
-        super.toJson(src, src.getClass(), writer, isRootTypeRequired);
+        boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType, false);
+
+        // use the exact source class for serialization, but try to keep the type parameters if available in
+        // the specified deserialization type
+        Type parameterizedSrcType = TypeUtils.getParameterizedType(src.getClass(), deserializationType);
+        super.toJson(src, parameterizedSrcType, writer, isRootTypeRequired);
     }
 
     /**
@@ -236,7 +240,7 @@ public class YaGson extends Gson {
             return JsonNull.INSTANCE;
         }
 
-        boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType);
+        boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType, false);
         JsonTreeWriter writer = new JsonTreeWriter();
         super.toJson(src, src.getClass(), writer, isRootTypeRequired);
         return writer.get();
