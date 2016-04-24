@@ -16,10 +16,10 @@
 
 package com.google.gson.internal.bind;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.PlaceholderUse;
 import am.yagson.refs.ReferencePlaceholder;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
 
 import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
@@ -56,18 +56,18 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     this.gson = gson;
   }
 
-  @Override public Object read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+  @Override public Object read(JsonReader in, ReadContext ctx) throws IOException {
     JsonToken token = in.peek();
     switch (token) {
     case BEGIN_ARRAY:
       final List<Object> list = new ArrayList<Object>();
-      rctx.registerObject(list);
+      ctx.registerObject(list);
       
       in.beginArray();
       for (int i = 0; in.hasNext(); i++) {
-        Object elementInstance = rctx.doRead(in, this, Integer.toString(i));
+        Object elementInstance = ctx.doRead(in, this, Integer.toString(i));
         ReferencePlaceholder<Object> elementPlaceholder;
-        if (elementInstance == null && ((elementPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+        if (elementInstance == null && ((elementPlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null)) {
           final int fi = i;
           elementPlaceholder.registerUse(new PlaceholderUse<Object>() {
             public void applyActualObject(Object actualObject) {
@@ -92,15 +92,15 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
           final String fieldName = in.nextName();
           if (i == 0) {
             if (fieldName.equals("@type")) {
-              return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, null, rctx);
+              return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, null, ctx);
             } else {
               result = map = new LinkedTreeMap<String, Object>();
-              rctx.registerObject(result);
+              ctx.registerObject(result);
             }
           }
           ReferencePlaceholder<Object> valuePlaceholder;
-          Object value = rctx.doRead(in, this, "" + i + "-val");
-          if (value == null && ((valuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+          Object value = ctx.doRead(in, this, "" + i + "-val");
+          if (value == null && ((valuePlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null)) {
             final LinkedTreeMap<String, Object> fmap = map;
             valuePlaceholder.registerUse(new PlaceholderUse<Object>() {
               public void applyActualObject(Object actualObject) {
@@ -112,34 +112,34 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
           }
         }
       } else {
-        result = new LinkedTreeMap<String, Object>();
-        rctx.registerObject(result);
+        result = gson.getTypeInfoPolicy().isEnabled() ? new Object() : new LinkedTreeMap<String, Object>();
+        ctx.registerObject(result);
       }
       in.endObject();
       return result;
     }
     case STRING:
       String str = in.nextString();
-      if (rctx.isReferenceString(str)) {
-        return rctx.getReferencedObject(str);
+      if (ctx.refsContext().isReferenceString(str)) {
+        return ctx.refsContext().getReferencedObject(str);
       } else {
-        rctx.registerObject(str);
+        ctx.registerObject(str);
         return str;
       }
 
     case NUMBER:
       Number num = in.nextNumber();
-      rctx.registerObject(num);
+      ctx.registerObject(num);
       return num;
 
     case BOOLEAN:
       boolean boolValue = in.nextBoolean();
-      rctx.registerObject(boolValue);
+      ctx.registerObject(boolValue);
       return boolValue;
 
     case NULL:
       in.nextNull();
-      rctx.registerObject(null);
+      ctx.registerObject(null);
       return null;
 
     default:
@@ -148,7 +148,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object value, ReferencesWriteContext rctx) throws IOException {
+  @Override public void write(JsonWriter out, Object value, WriteContext ctx) throws IOException {
     if (value == null) {
       out.nullValue();
       return;
@@ -161,6 +161,6 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       return;
     }
 
-    typeAdapter.write(out, value, rctx);
+    typeAdapter.write(out, value, ctx);
   }
 }

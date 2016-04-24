@@ -23,9 +23,6 @@ public enum TypeInfoPolicy {
      */
     EMIT_WRAPPERS_OR_VTYPES;
 
-    // TODO: how about root? rename to TypeInfoPolicyKind and add class TypeInfoPolicy?
-    // or, it will be done through new toJson method with additional Type/Class deserializationType argument
-
     /**
      * Whether type info is emitted (no matter how exactly)
      */

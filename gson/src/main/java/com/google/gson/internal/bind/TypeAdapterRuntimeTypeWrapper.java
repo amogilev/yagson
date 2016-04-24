@@ -15,9 +15,8 @@
  */
 package com.google.gson.internal.bind;
 
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
-import am.yagson.types.AdapterUtils;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.types.EmitTypeInfoPredicate;
 import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
@@ -32,22 +31,22 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
 public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
-  private final Gson context;
+  private final Gson gson;
   private final TypeAdapter<T> delegate;
   private final Type type;
   private final EmitTypeInfoPredicate emitTypeInfoPredicate;
 
   public
-  TypeAdapterRuntimeTypeWrapper(Gson context, TypeAdapter<T> delegate, Type type,
-                                       EmitTypeInfoPredicate emitTypeInfoPredicate) {
-    this.context = context;
+  TypeAdapterRuntimeTypeWrapper(Gson gson, TypeAdapter<T> delegate, Type type,
+                                EmitTypeInfoPredicate emitTypeInfoPredicate) {
+    this.gson = gson;
     this.delegate = delegate;
     this.type = type;
     this.emitTypeInfoPredicate = emitTypeInfoPredicate;
   }
 
   @Override
-  public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+  public T read(JsonReader in, ReadContext ctx) throws IOException {
 
     // PROBLEM: as JsonReader does not support lookaheads for more than one token, we cannot
     //    distinguish regular objects like "{field:value}" from type-advised primitives like
@@ -57,25 +56,36 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     //     For simple delegates, if '{' found, we expect and parse type advice here, and fail otherwise
 
     if (in.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(delegate)) {
-      return TypeUtils.readTypeAdvisedValue(context, in, type, rctx);
+      return TypeUtils.readTypeAdvisedValue(gson, in, type, ctx);
 
     } else {
       // no type advice, or delegate is able to process type advice itself
-      return delegate.read(in, rctx);
+      return delegate.read(in, ctx);
     }
 
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
-  public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
+  public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
     TypeAdapter chosen = chooseTypeAdapter(value);
     // TODO: move context.getTypeInfoPolicy().isEnabled() to predicates
-    if (value != null && context.getTypeInfoPolicy().isEnabled() &&
+    if (value != null && gson.getTypeInfoPolicy().isEnabled() &&
             emitTypeInfoPredicate.apply(value.getClass(), type)) {
-      TypeUtils.writeTypeWrapperAndValue(out, value, chosen, rctx);
+      TypeUtils.writeTypeWrapperAndValue(out, value, chosen, ctx);
     } else {
-      chosen.write(out, value, rctx);
+      chosen.write(out, value, ctx);
+    }
+  }
+
+  public TypeAdapter<T> resolve(T value) {
+    TypeAdapter chosen = chooseTypeAdapter(value);
+    boolean emitTypeInfo =  value != null && gson.getTypeInfoPolicy().isEnabled() &&
+            emitTypeInfoPredicate.apply(value.getClass(), type);
+    if (emitTypeInfo) {
+      return new TypeInfoEmittingTypeAdapterWrapper<T>(chosen);
+    } else {
+      return chosen;
     }
   }
   
@@ -89,11 +99,11 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     TypeAdapter chosen = delegate;
     Type runtimeType = getRuntimeTypeIfMoreSpecific(type, value);
     if (runtimeType != type) {
-      TypeAdapter runtimeTypeAdapter = context.getAdapter(TypeToken.get(runtimeType));
+      TypeAdapter runtimeTypeAdapter = gson.getAdapter(TypeToken.get(runtimeType));
       if (!(runtimeTypeAdapter instanceof ReflectiveTypeAdapterFactory.Adapter)) {
         // The user registered a type adapter for the runtime type, so we will use that
         chosen = runtimeTypeAdapter;
-      } else if (!(delegate instanceof ReflectiveTypeAdapterFactory.Adapter) && !context.getTypeInfoPolicy().isEnabled()) {
+      } else if (!(delegate instanceof ReflectiveTypeAdapterFactory.Adapter) && !gson.getTypeInfoPolicy().isEnabled()) {
         // The user registered a type adapter for Base class, so we prefer it over the
         // reflective type adapter for the runtime type.
         // NOTE: disabled when emitTypeInfo is used

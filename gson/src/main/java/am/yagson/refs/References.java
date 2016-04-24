@@ -28,7 +28,7 @@ public final class References {
     private References() {
     }
 
-    private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.CIRCULAR_ONLY;
+    private static final ReferencesPolicy defaultPolicy = ReferencesPolicy.CIRCULAR_AND_SIBLINGS;
 
     public static String keyRef(int i) {
         return "" + i + "-key";

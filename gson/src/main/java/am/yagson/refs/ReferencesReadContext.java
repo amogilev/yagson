@@ -3,6 +3,7 @@ package am.yagson.refs;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
+import am.yagson.ReadContext;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.SimpleTypeAdapter;
@@ -19,7 +20,7 @@ public interface ReferencesReadContext {
      */
     void registerObject(Object value);
 
-    <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement) throws IOException;
+    <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement, ReadContext ctx) throws IOException;
 
     /**
      * Returns whether the specified string is a reference string, known in this context.

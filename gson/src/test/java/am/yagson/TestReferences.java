@@ -6,7 +6,7 @@ import junit.framework.TestCase;
 
 import static am.yagson.TestingUtils.jsonStr;
 
-public class TestCircularDeps extends TestCase {
+public class TestReferences extends TestCase {
 
 	// instances of YaGson for two references policies being tested
 	// type info is disabled for convenience
@@ -101,5 +101,12 @@ public class TestCircularDeps extends TestCase {
 						"{'id':3,'connections':[{'id':4,'connections':['@root.connections.0']}]}," +
 						"'@root.connections.0.connections.0.connections.0']}]}"));
 
+	}
+
+	// tests that 'simple' objects (like strings) are never serialized as references
+	public void testDuplicateStringsNeverReferenced() {
+		Object[] arr = new Object[2];
+		arr[0] = arr[1] = "foo";
+		TestingUtils.testFully(gsonAllDuplicatesMode, arr, jsonStr("['foo','foo']"));
 	}
 }

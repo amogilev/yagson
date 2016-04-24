@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import junit.framework.TestCase;
 import am.yagson.refs.ReferencesReadContext;
 import am.yagson.refs.ReferencesWriteContext;
@@ -164,7 +166,7 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
       }
       
       return new TypeAdapter<R>() {
-        @Override public R read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+        @Override public R read(JsonReader in, ReadContext ctx) throws IOException {
           JsonElement jsonElement = Streams.parse(in);
           JsonElement labelJsonElement = jsonElement.getAsJsonObject().get(typeFieldName);
           if (labelJsonElement == null) {
@@ -178,10 +180,10 @@ public final class RuntimeTypeAdapterFactoryFunctionalTest extends TestCase {
             throw new JsonParseException("cannot deserialize " + baseType + " subtype named "
                 + label + "; did you forget to register a subtype?");
           }
-          return delegate.fromJsonTree(jsonElement, rctx);
+          return delegate.fromJsonTree(jsonElement, ctx);
         }
 
-        @Override public void write(JsonWriter out, R value, ReferencesWriteContext ctx) throws IOException {
+        @Override public void write(JsonWriter out, R value, WriteContext ctx) throws IOException {
           Class<?> srcType = value.getClass();
           String label = subtypeToLabel.get(srcType);
           @SuppressWarnings("unchecked") // registration requires that subtype extends T

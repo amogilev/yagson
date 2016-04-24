@@ -7,11 +7,11 @@ import am.yagson.refs.ReferencesWriteContext;
 public class ReferencesAllDuplicatesModeContextFactory implements ReferencesContextFactory {
 
   public ReferencesReadContext createReadContext() {
-    return new ReferencesAllDuplicatesModeContext().new ReadContext();
+    return new ReferencesAllDuplicatesModeContext().new RefsReadContext();
   }
 
   public ReferencesWriteContext createWriteContext(Object root) {
-    return new ReferencesAllDuplicatesModeContext().new WriteContext(root);
+    return new ReferencesAllDuplicatesModeContext().new RefsWriteContext(root);
   }
 
 }

@@ -25,17 +25,13 @@ import java.io.Writer;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import am.yagson.refs.References;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
-import am.yagson.types.AdapterUtils;
+import am.yagson.types.PostReadProcessor;
+import am.yagson.types.SetFromMapPostReadProcessor;
 import am.yagson.types.TypeInfoPolicy;
 import am.yagson.types.TypeUtils;
 import com.google.gson.internal.ConstructorConstructor;
@@ -137,6 +133,7 @@ public class Gson {
   
   private final ReferencesPolicy referencesPolicy;
   private final TypeInfoPolicy typeInfoPolicy;
+  private final ReflectiveTypeAdapterFactory reflectiveTypeAdapterFactory;
 
   /**
    * Constructs a Gson object with default configuration. The default configuration has the
@@ -247,10 +244,14 @@ public class Gson {
     factories.add(new MapTypeAdapterFactory(constructorConstructor, complexMapKeySerialization));
     factories.add(new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor));
     factories.add(TypeAdapters.ENUM_FACTORY);
-    factories.add(new ReflectiveTypeAdapterFactory(
-        constructorConstructor, fieldNamingPolicy, excluder));
+    factories.add(reflectiveTypeAdapterFactory = new ReflectiveTypeAdapterFactory(
+        constructorConstructor, fieldNamingPolicy, excluder, createDefaultReflectivePostReadProcessors()));
 
     this.factories = Collections.unmodifiableList(factories);
+  }
+
+  private List<PostReadProcessor> createDefaultReflectivePostReadProcessors() {
+    return Arrays.<PostReadProcessor>asList(new SetFromMapPostReadProcessor());
   }
 
   private TypeAdapter<Number> doubleAdapter(boolean serializeSpecialFloatingPointValues) {
@@ -614,11 +615,11 @@ public class Gson {
     writer.setSerializeNulls(serializeNulls);
     
     try {
-      ReferencesWriteContext rctx = References.createWriteContext(referencesPolicy, src);
+      WriteContext ctx = WriteContext.create(this, referencesPolicy, src);
       if (isRootTypeRequired && typeInfoPolicy.isEnabled()) {
-        TypeUtils.writeTypeWrapperAndValue(writer, src, adapter, rctx);
+        TypeUtils.writeTypeWrapperAndValue(writer, src, adapter, ctx);
       } else {
-        adapter.write(writer, src, rctx);
+        adapter.write(writer, src, ctx);
       }
     } catch (IOException e) {
       throw new JsonIOException(e);
@@ -829,11 +830,11 @@ public class Gson {
       TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
       TypeAdapter<T> typeAdapter = getAdapter(typeToken);
 
-      ReferencesReadContext rctx = References.createReadContext(referencesPolicy);
+      ReadContext ctx = ReadContext.create(referencesPolicy);
       if (reader.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(typeAdapter)) {
-        return TypeUtils.readTypeAdvisedValue(this, reader, typeToken.getType(), rctx);
+        return TypeUtils.readTypeAdvisedValue(this, reader, typeToken.getType(), ctx);
       } else {
-        T object = typeAdapter.read(reader, rctx);
+        T object = typeAdapter.read(reader, ctx);
         return object;
       }
     } catch (EOFException e) {
@@ -902,9 +903,7 @@ public class Gson {
     return (T) fromJson(new JsonTreeReader(json), typeOfT);
   }
 
-  public static class FutureTypeAdapter<T> extends TypeAdapter<T> {
-    private TypeAdapter<T> delegate;
-
+  public static class FutureTypeAdapter<T> extends DelegatingTypeAdapter<T> {
     public void setDelegate(TypeAdapter<T> typeAdapter) {
       if (delegate != null) {
         throw new AssertionError();
@@ -912,18 +911,14 @@ public class Gson {
       delegate = typeAdapter;
     }
 
-    public TypeAdapter<T> getDelegate() {
-      return delegate;
-    }
-
-    @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+    @Override public T read(JsonReader in, ReadContext ctx) throws IOException {
       if (delegate == null) {
         throw new IllegalStateException();
       }
-      return delegate.read(in, rctx);
+      return delegate.read(in, ctx);
     }
 
-    @Override public void write(JsonWriter out, T value, ReferencesWriteContext ctx) throws IOException {
+    @Override public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
       if (delegate == null) {
         throw new IllegalStateException();
       }
@@ -941,6 +936,10 @@ public class Gson {
 
   public ConstructorConstructor getConstructorConstructor() {
     return constructorConstructor;
+  }
+
+  public ReflectiveTypeAdapterFactory getReflectiveTypeAdapterFactory() {
+    return reflectiveTypeAdapterFactory;
   }
 
   @Override

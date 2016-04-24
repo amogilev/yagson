@@ -16,7 +16,8 @@
 
 package com.google.gson.internal;
 
-import am.yagson.refs.References;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
@@ -47,7 +48,7 @@ public final class Streams {
     try {
       reader.peek();
       isEmpty = false;
-      return TypeAdapters.JSON_ELEMENT.read(reader, References.createReadContext(ReferencesPolicy.DISABLED));
+      return TypeAdapters.JSON_ELEMENT.read(reader, ReadContext.create(ReferencesPolicy.DISABLED));
     } catch (EOFException e) {
       /*
        * For compatibility with JSON 1.5 and earlier, we return a JsonNull for
@@ -71,7 +72,7 @@ public final class Streams {
    * Writes the JSON element to the writer, recursively.
    */
   public static void write(JsonElement element, JsonWriter writer) throws IOException {
-    TypeAdapters.JSON_ELEMENT.write(writer, element, References.createWriteContext(ReferencesPolicy.DISABLED, element));
+    TypeAdapters.JSON_ELEMENT.write(writer, element, null);
   }
 
   @SuppressWarnings("resource")

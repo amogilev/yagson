@@ -25,7 +25,7 @@ public class YaGsonBuilder extends GsonBuilder {
         if (TypeInfoPolicy.defaultPolicy().isEnabled()) {
             enableComplexMapKeySerialization();
         }
-
+        escapeHtmlChars = false;
     }
 
     /**

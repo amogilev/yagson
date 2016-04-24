@@ -14,11 +14,14 @@ import java.util.jar.Attributes;
 
 import static am.yagson.TestingUtils.jsonStr;
 
-public class TestCustomMaps extends TestCase {
+public class TestVariousMaps extends TestCase {
 
-    // instances of YaGson for two testing with alternative references policy
+    // instances of YaGson for testing with alternative references policy
     private static YaGson gsonAllDuplicatesMode = new YaGsonBuilder()
             .setReferencesPolicy(ReferencesPolicy.DUPLICATE_OBJECTS)
+            .create();
+    private static YaGson gsonCircularOnlyMode = new YaGsonBuilder()
+            .setReferencesPolicy(ReferencesPolicy.CIRCULAR_ONLY)
             .create();
 
     private static Map<String, String> newTestMap() {
@@ -33,28 +36,8 @@ public class TestCustomMaps extends TestCase {
         return map;
     }
 
-    private static final Comparator<String> MY_STRING_CMP = new Comparator<String>() {
-        public int compare(String s1, String s2) {
-            int cmp = s1.length() - s2.length();
-            if (cmp == 0) {
-                cmp = s1.compareTo(s2);
-            }
-            return cmp;
-        }
-    };
-
-    private static final Comparator<Person> MY_PERSON_CMP = new Comparator<Person>() {
-        public int compare(Person o1, Person o2) {
-            int cmp = MY_STRING_CMP.compare(o1.family, o2.family);
-            if (cmp == 0) {
-                cmp = MY_STRING_CMP.compare(o1.name, o2.name);
-            }
-            return cmp;
-        }
-    };
-
     private static SortedMap<String, String> newTestSortedMapWithComparator() {
-        SortedMap<String, String> map = new TreeMap<String, String>(MY_STRING_CMP);
+        SortedMap<String, String> map = new TreeMap<String, String>(TestingUtils.MY_STRING_CMP);
         map.put("foo", "bar");
         map.put("xx", "xx");
 
@@ -64,7 +47,7 @@ public class TestCustomMaps extends TestCase {
     }
 
     private SortedMap<Person, String> newTestComplexSortedMapWithComparator() {
-        SortedMap<Person, String> map = new TreeMap<Person, String>(MY_PERSON_CMP);
+        SortedMap<Person, String> map = new TreeMap<Person, String>(TestingUtils.MY_PERSON_CMP);
 
         map.put(new Person("Jane", "McDoe"), "bar");
         map.put(new Person("John", "Doe"), "foo");
@@ -94,14 +77,14 @@ public class TestCustomMaps extends TestCase {
 
     public void testTreeMapWithComparator() {
         SortedMap<String, String> obj = newTestSortedMapWithComparator();
-        obj = TestingUtils.testFully(obj, jsonStr("{'xx':'xx','foo':'bar','@.comparator':{'@type':'am.yagson.TestCustomMaps$1','@val':{}}}"));
+        obj = TestingUtils.testFully(obj, jsonStr("{'xx':'xx','foo':'bar','@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}}"));
 
         assertTrue(obj.firstKey().equals("xx"));
         obj.put("z", "z");
         assertTrue(obj.firstKey().equals("z"));
 
         obj.clear();
-        TestingUtils.testFully(obj, jsonStr("{'@.comparator':{'@type':'am.yagson.TestCustomMaps$1','@val':{}}}"));
+        TestingUtils.testFully(obj, jsonStr("{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}}"));
     }
 
     public void testComplexTreeMapWithComparator() {
@@ -110,13 +93,13 @@ public class TestCustomMaps extends TestCase {
                 "[" +
                         "[{'name':'John','family':'Doe'},'foo']," +
                         "[{'name':'Jane','family':'McDoe'},'bar']," +
-                        "{'@.comparator':{'@type':'am.yagson.TestCustomMaps$2','@val':{}}}" +
+                        "{'@.comparator':{'@type':'am.yagson.TestingUtils$2','@val':{}}}" +
                         "]"));
 
         assertTrue(obj.get(obj.firstKey()).equals("foo"));
 
         obj.clear();
-        TestingUtils.testFully(obj, jsonStr("{'@.comparator':{'@type':'am.yagson.TestCustomMaps$2','@val':{}}}"));
+        TestingUtils.testFully(obj, jsonStr("{'@.comparator':{'@type':'am.yagson.TestingUtils$2','@val':{}}}"));
     }
 
     public void testDeserializeComplexTreeMapWithIncorrectExtraFields() {
@@ -127,7 +110,7 @@ public class TestCustomMaps extends TestCase {
                             "[" +
                                     "[{'name':'John','family':'Doe'},'foo']," +
                                     "[{'name':'Jane','family':'McDoe'},'bar']," +
-                                    "{'@.comparator':{'@type':'am.yagson.TestCustomMaps$2','@val':{}}," +
+                                    "{'@.comparator':{'@type':'am.yagson.TestingUtils$2','@val':{}}," +
                                     "'@.extraField':'foo'}" +
                                     "]"),
                     null,
@@ -135,7 +118,7 @@ public class TestCustomMaps extends TestCase {
             fail("JsonSyntaxException expected");
         } catch (JsonSyntaxException e) {
             assertEquals(
-                    "The Map type for class java.util.TreeMap does not have serializable reflective field 'extraField'",
+                    "The class java.util.TreeMap does not have serializable reflective field 'extraField'",
                     e.getMessage());
         }
 
@@ -171,21 +154,24 @@ public class TestCustomMaps extends TestCase {
         Map<String, String> obj = Collections.synchronizedMap(newTestMap());
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashMap','m':{'foo':'bar'}," +
-                        "'@vtype':'java.util.Collections$SynchronizedMap','mutex':'@root'}"));
+                "{'@vtype':'java.util.HashMap','m':{'foo':'bar'},'mutex':'@root'}"));
     }
 
     public void testSynchronizedSortedMap() {
         SortedMap<String, String> obj = Collections.synchronizedSortedMap(newTestSortedMap());
 
         // NOTE: duplication in circular-only refs mode
-        TestingUtils.testFully(obj, jsonStr(
+        TestingUtils.testFully(gsonCircularOnlyMode, obj, jsonStr(
                 "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'@vtype':'java.util.TreeMap','m':{'foo':'bar'}," +
-                        "'@vtype':'java.util.Collections$SynchronizedSortedMap','mutex':'@root'}"));
+                        "'mutex':'@root'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'@vtype':'java.util.TreeMap','m':'@root.sm'," +
-                        "'@vtype':'java.util.Collections$SynchronizedSortedMap','mutex':'@root'}"));
+                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@root.sm'," +
+                        "'mutex':'@root'}"));
+
+        TestingUtils.testFully(obj, jsonStr(
+                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@.sm'," +
+                        "'mutex':'@root'}"));
     }
 
     public void testCheckedMap() {
@@ -200,13 +186,17 @@ public class TestCustomMaps extends TestCase {
         Map<String, String> obj = Collections.checkedSortedMap(newTestSortedMap(), String.class, String.class);
 
         // NOTE: duplication in circular-only refs mode
-        TestingUtils.testFully(obj, jsonStr(
+        TestingUtils.testFully(gsonCircularOnlyMode, obj, jsonStr(
                 "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'@vtype':'java.util.TreeMap','m':{'foo':'bar'}," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'@vtype':'java.util.TreeMap','m':'@root.sm'," +
-                        "'keyType':'java.lang.String','valueType':'@root.keyType'}"));
+                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@root.sm'," +
+                        "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
+
+        TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
+                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@root.sm'," +
+                        "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
     }
 
@@ -234,11 +224,11 @@ public class TestCustomMaps extends TestCase {
     }
 
     public void testLinkedHashTreeMapWithComparator() {
-        Map<String, String> obj = new LinkedHashTreeMap<String, String>(MY_STRING_CMP);
+        Map<String, String> obj = new LinkedHashTreeMap<String, String>(TestingUtils.MY_STRING_CMP);
         obj.put("foo", "bar");
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'foo':'bar','@.comparator':{'@type':'am.yagson.TestCustomMaps$1','@val':{}}}"));
+                "{'foo':'bar','@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}}"));
     }
 
     public void testConcurrentHashMap() {
@@ -247,17 +237,6 @@ public class TestCustomMaps extends TestCase {
 
         TestingUtils.testFully(obj, jsonStr(
                 "{'foo':'bar'}"));
-    }
-
-    public void testEnumMap() {
-        Map<TypeInfoPolicy, String> obj = new EnumMap<TypeInfoPolicy, String>(TypeInfoPolicy.class);
-        obj.put(TypeInfoPolicy.DISABLED, "off");
-
-        TestingUtils.testFully(obj, jsonStr(
-                "[[{'@type':'am.yagson.types.TypeInfoPolicy','@val':'DISABLED'},'off']]"));
-
-        TestingUtils.testFully(obj, new TypeToken<EnumMap<TypeInfoPolicy, String>>(){}, jsonStr(
-                "{'DISABLED':'off'}"));
     }
 
     public void testConcurrentSkipListMap() {

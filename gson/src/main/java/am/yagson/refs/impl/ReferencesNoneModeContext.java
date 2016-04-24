@@ -2,6 +2,8 @@ package am.yagson.refs.impl;
 
 import java.io.IOException;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.ReferencePlaceholder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
@@ -19,13 +21,17 @@ public class ReferencesNoneModeContext implements ReferencesReadContext, Referen
     public static ReferencesNoneModeContext instance = new ReferencesNoneModeContext();
 
     public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter,
-                                        String pathElement) {
-        return valueTypeAdapter.toJsonTree(value, this);
+                                        String pathElement, WriteContext ctx) {
+        return valueTypeAdapter.toJsonTree(value, ctx);
+    }
+
+    public <T> String getReferenceFor(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {
+        return null;
     }
 
     public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter,
-                            String pathElement, JsonWriter out) throws IOException {
-        valueTypeAdapter.write(out, value, this);
+                            String pathElement, JsonWriter out, WriteContext ctx) throws IOException {
+        valueTypeAdapter.write(out, value, ctx);
     }
 
     public void registerObject(Object value) {
@@ -33,8 +39,8 @@ public class ReferencesNoneModeContext implements ReferencesReadContext, Referen
     }
 
     public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter,
-                        String pathElement) throws IOException {
-        return typeAdapter.read(reader, this);
+                        String pathElement, ReadContext ctx) throws IOException {
+        return typeAdapter.read(reader, ctx);
     }
 
     public boolean isReferenceString(String str) {

@@ -1,11 +1,13 @@
 package am.yagson.types;
 
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.internal.$Gson$Types;
+import com.google.gson.internal.bind.AdapterUtils;
+import com.google.gson.internal.bind.MapTypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -58,42 +60,75 @@ public class TypeUtils {
     }
 
     public static <T> T readTypeAdvisedValue(Gson context, JsonReader in, Type formalType,
-                                             ReferencesReadContext rctx) throws IOException {
-        Class valueClass = readTypeAdvice(in);
-        Type type = TypeUtils.getParameterizedType(valueClass, formalType);
-        return readTypeAdvisedValueAfterType(context, in, rctx, type);
+                                             ReadContext ctx) throws IOException {
+        Type advisedType = readTypeAdvice(in);
+        Type type = TypeUtils.mergeTypes(advisedType, formalType);
+        return readTypeAdvisedValueAfterType(context, in, ctx, type);
     }
 
     public static <T> T readTypeAdvisedValueAfterTypeField(Gson gson, JsonReader in, Type formalType,
-                                                           ReferencesReadContext rctx) throws IOException {
-        Class valueClass = readTypeAdviceAfterTypeField(in);
-        Type type = TypeUtils.getParameterizedType(valueClass, formalType);
-        return readTypeAdvisedValueAfterType(gson, in, rctx, type);
+                                                           ReadContext ctx) throws IOException {
+        Type advisedType = readTypeAdviceAfterTypeField(in);
+        Type type = TypeUtils.mergeTypes(advisedType, formalType);
+        return readTypeAdvisedValueAfterType(gson, in, ctx, type);
     }
 
-    public static Class readTypeAdvice(JsonReader in) throws IOException {
+    public static Type readTypeAdvice(JsonReader in) throws IOException {
         in.beginObject();
         if (!in.hasNext()) {
             throw new JsonSyntaxException("BEGIN_OBJECT is not expected at path " + in.getPath());
         }
         String name = in.nextName();
         if (!name.equals("@type")) {
-            throw new JsonSyntaxException("BEGIN_OBJECT is not expected at path " + in.getPath());
+            throw new JsonSyntaxException("@type is expected at path " + in.getPath());
         }
         return readTypeAdviceAfterTypeField(in);
     }
 
-    public static Class readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
+    private static final WildcardType unknownType = $Gson$Types.subtypeOf(Object.class);
+
+    public static Type readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
         // Check whether next tokens are type advise, fail if not
         String advisedTypeStr = in.nextString();
-        Class valueType;
+        String advisedClassStr = advisedTypeStr;
+
+        int i = advisedTypeStr.indexOf('<');
+        if (i >= 0) {
+            if (!advisedTypeStr.endsWith(">")) {
+                throw new JsonSyntaxException("Incorrect advised type: '" + advisedTypeStr + "'");
+            }
+            advisedClassStr = advisedTypeStr.substring(0, i).trim();
+
+            String parametersStr = advisedTypeStr.substring(i+ 1, advisedTypeStr.length() - 1).trim();
+            String[] parameters = parametersStr.split(",");
+            Type[] parameterTypes = new Type[parameters.length];
+            boolean hasParameterTypes = false;
+            for (int j = 0; j < parameters.length; j++) {
+                Type type = toType(parameters[j].trim());
+                parameterTypes[j] = type;
+                if (type != unknownType) {
+                    hasParameterTypes = true;
+                }
+            }
+
+            if (hasParameterTypes) {
+                Class advisedClass = (Class) toType(advisedClassStr);
+                return $Gson$Types.newParameterizedTypeWithOwner(advisedClass.getEnclosingClass(), advisedClass, parameterTypes);
+            }
+        }
+        Type valueType = toType(advisedClassStr);
+        return valueType;
+    }
+
+    private static Type toType(String name) {
+        if (name.equals("?")) {
+            return unknownType;
+        }
         try {
-            valueType = Class.forName(advisedTypeStr);
+            return Class.forName(name);
         } catch (ClassNotFoundException e) {
             throw new JsonSyntaxException("Missing class specified in @type info", e);
         }
-
-        return valueType;
     }
 
     public static void consumeValueField(JsonReader in) throws IOException {
@@ -107,12 +142,12 @@ public class TypeUtils {
         }
     }
 
-    private static <T> T readTypeAdvisedValueAfterType(Gson context, JsonReader in, ReferencesReadContext rctx,
+    private static <T> T readTypeAdvisedValueAfterType(Gson context, JsonReader in, ReadContext ctx,
                                                        Type valueType) throws IOException {
         consumeValueField(in);
 
         // use actual type adapter instead of delegate
-        T result = (T) context.getAdapter(TypeToken.get(valueType)).read(in, rctx);
+        T result = (T) context.getAdapter(TypeToken.get(valueType)).read(in, ctx);
 
         in.endObject();
         return result;
@@ -142,10 +177,36 @@ public class TypeUtils {
      * @return whether the root type information is necessary
      */
     public static boolean isTypeInfoRequired(Class<?> actualClass, Type deserializationType, boolean isMapKey) {
-        if (isDefaultDeserializationClass(actualClass, deserializationType, isMapKey)) {
+        boolean isEnumSet = EnumSet.class.isAssignableFrom(actualClass);
+        boolean isEnumCollection = isEnumSet || EnumMap.class.isAssignableFrom(actualClass);
+        if (isEnumCollection) {
+            // for EnumSet and EnumMap additionally check that the enum element type is specified in the deserialization type
+            // also, consider RegularEnumSet and JumboEnumSet to be the default deserializaton classes for EnumSet
+            if (deserializationType == null) {
+                return true;
+            }
+            Class<?> rawType = $Gson$Types.getRawType(deserializationType);
+
+            Type enumType = isEnumSet ? $Gson$Types.getCollectionElementType(deserializationType, rawType) :
+                    $Gson$Types.getMapKeyAndValueTypes(deserializationType, rawType)[0];
+            if (enumType == null || !$Gson$Types.getRawType(enumType).isEnum()) {
+                return true;
+            }
+            if (isEnumSet) {
+                // EnumSet may be extended only by same-package classes, i.e. RegularEnumSet and JumboEnumSet
+                // The implementation class is chosen automatically, so no specification required
+                return !EnumSet.class.isAssignableFrom(rawType);
+            } else {
+                // EnumMap may potentially be extended
+                return typesDiffer(deserializationType, actualClass);
+            }
+        } else if (isDefaultDeserializationClass(actualClass, deserializationType, isMapKey)) {
             return false;
         } else if (deserializationType == null) {
             return true;
+        } else if (Enum.class.isAssignableFrom(actualClass) && $Gson$Types.getRawType(deserializationType).isEnum()) {
+            // ignore synthetic enum classes generated for the enum values with overridden methods
+            return false;
         } else {
             return typesDiffer(deserializationType, actualClass);
         }
@@ -188,6 +249,7 @@ public class TypeUtils {
             // check some common collection cases (only the most common)
             // MUST be in sync with ConstructorConstructor.newDefaultImplementationConstructor() && ObjectTypeAdapter
             Class<?> rawType = $Gson$Types.getRawType(deserializationType);
+
             if (actualClass == ArrayList.class &&
                     (rawType == Object.class || rawType == Collection.class || rawType == List.class)) {
                 return true;
@@ -197,14 +259,100 @@ public class TypeUtils {
         return false;
     }
 
-    public static <T> void writeTypeWrapperAndValue(JsonWriter out, T value, TypeAdapter adapter,
-                                                    ReferencesWriteContext rctx) throws IOException {
+    public static void writeTypeWrapperAndValue(JsonWriter out, Object value, TypeAdapter adapter,
+                                                    WriteContext ctx) throws IOException {
         out.beginObject();
-        out.name("@type");
-        out.value(value.getClass().getName());
+        adapter = writeTypeAndUpdateAdapterForValue("@type", out, value, adapter, ctx);
         out.name("@val");
-        adapter.write(out, value, rctx);
+        adapter.write(out, value, ctx);
         out.endObject();
+    }
+
+    public static TypeAdapter writeVTypeInfoAndUpdateAdapterForValue(JsonWriter out, Object value, TypeAdapter adapter,
+                                                    WriteContext ctx) throws IOException {
+        return writeTypeAndUpdateAdapterForValue("@vtype", out, value, adapter, ctx);
+    }
+
+    public static Field findField(Class declaringClass, String fieldName) {
+        try {
+            Field f = declaringClass.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            return f;
+        } catch (NoSuchFieldException e) {
+            throw new IllegalStateException("Field '" + fieldName + "' is not found in " + declaringClass, e);
+        }
+    }
+
+    public static <T> T getField(Field f, Object instance) {
+        try {
+            return (T) f.get(instance);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Failed to obtain the value of field " + f + " from object " + instance, e);
+        }
+    }
+
+    private static final Field enumSetElementTypeField = findField(EnumSet.class, "elementType");
+    private static final Field enumMapKeyTypeField = findField(EnumMap.class, "keyType");
+
+    public static TypeAdapter writeTypeAndUpdateAdapterForValue(String typeLabel, JsonWriter out, Object value,
+                                                                TypeAdapter adapter, WriteContext ctx) throws IOException {
+        out.name(typeLabel);
+        Class<?> actualClass = value.getClass();
+        String parameterTypes = "";
+        if (EnumSet.class.isAssignableFrom(actualClass)) {
+            Class<? extends Enum> enumClass = getField(enumSetElementTypeField, value);
+            // change the written class to EnumSet (from RegularEnumSet/JumboEnumSet)
+            actualClass = EnumSet.class;
+            // write parameter for EnumSet type
+            parameterTypes = "<" + enumClass.getName() + ">";
+            // replace the used adapter for the one with known element type
+            Type enumSetType = $Gson$Types.newParameterizedTypeWithOwner(null, actualClass, enumClass);
+            adapter = ctx.getGson().getAdapter(TypeToken.get(enumSetType));
+        } else if (EnumMap.class.isAssignableFrom(actualClass)) {
+            Class<? extends Enum> enumClass = getField(enumMapKeyTypeField, value);
+            if (EnumMap.class.equals(enumClass)) {
+                parameterTypes = "<" + enumClass.getName() + ",?>";
+            } else {
+                // the parameters may be overridden in subclasses
+                // print the parameters, only if the enum (key) type is still present in the parameters lists of the actuall class
+                TypeVariable[] actualClassTypeVariables = actualClass.getTypeParameters();
+                TypeVariable mapKeyTypeVar = EnumMap.class.getTypeParameters()[0];
+                int mapKeyTypeVarIdx = indexOfInheritedTypeVariable(mapKeyTypeVar, EnumMap.class, actualClass);
+                if (mapKeyTypeVarIdx >= 0) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("<");
+                    for (int i = 0; i < actualClassTypeVariables.length; i++) {
+                        TypeVariable actualClassTypeVariable = actualClassTypeVariables[i];
+                        if (i == mapKeyTypeVarIdx) {
+                            sb.append(enumClass.getName());
+                        } else {
+                            sb.append('?');
+                        }
+                        sb.append(',');
+                    }
+                    sb.setCharAt(sb.length() - 1, '>'); // delete last ',' and add '>'
+                    parameterTypes = sb.toString();
+
+                    TypeAdapter resolvedAdapter = AdapterUtils.resolve(adapter, value);
+                    if (resolvedAdapter instanceof MapTypeAdapterFactory.Adapter) {
+                        Type formalMapType = ((MapTypeAdapterFactory.Adapter) resolvedAdapter).getFormalMapType();
+                        Type[] typeArgsWithExactKeyType = new Type[actualClassTypeVariables.length];
+                        Arrays.fill(typeArgsWithExactKeyType, unknownType);
+                        typeArgsWithExactKeyType[mapKeyTypeVarIdx] = enumClass;
+
+                        Type mergedMapType = mergeTypes(
+                                $Gson$Types.newParameterizedTypeWithOwner(actualClass.getEnclosingClass(), actualClass, typeArgsWithExactKeyType),
+                                formalMapType);
+                        adapter = ctx.getGson().getAdapter(TypeToken.get(mergedMapType));
+                    }
+                } else {
+                    // key type is already fixed in subtypes, so do not print params
+                }
+            }
+        }
+        out.value(actualClass.getName() + parameterTypes);
+
+        return adapter;
     }
 
     /**
@@ -310,62 +458,131 @@ public class TypeUtils {
     }
 
     /**
-     * If possible, enriches the raw class type with the type parameters obtained from the super type
-     * information.
+     * Merges the exact raw type and optional parameter types information from the formal type (which should be
+     * same type or one of the supertypes) into a single type.
+     * If the parameter types are present, the resulting type is {@link ParameterizedType}, otherwise it is the
+     * raw type (i.e. Class).
      * <p/>
-     * For example, if rawType is {@code HashMap.class} and the super-type is {@code Map&lt;String, String&gt;},
-     * this method shall create and return the type of {@code HashMap&lt;String, String&gt;}
+     * The raw type is always taken from rawTypeSource, the parameter types may be taken from both sources and
+     * then merged.
+     * <p/>
+     * Used to enrich the raw class (mostly from advised type information) with the type parameters available in
+     * the formal deserizalization type. For example, if the advised type is {@code HashMap.class} and the formal
+     * type is {@code Map&lt;String, String&gt;}, this method shall create and return the type of
+     * {@code HashMap&lt;String, String&gt;}
      *
-     * @param rawType the raw class type
-     * @param superType the type which is a super (or same level) type to the raw class type
+     * @param rawTypeSource the source of the raw class type, with optional parameter types
+     * @param parametersTypesSource the type which is used as a source of the parameter types
      *
-     * @return the raw type enriched with the parameter types obtained from the super-type if possible, or
+     * @return the result of merging both types, with a raw type equal to {@code rawTypeSource.} which raw tyraw type enriched with the parameter types obtained from the super-type if possible, or
      * the rawType otherwise
      */
-    public static Type getParameterizedType(Class<?> rawType, Type superType) {
-        if (superType == null || !(superType instanceof ParameterizedType)) {
-            return rawType;
+    public static Type mergeTypes(Type rawTypeSource, Type parametersTypesSource) {
+        if (parametersTypesSource == null || !(parametersTypesSource instanceof ParameterizedType)) {
+            return rawTypeSource;
         }
+        Class rawType = $Gson$Types.getRawType(rawTypeSource);
         TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
         if (typeParameters.length == 0) {
             // no parameter types
-            return rawType;
+            return rawTypeSource;
         }
-        ParameterizedType parameterizedSuperType = (ParameterizedType) superType;
-        Class<?> rawSuperType = $Gson$Types.getRawType(parameterizedSuperType.getRawType());
-        if (!rawSuperType.isAssignableFrom(rawType)) {
+        ParameterizedType parametersSource = (ParameterizedType) parametersTypesSource;
+        Class<?> parametersSourceRawType = $Gson$Types.getRawType(parametersSource.getRawType());
+        if (!parametersSourceRawType.isAssignableFrom(rawType)) {
             // illegal use - superType is not a super type for the raw type
-            return rawType;
+            return rawTypeSource;
         }
 
-        if (rawType == rawSuperType) {
-            return parameterizedSuperType;
+        if (rawTypeSource == parametersSourceRawType) {
+            return parametersTypesSource;
         }
+
+        // if rawTypeSource is ParameterizedType too, use it as an additional parameters source
+        ParameterizedType extraParametersSource = rawTypeSource instanceof ParameterizedType ?
+                (ParameterizedType)rawTypeSource : null;
 
         Type[] resolvedTypeArgs = new Type[typeParameters.length];
         for (int i = 0; i < typeParameters.length; i++) {
             TypeVariable<?> typeVar = typeParameters[i];
-            Collection<Type> lookupSuperTypes = getSuperTypes(rawType);
-            Type resolvedType = lookupTypeArg(typeVar, lookupSuperTypes, parameterizedSuperType);
+            Collection<Type> lookupSuperTypes = getGenericSuperTypes(rawType);
+            Type resolvedType = lookupTypeArg(typeVar, lookupSuperTypes, parametersSource);
+            if (extraParametersSource != null && (resolvedType == null ||
+                    resolvedType instanceof WildcardType || resolvedType instanceof TypeVariable)) {
+                // prefer alternative parameters source
+                resolvedType = extraParametersSource.getActualTypeArguments()[i];
+            }
             resolvedTypeArgs[i] = resolvedType == null ? typeVar : resolvedType;
         }
 
-        return $Gson$Types.newParameterizedTypeWithOwner(rawType.getDeclaringClass(), rawType, resolvedTypeArgs);
+        return $Gson$Types.newParameterizedTypeWithOwner(rawType.getEnclosingClass(), rawType, resolvedTypeArgs);
     }
 
-    private static Collection<Type> getSuperTypes(Class<?> rawType) {
+    private static Collection<Type> getGenericSuperTypes(Class<?> rawType) {
         Type[] genericInterfaces = rawType.getGenericInterfaces();
         Type genericSuperclass = rawType.getGenericSuperclass();
 
         List<Type> superTypes = new ArrayList<Type>(genericInterfaces.length + 1);
-        superTypes.addAll(Arrays.asList(genericInterfaces));
         if (genericSuperclass != null) {
             superTypes.add(genericSuperclass);
         }
+        superTypes.addAll(Arrays.asList(genericInterfaces));
         return superTypes;
     }
 
-    private static Type lookupTypeArg(TypeVariable<?> typeVar, Collection<Type> lookupSuperTypes,
+    public static int indexOfInheritedTypeVariable(TypeVariable superTypeVar, Class rawSuperType, Class inheritedClass) {
+        // build the inheritance chain of supertypes, ending on the generic version of supertype
+        List<Type> inheritanceChain = new ArrayList<Type>();
+        fillGenericInheritanceChain(inheritanceChain, rawSuperType, inheritedClass);
+
+        // iterate the chain in the reverse order, matching the interested type variable on each step
+        Collections.reverse(inheritanceChain);
+        TypeVariable var = superTypeVar;
+        for (Type t : inheritanceChain) {
+            if (!(t instanceof ParameterizedType)) {
+                return -1;
+            }
+
+            TypeVariable[] typeVariables = $Gson$Types.getRawType(t).getTypeParameters();
+            int matchedVarIdx = findTypeVariableIndex(var, typeVariables);
+            assert matchedVarIdx >= 0 : "Missing typeVar " + var + " in " + t;
+
+            Type[] typeArguments = ((ParameterizedType) t).getActualTypeArguments();
+            Type matchedTypeArg = typeArguments[matchedVarIdx];
+            if (!(matchedTypeArg instanceof TypeVariable)) {
+                // resolved to non-variable, hence not present in the inherited class
+                return -1;
+            }
+            // continue on the one type level down
+            var = (TypeVariable)matchedTypeArg;
+        }
+
+        return findTypeVariableIndex(var, inheritedClass.getTypeParameters());
+    }
+
+    private static int findTypeVariableIndex(TypeVariable typeVarToFind, TypeVariable[] typeVariables) {
+        for (int i = 0; i < typeVariables.length; i++) {
+            if (typeVarToFind == typeVariables[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static void fillGenericInheritanceChain(List<Type> inheritanceChain, Class superType, Class inheritedClass) {
+        for (Type t : getGenericSuperTypes(inheritedClass)) {
+            Class c = $Gson$Types.getRawType(t);
+            if (superType.isAssignableFrom(c)) {
+                inheritanceChain.add(t);
+                if (c != superType) {
+                    fillGenericInheritanceChain(inheritanceChain, superType, c);
+                }
+                break;
+            }
+        }
+    }
+
+    public static Type lookupTypeArg(TypeVariable<?> typeVar, Collection<Type> lookupSuperTypes,
                                       ParameterizedType knownParameterizedSuperType) {
         for (Type lookupType : lookupSuperTypes) {
             if (lookupType instanceof ParameterizedType) {
@@ -390,7 +607,7 @@ public class TypeUtils {
                 }
 
                 // else continue lookup on a higher level
-                Type resolved = lookupTypeArg(rawLookupType.getTypeParameters()[foundIdx], getSuperTypes(rawLookupType),
+                Type resolved = lookupTypeArg(rawLookupType.getTypeParameters()[foundIdx], getGenericSuperTypes(rawLookupType),
                         knownParameterizedSuperType);
                 if (resolved != null) {
                     return resolved;
@@ -449,4 +666,26 @@ public class TypeUtils {
     public static Iterable<Class<?>> classes(Class<?>...classes) {
         return Arrays.asList(classes);
     }
+
+    public static void initEnumMapKeyType(EnumMap<?,?> instance, Class<?> keyType) {
+        if (!keyType.isEnum()) {
+            throw new JsonSyntaxException("Only enum keys are allowed for EnumMap, but got " + keyType);
+        }
+        EnumMap otherInstance = new EnumMap(keyType);
+        copyFields(instance, otherInstance, EnumMap.class, "keyType", "keyUniverse", "vals");
+    }
+
+    private static void copyFields(Object to, Object from, Class<?> declaringClass, String...fieldNames) {
+        for (String fname : fieldNames) {
+            try {
+                Field f = declaringClass.getDeclaredField(fname);
+                f.setAccessible(true);
+                f.set(to, f.get(from));
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to initialize field " + fname + " of " + declaringClass);
+            }
+        }
+    }
+
+
 }

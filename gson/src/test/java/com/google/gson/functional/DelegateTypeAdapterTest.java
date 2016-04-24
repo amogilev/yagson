@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import junit.framework.TestCase;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -78,15 +78,15 @@ public class DelegateTypeAdapterTest extends TestCase {
       final TypeAdapter<T> delegate = gson.getDelegateAdapter(this, type);
       return new TypeAdapter<T>() {
         @Override
-        public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
+        public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
           ++numWrites;
-          delegate.write(out, value, rctx);
+          delegate.write(out, value, ctx);
         }
 
         @Override
-        public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+        public T read(JsonReader in, ReadContext ctx) throws IOException {
           ++numReads;
-          return delegate.read(in, rctx);
+          return delegate.read(in, ctx);
         }
       };
     }

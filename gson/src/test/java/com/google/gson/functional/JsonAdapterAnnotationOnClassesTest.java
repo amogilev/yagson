@@ -16,8 +16,8 @@
 
 package com.google.gson.functional;
 
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -37,7 +37,6 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Calendar;
 import java.util.Locale;
 
 import junit.framework.TestCase;
@@ -203,7 +202,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
     }
   }
   private static class UserJsonAdapter extends TypeAdapter<User> {
-    @Override public void write(JsonWriter out, User user, ReferencesWriteContext rctx) throws IOException {
+    @Override public void write(JsonWriter out, User user, WriteContext ctx) throws IOException {
       // implement write: combine firstName and lastName into name
       out.beginObject();
       out.name("name");
@@ -213,9 +212,9 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
     }
 
     @Override
-    public User read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+    public User read(JsonReader in, ReadContext ctx) throws IOException {
       User value = read(in);
-      rctx.registerObject(value);
+      ctx.registerObject(value);
       return value;
     }
 

@@ -7,10 +7,13 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.*;
-import am.yagson.types.AdapterUtils;
 
 import com.google.gson.*;
+import com.google.gson.internal.bind.AdapterUtils;
+import com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -43,38 +46,31 @@ public class ReferencesAllDuplicatesModeContext {
     }
 
 
-    class WriteContext implements ReferencesWriteContext {
+    class RefsWriteContext implements ReferencesWriteContext {
         protected IdentityHashMap<Object, String> references = new IdentityHashMap<Object, String>();
         protected Deque<Object> currentObjects = new ArrayDeque<Object>(); // used only for self-checks
 
-        public WriteContext(Object root) {
-            startObject(root, REF_ROOT);
+        public RefsWriteContext(Object root) {
+            init();
+            if (root != null) {
+                startObject(root, REF_ROOT);
+            }
+        }
+
+        // inits subclasses (before constructor completion)
+        protected void init() {
         }
 
         /**
-         * Returns non-null reference path if the object was already visited
-         * during serialization in the current context, or saves the object as
-         * visited and returns null.
+         * Saves the object for the further possible references.
          *
          * @param value the object to be serialized next
-         * @param pathElement the element corresponding to teh object in the references path
-         *
-         * @return null if object needs to be serialized in a regular way, or a reference path
-         *    if it is already visited and so the returned reference shall be used instead
+         * @param pathElement the element corresponding to the object in the references path
          */
-        protected String startObject(Object value, String pathElement) {
-            if (value != null) {
-                String ref = references.get(value);
-                if (ref != null) {
-                    return ref;
-                }
-
-                currentObjects.addLast(value);
-                currentPathElements.addLast(pathElement);
-                references.put(value, getCurrentReference());
-            }
-
-            return null;
+        protected void startObject(Object value, String pathElement) {
+            currentObjects.addLast(value);
+            currentPathElements.addLast(pathElement);
+            references.put(value, getCurrentReference());
         }
 
         /**
@@ -93,35 +89,49 @@ public class ReferencesAllDuplicatesModeContext {
             }
         }
 
-        public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {
-            if (value == null || AdapterUtils.isSimpleTypeAdapter(valueTypeAdapter)) {
-                // avoid creating references to simple types even in "all duplicates" mode
-                return valueTypeAdapter.toJsonTree(value, this);
+        protected final <T> boolean isPotentialReference(T value, TypeAdapter<T> valueTypeAdapter) {
+            // avoid creating references to simple types even in "all duplicates" mode
+            return value != null && !AdapterUtils.isSimpleTypeAdapter(valueTypeAdapter);
+        }
+
+        public <T> String getReferenceFor(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {
+            if (!isPotentialReference(value, valueTypeAdapter)) {
+                return null;
             }
 
-            String ref = startObject(value, pathElement);
+            return references.get(value);
+        }
+
+        public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement,
+                                            WriteContext ctx) {
+            String ref = getReferenceFor(value, valueTypeAdapter, pathElement);
             if (ref != null) {
                 return makeReferenceElement(ref);
-            } else {
-                JsonElement el = valueTypeAdapter.toJsonTree(value, this);
+            } else if (isPotentialReference(value, valueTypeAdapter)) {
+                startObject(value, pathElement);
+                JsonElement el = valueTypeAdapter.toJsonTree(value, ctx);
                 endObject(value);
                 return el;
+            } else {
+                return valueTypeAdapter.toJsonTree(value, ctx);
             }
         }
 
-        public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter, String pathElement, JsonWriter out) throws IOException {
-            if (value == null || AdapterUtils.isSimpleTypeAdapter(valueTypeAdapter)) {
-                // avoid creating references to simple types even in "all duplicates" mode
-                valueTypeAdapter.write(out, value, this);
-                return;
-            }
+        public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter, String pathElement, JsonWriter out,
+                                WriteContext ctx) throws IOException {
 
-            String ref = startObject(value, pathElement);
+            // resolve required for correct check of isSimple (i.e. if isPotentialReference)
+            valueTypeAdapter = AdapterUtils.resolve(valueTypeAdapter, value);
+
+            String ref = getReferenceFor(value, valueTypeAdapter, pathElement);
             if (ref != null) {
                 out.value(ref);
-            } else {
-                valueTypeAdapter.write(out, value, this);
+            } else if (isPotentialReference(value, valueTypeAdapter)) {
+                startObject(value, pathElement);
+                valueTypeAdapter.write(out, value, ctx);
                 endObject(value);
+            } else {
+                valueTypeAdapter.write(out, value, ctx);
             }
         }
 
@@ -135,13 +145,13 @@ public class ReferencesAllDuplicatesModeContext {
     }
 
 
-    class ReadContext implements ReferencesReadContext {
+    class RefsReadContext implements ReferencesReadContext {
 
         protected boolean awaitsObjectRead = false;
         protected ReferencePlaceholder<?> lastReadPlaceholder = null;
         protected Map<String, Object> objectsByReference = new HashMap<String, Object>();
 
-        public ReadContext() {
+        public RefsReadContext() {
             currentPathElements.add(REF_ROOT);
             awaitsObjectRead = true;
         }
@@ -198,9 +208,10 @@ public class ReferencesAllDuplicatesModeContext {
             return value;
         }
 
-        public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement) throws IOException {
+        public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement,
+                            ReadContext ctx) throws IOException {
             beforeObjectRead(pathElement);
-            T fieldValue = typeAdapter.read(reader, this);
+            T fieldValue = typeAdapter.read(reader, ctx);
             if (fieldValue == null) {
                 // registerObject is skipped for nulls in most cases, so clear 'awaits' flag
                 awaitsObjectRead = false;

@@ -24,17 +24,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.PlaceholderUse;
 import am.yagson.refs.ReferencePlaceholder;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
 
 import am.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.internal.$Gson$Types;
-import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -73,11 +72,11 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   @SuppressWarnings("unchecked")
   @Override
   protected Object readOptionallyAdvisedInstance(Object advisedInstance, JsonReader in,
-                                                 ReferencesReadContext rctx) throws IOException {
+                                                 ReadContext ctx) throws IOException {
 
     List<E> list = new ArrayList<E>();
 
-    ReferencePlaceholder<E[]> arrayPlaceholder = new ReferencePlaceholder<E[]>(arrayType);
+    ReferencePlaceholder<E[]> arrayPlaceholder = new ReferencePlaceholder<E[]>();
     final AtomicReference<E[]> futureArray = new AtomicReference<E[]>();
 
     // PROBLEM: we should register the created array instance before reading the element,
@@ -89,12 +88,12 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     // where this reference is used, a PlaceholderUse is created and registered. When the
     // final array object is created, it is sent to all registered uses, which insert it
     // into the places of use.
-    rctx.registerObject(arrayPlaceholder);
+    ctx.registerObject(arrayPlaceholder);
 
     Class advisedComponentType = null;
     boolean hasTypeAdvise = false;
     if (in.peek() == JsonToken.BEGIN_OBJECT) {
-      Class typeAdvise = TypeUtils.readTypeAdvice(in);
+      Class typeAdvise = $Gson$Types.getRawType(TypeUtils.readTypeAdvice(in));
       if (typeAdvise.isArray()) {
         advisedComponentType = typeAdvise.getComponentType();
       }
@@ -108,9 +107,9 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     for (int i = 0; in.hasNext(); i++) {
       ReferencePlaceholder<E> elementPlaceholder;
 
-      E instance = rctx.doRead(in, componentTypeAdapter, Integer.toString(i));
+      E instance = ctx.doRead(in, componentTypeAdapter, Integer.toString(i));
 
-      if (instance == null && ((elementPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null)) {
+      if (instance == null && ((elementPlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null)) {
         final int fi = i;
         elementPlaceholder.registerUse(new PlaceholderUse<E>() {
           public void applyActualObject(E actualObject) {
@@ -139,7 +138,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   }
 
   @SuppressWarnings("unchecked")
-  @Override public void write(JsonWriter out, Object array, ReferencesWriteContext rctx) throws IOException {
+  @Override public void write(JsonWriter out, Object array, WriteContext ctx) throws IOException {
     if (array == null) {
       out.nullValue();
       return;
@@ -148,7 +147,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     out.beginArray();
     for (int i = 0, length = Array.getLength(array); i < length; i++) {
       E value = (E) Array.get(array, i);
-      rctx.doWrite(value, componentTypeAdapter, Integer.toString(i), out);
+      ctx.doWrite(value, componentTypeAdapter, Integer.toString(i), out);
     }
     out.endArray();
   }

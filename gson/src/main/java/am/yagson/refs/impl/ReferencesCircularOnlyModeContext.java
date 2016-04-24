@@ -13,8 +13,8 @@ public class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesMo
   
   static ReferencesPolicy policy = ReferencesPolicy.CIRCULAR_ONLY;
   
-  class WriteContext extends ReferencesAllDuplicatesModeContext.WriteContext {
-    public WriteContext(Object root) {
+  class RefsWriteContext extends ReferencesAllDuplicatesModeContext.RefsWriteContext {
+    public RefsWriteContext(Object root) {
       super(root);
     }
 
@@ -32,7 +32,7 @@ public class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesMo
     }
   }
   
-  class ReadContext extends ReferencesAllDuplicatesModeContext.ReadContext {
+  class RefsReadContext extends ReferencesAllDuplicatesModeContext.RefsReadContext {
 
     @Override
     public ReferencesPolicy getPolicy() {

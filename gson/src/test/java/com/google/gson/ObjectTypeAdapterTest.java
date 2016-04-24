@@ -20,6 +20,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import am.yagson.WriteContext;
+import am.yagson.refs.References;
+import am.yagson.refs.ReferencesPolicy;
 import junit.framework.TestCase;
 
 public final class ObjectTypeAdapterTest extends TestCase {
@@ -34,15 +38,19 @@ public final class ObjectTypeAdapterTest extends TestCase {
     assertEquals(3, map.size());
   }
 
+  private WriteContext wctx(Object root) {
+    return WriteContext.create(gson, References.defaultPolicy(), root);
+  }
+
   public void testSerialize() throws Exception {
     Object object = new RuntimeType();
-    assertEquals("{'a':5,'b':[1,2,null]}", adapter.toJson(object).replace("\"", "'"));
+    assertEquals("{'a':5,'b':[1,2,null]}", adapter.toJson(object, wctx(object)).replace("\"", "'"));
   }
   
   public void testSerializeNullValue() throws Exception {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     map.put("a", null);
-    assertEquals("{'a':null}", adapter.toJson(map).replace('"', '\''));
+    assertEquals("{'a':null}", adapter.toJson(map, wctx(map)).replace('"', '\''));
   }
 
   public void testDeserializeNullValue() throws Exception {
@@ -52,7 +60,7 @@ public final class ObjectTypeAdapterTest extends TestCase {
   }
 
   public void testSerializeObject() throws Exception {
-    assertEquals("{}", adapter.toJson(new Object()));
+    assertEquals("{}", adapter.toJson(new Object(), wctx(null)));
   }
 
   @SuppressWarnings("unused")

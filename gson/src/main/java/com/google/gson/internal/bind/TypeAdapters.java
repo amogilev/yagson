@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
@@ -77,10 +77,10 @@ public final class TypeAdapters {
   };
 
   @SuppressWarnings("rawtypes")
-  public static final TypeAdapter<Class> CLASS_NEW = new TypeAdapter<Class>() {
+  public static final TypeAdapter<Class> CLASS_NEW = new SimpleTypeAdapter<Class>() {
 
     @Override
-    public void write(JsonWriter out, Class value, ReferencesWriteContext rctx) throws IOException {
+    public void write(JsonWriter out, Class value) throws IOException {
       if (value == null) {
         out.nullValue();
       } else {
@@ -89,22 +89,16 @@ public final class TypeAdapters {
     }
 
     @Override
-    public Class read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+    public Class read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
         in.nextNull();
         return null;
       } else {
         String str = in.nextString();
-        if (rctx.isReferenceString(str)) {
-          return rctx.getReferencedObject(str);
-        } else {
-          try {
-            Class c = Class.forName(str);
-            rctx.registerObject(c);
-            return c;
-          } catch (ClassNotFoundException e) {
-            throw new JsonSyntaxException("Missing class", e);
-          }
+        try {
+          return Class.forName(str);
+        } catch (ClassNotFoundException e) {
+          throw new JsonSyntaxException("Missing class", e);
         }
       }
     }
@@ -554,13 +548,13 @@ public final class TypeAdapters {
 
       final TypeAdapter<Date> dateTypeAdapter = gson.getAdapter(Date.class);
       return (TypeAdapter<T>) new TypeAdapter<Timestamp>() {
-        @Override public Timestamp read(JsonReader in, ReferencesReadContext rctx) throws IOException {
-          Date date = dateTypeAdapter.read(in, rctx);
+        @Override public Timestamp read(JsonReader in, ReadContext ctx) throws IOException {
+          Date date = dateTypeAdapter.read(in, ctx);
           return date != null ? new Timestamp(date.getTime()) : null;
         }
 
-        @Override public void write(JsonWriter out, Timestamp value, ReferencesWriteContext rctx) throws IOException {
-          dateTypeAdapter.write(out, value, rctx);
+        @Override public void write(JsonWriter out, Timestamp value, WriteContext ctx) throws IOException {
+          dateTypeAdapter.write(out, value, ctx);
         }
       };
     }
@@ -575,9 +569,9 @@ public final class TypeAdapters {
     private static final String SECOND = "second";
 
     @Override
-    public Calendar read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+    public Calendar read(JsonReader in, ReadContext ctx) throws IOException {
       Calendar value = read(in);
-      rctx.registerObject(value);
+      ctx.registerObject(value);
       return value;
     }
 
@@ -615,7 +609,7 @@ public final class TypeAdapters {
     }
 
     @Override
-    public void write(JsonWriter out, Calendar value, ReferencesWriteContext rctx) throws IOException {
+    public void write(JsonWriter out, Calendar value, WriteContext ctx) throws IOException {
       if (value == null) {
         out.nullValue();
         return;
@@ -680,9 +674,9 @@ public final class TypeAdapters {
   public static final TypeAdapter<JsonElement> JSON_ELEMENT = new TypeAdapter<JsonElement>() {
 
     @Override
-    public JsonElement read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+    public JsonElement read(JsonReader in, ReadContext ctx) throws IOException {
       JsonElement value = read(in);
-      rctx.registerObject(value);
+      ctx.registerObject(value);
       return value;
     }
 
@@ -727,7 +721,11 @@ public final class TypeAdapters {
       }
     }
 
-    @Override public void write(JsonWriter out, JsonElement value, ReferencesWriteContext rctx) throws IOException {
+    /**
+     * {@inheritDoc}
+     * @param ctx WriteContext is not used for writing JsonElements, so may be null
+     */
+    @Override public void write(JsonWriter out, JsonElement value, WriteContext ctx) throws IOException {
       if (value == null || value.isJsonNull()) {
         out.nullValue();
       } else if (value.isJsonPrimitive()) {
@@ -743,7 +741,7 @@ public final class TypeAdapters {
       } else if (value.isJsonArray()) {
         out.beginArray();
         for (JsonElement e : value.getAsJsonArray()) {
-          write(out, e, rctx);
+          write(out, e, null);
         }
         out.endArray();
 
@@ -751,7 +749,7 @@ public final class TypeAdapters {
         out.beginObject();
         for (Map.Entry<String, JsonElement> e : value.getAsJsonObject().entrySet()) {
           out.name(e.getKey());
-          write(out, e.getValue(), rctx);
+          write(out, e.getValue(), null);
         }
         out.endObject();
 

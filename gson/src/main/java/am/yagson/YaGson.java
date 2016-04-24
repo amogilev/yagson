@@ -75,9 +75,10 @@ public class YaGson extends Gson {
         super(Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy()),
                 FieldNamingPolicy.IDENTITY,
                 Collections.<Type, InstanceCreator<?>>emptyMap(), false,
-                TypeInfoPolicy.defaultPolicy().isEnabled() ? true : false,
+                TypeInfoPolicy.defaultPolicy().isEnabled(),
                 DEFAULT_JSON_NON_EXECUTABLE,
-                true, false, false, LongSerializationPolicy.DEFAULT,
+                !TypeInfoPolicy.defaultPolicy().isEnabled(), // disable htmlSafe if types are printed
+                false, false, LongSerializationPolicy.DEFAULT,
                 Collections.<TypeAdapterFactory>emptyList(),
                 References.defaultPolicy(), TypeInfoPolicy.defaultPolicy());
     }
@@ -200,7 +201,7 @@ public class YaGson extends Gson {
 
         // use the exact source class for serialization, but try to keep the type parameters if available in
         // the specified deserialization type
-        Type parameterizedSrcType = TypeUtils.getParameterizedType(src.getClass(), deserializationType);
+        Type parameterizedSrcType = TypeUtils.mergeTypes(src.getClass(), deserializationType);
         super.toJson(src, parameterizedSrcType, writer, isRootTypeRequired);
     }
 

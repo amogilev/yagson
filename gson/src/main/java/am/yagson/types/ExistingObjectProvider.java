@@ -17,4 +17,8 @@ public class ExistingObjectProvider<T> implements ObjectProvider<T> {
     public T get() {
         return instance;
     }
+
+    public static <E> ObjectProvider<E> of(E instance) {
+        return new ExistingObjectProvider<E>(instance);
+    }
 }

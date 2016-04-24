@@ -14,12 +14,15 @@ public class ReferencePlaceholder<T> {
 
     private T actualObject;
 
-    private List<PlaceholderUse<? extends T>> registeredUses = new ArrayList<PlaceholderUse<? extends T>>();
+    private List<PlaceholderUse<? extends T>> registeredUses;
 
-    public ReferencePlaceholder(Class<T> expectedActualObjectClass) {
+    public ReferencePlaceholder() {
     }
 
     public void registerUse(PlaceholderUse<? extends T> pu) {
+        if (registeredUses == null) {
+            registeredUses = new ArrayList<PlaceholderUse<? extends T>>();
+        }
         registeredUses.add(pu);
     }
 
@@ -30,8 +33,15 @@ public class ReferencePlaceholder<T> {
     @SuppressWarnings("unchecked")
     public void applyActualObject(T actualObject) throws IOException {
         this.actualObject = actualObject;
-        for (PlaceholderUse pu : registeredUses) {
-            pu.applyActualObject(actualObject);
+        if (registeredUses != null) {
+            for (PlaceholderUse pu : registeredUses) {
+                pu.applyActualObject(actualObject);
+            }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ReferencePlaceholder{}";
     }
 }

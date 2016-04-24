@@ -7,11 +7,11 @@ import am.yagson.refs.ReferencesWriteContext;
 public class ReferencesCircularOnlyModeContextFactory implements ReferencesContextFactory {
 
   public ReferencesReadContext createReadContext() {
-    return new ReferencesCircularOnlyModeContext().new ReadContext();
+    return new ReferencesCircularOnlyModeContext().new RefsReadContext();
   }
 
   public ReferencesWriteContext createWriteContext(Object root) {
-    return new ReferencesCircularOnlyModeContext().new WriteContext(root);
+    return new ReferencesCircularOnlyModeContext().new RefsWriteContext(root);
   }
 
 }

@@ -2,12 +2,14 @@ package com.google.gson.internal.bind;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Type;
 
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
+import com.google.gson.internal.$Gson$Types;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -17,21 +19,21 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
 
   class Delegate extends TypeAdapter<T> {
 
-    private final Class<T> advisedType;
+    private final Type advisedType;
     private final Gson context;
 
-    public Delegate(Class<T> advisedType, Gson context) {
+    public Delegate(Type advisedType, Gson context) {
       this.advisedType = advisedType;
       this.context = context;
     }
 
     @Override
-    public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
-      TypeAdvisableComplexTypeAdapter.this.write(out, value, rctx);
+    public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
+      TypeAdvisableComplexTypeAdapter.this.write(out, value, ctx);
     }
 
     @Override
-    public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+    public T read(JsonReader in, ReadContext ctx) throws IOException {
       JsonToken nextToken = in.peek();
 
       if (nextToken == JsonToken.NULL) {
@@ -40,23 +42,24 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
       } else if (nextToken == JsonToken.STRING) {
         // for complex type adapters, each string is a reference, no isReferenceString() match required
         String reference = in.nextString();
-        T referenced = rctx.getReferencedObject(reference);
+        T referenced = ctx.refsContext().getReferencedObject(reference);
         return referenced;
       }
 
       T instance;
-      if (advisedType.isArray()) {
-        Class<?> advisedComponentType = advisedType.getComponentType();
+      Class<?> rawType = $Gson$Types.getRawType(advisedType);
+      if (rawType.isArray()) {
+        Class<?> advisedComponentType = rawType.getComponentType();
         instance = (T) Array.newInstance(advisedComponentType, 0);
       } else {
-        instance = context.getConstructorConstructor().get(TypeToken.get(advisedType)).construct();
+        instance = (T) context.getConstructorConstructor().get(TypeToken.get(advisedType)).construct();
       }
 
-      return readOptionallyAdvisedInstance(instance, in, rctx);
+      return readOptionallyAdvisedInstance(instance, in, ctx);
     }
   }
 
-  public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+  public T read(JsonReader in, ReadContext ctx) throws IOException {
     JsonToken nextToken = in.peek();
 
     if (nextToken == JsonToken.NULL) {
@@ -65,11 +68,11 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
     } else if (nextToken == JsonToken.STRING) {
       // for complex type adapters, each string is a reference, no isReferenceString() match required
       String reference = in.nextString();
-      T referenced = rctx.getReferencedObject(reference);
+      T referenced = ctx.refsContext().getReferencedObject(reference);
       return referenced;
     }
 
-    return readOptionallyAdvisedInstance(null, in, rctx);
+    return readOptionallyAdvisedInstance(null, in, ctx);
   }
 
   /**
@@ -79,11 +82,11 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
    *
    * @param advisedInstance the advised instance, or {@code null}
    * @param in the reader
-   * @param rctx the references context
+   * @param ctx the references context
    *
    * @return the chosen instance, filled with data
    */
   protected abstract T readOptionallyAdvisedInstance(T advisedInstance, JsonReader in,
-                                                     ReferencesReadContext rctx) throws IOException;
+                                                     ReadContext ctx) throws IOException;
 
 }

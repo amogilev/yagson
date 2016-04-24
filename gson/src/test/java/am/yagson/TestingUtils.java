@@ -13,7 +13,26 @@ import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 
 public class TestingUtils {
-	
+
+	static final Comparator<String> MY_STRING_CMP = new Comparator<String>() {
+        public int compare(String s1, String s2) {
+            int cmp = s1.length() - s2.length();
+            if (cmp == 0) {
+                cmp = s1.compareTo(s2);
+            }
+            return cmp;
+        }
+    };
+	static final Comparator<Person> MY_PERSON_CMP = new Comparator<Person>() {
+        public int compare(Person o1, Person o2) {
+            int cmp = MY_STRING_CMP.compare(o1.family, o2.family);
+            if (cmp == 0) {
+                cmp = MY_STRING_CMP.compare(o1.name, o2.name);
+            }
+            return cmp;
+        }
+    };
+
 	private static YaGson buildGson() {
 		return buildGson(null);
 	}

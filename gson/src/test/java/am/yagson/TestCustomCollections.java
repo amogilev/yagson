@@ -13,7 +13,7 @@ public class TestCustomCollections extends TestCase {
         l.add(1L);
 
         Collection<Long> obj = Collections.unmodifiableCollection(l);
-        TestingUtils.testFully(obj, "[1]");
+        TestingUtils.testFully(obj, jsonStr("{'c':[1]}"));
     }
 
     // TODO: tests singleton, synchronized, and many others!

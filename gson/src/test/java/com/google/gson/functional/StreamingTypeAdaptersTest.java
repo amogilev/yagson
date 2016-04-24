@@ -16,6 +16,8 @@
 
 package com.google.gson.functional;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.References;
 
 import com.google.gson.Gson;
@@ -43,7 +45,7 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 public final class StreamingTypeAdaptersTest extends TestCase {
-  private Gson miniGson = new GsonBuilder().create();
+  private static Gson miniGson = new GsonBuilder().create();
   private TypeAdapter<Truck> truckAdapter = miniGson.getAdapter(Truck.class);
   private TypeAdapter<Map<String, Double>> mapAdapter
       = miniGson.getAdapter(new TypeToken<Map<String, Double>>() {});
@@ -212,7 +214,7 @@ public final class StreamingTypeAdaptersTest extends TestCase {
     passengersArray.add(jesseObject);
     truckObject.add("passengers", passengersArray);
 
-    Truck truck = truckAdapter.fromJsonTree(truckObject, References.createReadContext(null));
+    Truck truck = truckAdapter.fromJsonTree(truckObject, ReadContext.create(References.defaultPolicy()));
     assertEquals(300.0, truck.horsePower);
     assertEquals(Arrays.asList(new Person("Jesse", 30)), truck.passengers);
   }
@@ -253,7 +255,7 @@ public final class StreamingTypeAdaptersTest extends TestCase {
   private static <T> String toJson(TypeAdapter<T> typeAdapter, T value) throws IOException {
     StringWriter stringWriter = new StringWriter();
     JsonWriter writer = new JsonWriter(stringWriter);
-    typeAdapter.write(writer, value, References.createWriteContext(null, value));
+    typeAdapter.write(writer, value, WriteContext.create(miniGson, References.defaultPolicy(), value));
     return stringWriter.toString();
   }
 
@@ -261,6 +263,6 @@ public final class StreamingTypeAdaptersTest extends TestCase {
   private <T> T fromJson(TypeAdapter<T> typeAdapter, String json) throws IOException {
     JsonReader reader = new JsonReader(new StringReader(json));
     reader.setLenient(true); // TODO: non-lenient?
-    return typeAdapter.read(reader, References.createReadContext(null));
+    return typeAdapter.read(reader, ReadContext.create(References.defaultPolicy()));
   }
 }

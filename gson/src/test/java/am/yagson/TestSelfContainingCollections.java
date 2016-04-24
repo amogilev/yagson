@@ -93,7 +93,7 @@ public class TestSelfContainingCollections extends TestCase {
         arr[0] = obj;
 
         TestingUtils.testFully(arr, jsonStr(
-                "[{'@type':'am.yagson.ClassWithObject','@val':{'@vtype':'[Ljava.lang.Object;','obj':'@root'}}]"));
+                "[{'@type':'am.yagson.ClassWithObject','@val':{'obj':'@root'}}]"));
     }
 
     public void testSelfContainingArrayThroughList() {

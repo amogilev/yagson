@@ -16,24 +16,14 @@
 
 package com.google.gson.internal;
 
+import am.yagson.types.PostAllocateProcessor;
+import am.yagson.types.TypeUtils;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Returns a function that can construct an instance of a requested type.
@@ -80,7 +70,7 @@ public final class ConstructorConstructor {
       return newConstructorWithUnsafeBackup(defaultConstructor, type, rawType);
     }
 
-    if (!isTypeInfoEnabled || Modifier.isAbstract(rawType.getModifiers())) {
+    if (!isTypeInfoEnabled || Modifier.isAbstract(rawType.getModifiers()) || EnumSet.class.isAssignableFrom(rawType)) {
       // if type info is enabled and available, use the class instance instead of the default implementation
       ObjectConstructor<T> defaultImplementation = newDefaultImplementationConstructor(type, rawType);
       if (defaultImplementation != null) {
@@ -88,8 +78,20 @@ public final class ConstructorConstructor {
       }
     }
 
+    PostAllocateProcessor postAllocateProcessor = null;
+    if (EnumMap.class.isAssignableFrom(rawType)) {
+      final Type enumType = $Gson$Types.resolve(type, rawType, EnumMap.class.getTypeParameters()[0]);
+      if (enumType instanceof Class) {
+        postAllocateProcessor = new PostAllocateProcessor() {
+          public void apply(Object instance) {
+            TypeUtils.initEnumMapKeyType((EnumMap<?, ?>) instance, $Gson$Types.getRawType(enumType));
+          }
+        };
+      }
+    }
+
     // finally try unsafe
-    return newUnsafeAllocator(type, rawType);
+    return newUnsafeAllocator(type, rawType, postAllocateProcessor);
   }
 
   private <T> ObjectConstructor<T> newConstructorWithUnsafeBackup(final ObjectConstructor<T> constr, final Type type, final Class<? super T> rawType) {
@@ -103,7 +105,7 @@ public final class ConstructorConstructor {
         try {
           return constr.construct();
         } catch (RuntimeException e) {
-          backup = newUnsafeAllocator(type, rawType);
+          backup = newUnsafeAllocator(type, rawType, null);
           return backup.construct();
         }
       }
@@ -112,6 +114,9 @@ public final class ConstructorConstructor {
 
   private <T> ObjectConstructor<T> newDefaultConstructor(Class<? super T> rawType) {
     try {
+      if (Modifier.isAbstract(rawType.getModifiers())) {
+        return null;
+      }
       final Constructor<? super T> constructor = rawType.getDeclaredConstructor();
       if (!constructor.isAccessible()) {
         constructor.setAccessible(true);
@@ -218,13 +223,16 @@ public final class ConstructorConstructor {
   }
 
   private <T> ObjectConstructor<T> newUnsafeAllocator(
-      final Type type, final Class<? super T> rawType) {
+          final Type type, final Class<? super T> rawType, final PostAllocateProcessor postAllocateProcessor) {
     return new ObjectConstructor<T>() {
       private final UnsafeAllocator unsafeAllocator = UnsafeAllocator.create();
       @SuppressWarnings("unchecked")
       public T construct() {
         try {
           Object newInstance = unsafeAllocator.newInstance(rawType);
+          if (postAllocateProcessor != null) {
+            postAllocateProcessor.apply(newInstance);
+          }
           return (T) newInstance;
         } catch (Exception e) {
           throw new RuntimeException(("Unable to invoke no-args constructor for " + type + ". "

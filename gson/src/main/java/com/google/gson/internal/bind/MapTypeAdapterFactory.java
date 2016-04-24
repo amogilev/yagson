@@ -19,11 +19,11 @@ package com.google.gson.internal.bind;
 import static am.yagson.refs.References.REF_FIELD_PREFIX;
 import static am.yagson.refs.References.keyRef;
 import static am.yagson.refs.References.valRef;
-import static am.yagson.types.AdapterUtils.isTypeAdvisable;
-import static am.yagson.types.AdapterUtils.toTypeAdvisable;
 import static am.yagson.types.TypeUtils.classOf;
 import static am.yagson.types.TypeUtils.classes;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.*;
 
 import am.yagson.refs.impl.MapPlaceholderUse;
@@ -45,9 +45,9 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Adapts maps to either JSON objects or JSON arrays.
@@ -158,7 +158,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
    * non-transient Map field (except of Properties, which may be added as extra field), or does not override
    * AbstractMap.put() (if extends AbstractMap).
    */
-  private boolean requireReflectiveAdapter(Gson gson, Class<?> mapType) {
+  private static boolean requireReflectiveAdapter(Gson gson, Class<?> mapType) {
     try {
       return gson.getTypeInfoPolicy().isEnabled() && TypeUtils.isGeneralNonAbstractClass(mapType) &&
               (TypeUtils.containsField(mapType, false, classOf(Map.class), classOf(Properties.class)) ||
@@ -178,13 +178,13 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         : context.getAdapter(TypeToken.get(keyType));
   }
 
-  private final class Adapter<K, V> extends TypeAdvisableComplexTypeAdapter<Map<K, V>> {
+  public final class Adapter<K, V> extends TypeAdvisableComplexTypeAdapter<Map<K, V>> {
     private final TypeAdapter<K> keyTypeAdapter;
     private final TypeAdapter<V> valueTypeAdapter;
     private final Class<?> rawKeyType;
     private final ObjectConstructor<? extends Map<K, V>> constructor;
     private final Gson gson;
-    private final Type formalMapType; // declared map type, e.g. SortedMap>String, String>
+    private final Type formalMapType; // declared map type, e.g. SortedMap<String, String>
     private final Class<? extends Map> defaultMapClass; // raw class of the default map instance (defined by constructor)
     private final Map<K, V> defaultMapInstance; // the default Map instance, as returned by the constructor
     private final Map<String, FieldInfo> reflectiveFields; // reflective (extra) fields for raw map type
@@ -198,7 +198,6 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       this.valueTypeAdapter =
         new TypeAdapterRuntimeTypeWrapper<V>(gson, valueTypeAdapter, valueType,
                 TypeUtils.getEmitTypeInfoRule(gson, false));
-      // this.mapType = $Gson$Types.newParameterizedTypeWithOwner(null, Map.class, keyType, valueType);
       this.formalMapType = formalMapType;
       this.rawKeyType = $Gson$Types.getRawType(keyType);
       this.constructor = constructor;
@@ -210,47 +209,23 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
               new ExistingObjectProvider(defaultMapInstance));
     }
 
+    public Type getFormalMapType() {
+      return formalMapType;
+    }
+
     private Map<String, FieldInfo> buildReflectiveFieldsInfo(Class<? extends Map> containerClass,
                                                              ObjectProvider<? extends Map> objectProvider) {
       return AdapterUtils.buildReflectiveFieldsInfo(gson, containerClass, formalMapType,
               objectProvider, classes(Comparator.class, Properties.class), null);
     }
 
-    private void readAndSetField(String fname, Map<String, FieldInfo> reflectiveFields, JsonReader in,
-                                 ReferencesReadContext rctx, Map<K, V> mapInstance, String valPathElement) throws IOException {
-      FieldInfo fieldInfo = reflectiveFields.get(fname);
-      if (fieldInfo == null) {
-        throw new JsonSyntaxException("The Map type for " + mapInstance.getClass() +
-                " does not have serializable reflective field '" + fname +"'");
-      }
-      // read value using the corresponding type adapter
-      Object fieldValue = rctx.doRead(in, fieldInfo.getFieldAdapter(), valPathElement);
-
-      // try set the field
-      try {
-        fieldInfo.getField().set(mapInstance, fieldValue);
-      } catch (IllegalAccessException e) {
-        throw new JsonSyntaxException("Failed to set the Map reflective field value; mapType=" + mapInstance.getClass() +
-                "; field=" + fieldInfo.getField() + "; value=" + fieldValue);
-      }
-    }
-
-
     @Override
     protected Map<K, V> readOptionallyAdvisedInstance(Map<K, V> advisedInstance, JsonReader in,
-                                                 ReferencesReadContext rctx) throws IOException {
+                                                      ReadContext ctx) throws IOException {
 
       if (advisedInstance != null && defaultMapClass != advisedInstance.getClass() &&
               requireReflectiveAdapter(gson, advisedInstance.getClass())) {
-        // use another (i.e. reflective) type adapter
-        TypeToken<Map<K, V>> typeToken = (TypeToken<Map<K, V>>)
-                TypeToken.get(TypeUtils.getParameterizedType(advisedInstance.getClass(), formalMapType));
-        TypeAdapter<Map<K, V>> adapter = gson.getAdapter(typeToken);
-        if (isTypeAdvisable(adapter)) {
-          return toTypeAdvisable(adapter).readOptionallyAdvisedInstance(advisedInstance, in, rctx);
-        } else {
-          return gson.getAdapter(typeToken).read(in, rctx);
-        }
+        return AdapterUtils.readByReflectiveAdapter(advisedInstance, in, ctx, gson, formalMapType);
       }
 
       Map<K, V> instance = null;
@@ -264,7 +239,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       if (peek == JsonToken.BEGIN_ARRAY) {
         instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-        rctx.registerObject(instance);
+        ctx.registerObject(instance);
 
         in.beginArray();
         for (int i = 0; in.hasNext(); i++) {
@@ -281,8 +256,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
                 throw new JsonSyntaxException("@.field expected, but got: '" + fieldRef + "'");
               }
               // save the read field into the instance
-              readAndSetField(fieldRef.substring(REF_FIELD_PREFIX.length()),
-                      localReflectiveFields, in, rctx, instance, valRef(i));
+              AdapterUtils.readAndSetReflectiveField(instance, fieldRef.substring(REF_FIELD_PREFIX.length()),
+                      localReflectiveFields, in, ctx, valRef(i));
             }
             in.endObject();
             continue;
@@ -292,8 +267,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           ReferencePlaceholder<V> valuePlaceholder = null;
 
           in.beginArray(); // entry array
-          K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
-          if (key == null && (keyPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+          K key = ctx.doRead(in, keyTypeAdapter, keyRef(i));
+          if (key == null && (keyPlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             keys.add(keyPlaceholder);
             PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i);
             keyPlaceholder.registerUse(keyUse);
@@ -301,8 +276,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
             keys.add(key);
           }
 
-          V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
-          if (value == null && (valuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+          V value = ctx.doRead(in, valueTypeAdapter, valRef(i));
+          if (value == null && (valuePlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             values.add(valuePlaceholder);
             PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i);
             valuePlaceholder.registerUse(valueUse);
@@ -322,7 +297,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           // if type is advised with @type, follow that advice
           String keyStr = in.nextName();
           if (keyStr.equals("@type")) {
-            return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, formalMapType, rctx);
+            return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, formalMapType, ctx);
           } else if (keyStr.startsWith(REF_FIELD_PREFIX)) {
             // extra field processing will be performed at first loop iteration
             fieldRef = keyStr;
@@ -334,7 +309,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
         // otherwise use the previous @vtype advice, or the default instance
         instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-        rctx.registerObject(instance);
+        ctx.registerObject(instance);
         Map<String, FieldInfo> localReflectiveFields = null;
 
 
@@ -355,8 +330,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
                       buildReflectiveFieldsInfo(instance.getClass(), new ExistingObjectProvider(instance));
             }
             // save the read field into the instance
-            readAndSetField(fieldRef.substring(REF_FIELD_PREFIX.length()),
-                    localReflectiveFields, in, rctx, instance, valRef(i));
+            AdapterUtils.readAndSetReflectiveField(instance, fieldRef.substring(REF_FIELD_PREFIX.length()),
+                    localReflectiveFields, in, ctx, valRef(i));
 
             fieldRef = null;
             continue;
@@ -365,8 +340,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           ReferencePlaceholder<K> keyPlaceholder = null;
           ReferencePlaceholder<V> valuePlaceholder = null;
 
-          K key = rctx.doRead(in, keyTypeAdapter, keyRef(i));
-          if (key == null && (keyPlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+          K key = ctx.doRead(in, keyTypeAdapter, keyRef(i));
+          if (key == null && (keyPlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             keys.add(keyPlaceholder);
             PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i);
             keyPlaceholder.registerUse(keyUse);
@@ -374,8 +349,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
             keys.add(key);
           }
 
-          V value = rctx.doRead(in, valueTypeAdapter, valRef(i));
-          if (value == null && (valuePlaceholder = rctx.consumeLastPlaceholderIfAny()) != null) {
+          V value = ctx.doRead(in, valueTypeAdapter, valRef(i));
+          if (value == null && (valuePlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             values.add(valuePlaceholder);
             PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i);
             valuePlaceholder.registerUse(valueUse);
@@ -390,11 +365,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       for (int i = 0; i < keys.size(); i++) {
         Object keyOrPlaceholder = keys.get(i);
         Object valueOrPlaceholder = values.get(i);
-        if (i == 0 && instance instanceof EnumMap) {
-          // keys in EnumMap are never placeholders
-          assert !(keyOrPlaceholder instanceof ReferencePlaceholder);
-          initEnumMapKeyType(instance, keyOrPlaceholder.getClass());
-        }
+
         if (keyOrPlaceholder instanceof ReferencePlaceholder || valueOrPlaceholder instanceof ReferencePlaceholder) {
           // this entry is not ready yet, skip it
         } else {
@@ -427,57 +398,21 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       }
     }
 
-    private void initEnumMapKeyType(Map<K, V> instance, Class<?> keyType) {
-      if (!keyType.isEnum()) {
-        throw new JsonSyntaxException("Only enum keys are allowed for EnumMap, but got " + keyType);
-      }
-      EnumMap otherInstance = new EnumMap(keyType);
-      copyFields(instance, otherInstance, EnumMap.class, "keyType", "keyUniverse", "vals");
-    }
-
-    private void copyFields(Object to, Object from, Class<?> declaringClass, String...fieldNames) {
-      for (String fname : fieldNames) {
-          try {
-            Field f = declaringClass.getDeclaredField(fname);
-            f.setAccessible(true);
-            f.set(to, f.get(from));
-          } catch (Exception e) {
-            throw new IllegalStateException("Failed to initialize field " + fname + " of " + declaringClass);
-          }
-        }
-    }
-
-    private int writeExtraFields(JsonWriter out, Map<K, V> map, ReferencesWriteContext rctx, int startIdx,
-                                 boolean wrapInObject) throws IOException {
-      int i = startIdx;
+    private void writeExtraFields(JsonWriter out, Map<K, V> map, WriteContext ctx, int startIdx,
+                                  boolean wrapInObject) throws IOException {
       Map<String, FieldInfo> localReflectiveFields = defaultMapClass == map.getClass() ? reflectiveFields :
               buildReflectiveFieldsInfo(map.getClass(), new ConstructingObjectProvider(
                       constructorConstructor.get(TypeToken.get(map.getClass()))));
-      boolean hasExtraFieldsWritten = false;
-      for (FieldInfo f : localReflectiveFields.values()) {
-        Object fieldValue;
-        try {
-          fieldValue = f.getField().get(map);
-        } catch (IllegalAccessException e) {
-          throw new IOException("Failed to read field", e);
+      final AtomicInteger mapEntryIdx = new AtomicInteger(startIdx);
+      AdapterUtils.writeReflectiveFields(map, localReflectiveFields, out, ctx, new PathElementProducer() {
+        public String produce() {
+          int i = mapEntryIdx.getAndIncrement();
+          return "" + i + "-val";
         }
-        // skip default values
-        if (fieldValue != f.getDefaultValue() && (fieldValue == null || !fieldValue.equals(f.getDefaultValue()))) {
-          if (wrapInObject && !hasExtraFieldsWritten) {
-            out.beginObject();
-          }
-          out.name(REF_FIELD_PREFIX + f.getField().getName());
-          rctx.doWrite(fieldValue, f.getFieldAdapter(), "" + i + "-val", out);
-          hasExtraFieldsWritten = true;
-        }
-      }
-      if (wrapInObject && hasExtraFieldsWritten) {
-        out.endObject();
-      }
-      return i;
+      }, wrapInObject);
     }
 
-    public void write(JsonWriter out, Map<K, V> map, ReferencesWriteContext rctx) throws IOException {
+    public void write(JsonWriter out, Map<K, V> map, WriteContext ctx) throws IOException {
       if (map == null) {
         out.nullValue();
         return;
@@ -487,10 +422,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         // although the condition was checked in the factory for the formal type, it shall be
         // re-checked for the actual class if it differs
 
-        TypeToken<Map<K, V>> typeToken = (TypeToken<Map<K, V>>)
-                TypeToken.get(TypeUtils.getParameterizedType(map.getClass(), formalMapType));
-        TypeAdapter<Map<K, V>> adapter = gson.getAdapter(typeToken);
-        adapter.write(out, map, rctx);
+        AdapterUtils.writeByReflectiveAdapter(out, map, ctx, gson, formalMapType);
         return;
       }
 
@@ -499,45 +431,52 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         int i = 0;
         for (Map.Entry<K, V> entry : map.entrySet()) {
           out.name(String.valueOf(entry.getKey()));
-          rctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
+          ctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
           i++;
         }
-        writeExtraFields(out, map, rctx, i, false);
+        writeExtraFields(out, map, ctx, i, false);
         out.endObject();
         return;
       }
 
+      boolean skipEntries = ctx.isSkipNextMapEntries();
       boolean hasComplexKeys = false;
       List<JsonElement> keys = new ArrayList<JsonElement>(map.size());
-
       List<V> values = new ArrayList<V>(map.size());
       int i = 0;
-      for (Map.Entry<K, V> entry : map.entrySet()) {
-        JsonElement keyElement = rctx.doToJsonTree(entry.getKey(), keyTypeAdapter, keyRef(i));
-        i++;
-        keys.add(keyElement);
-        values.add(entry.getValue());
-        hasComplexKeys |= keyElement.isJsonArray() || keyElement.isJsonObject();
+
+      if (!skipEntries) {
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+          JsonElement keyElement = ctx.doToJsonTree(entry.getKey(), keyTypeAdapter, keyRef(i));
+          i++;
+          keys.add(keyElement);
+          values.add(entry.getValue());
+          hasComplexKeys |= keyElement.isJsonArray() || keyElement.isJsonObject();
+        }
       }
 
       if (hasComplexKeys) {
         out.beginArray();
-        for (i = 0; i < keys.size(); i++) {
-          out.beginArray(); // entry array
-          Streams.write(keys.get(i), out);
-          rctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
-          out.endArray();
+        if (!skipEntries) {
+          for (i = 0; i < keys.size(); i++) {
+            out.beginArray(); // entry array
+            Streams.write(keys.get(i), out);
+            ctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
+            out.endArray();
+          }
         }
-        writeExtraFields(out, map, rctx, keys.size(), true);
+        writeExtraFields(out, map, ctx, keys.size(), true);
         out.endArray();
       } else {
         out.beginObject();
-        for (i = 0; i < keys.size(); i++) {
-          JsonElement keyElement = keys.get(i);
-          out.name(keyToString(keyElement));
-          rctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
+        if (!skipEntries) {
+          for (i = 0; i < keys.size(); i++) {
+            JsonElement keyElement = keys.get(i);
+            out.name(keyToString(keyElement));
+            ctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
+          }
         }
-        writeExtraFields(out, map, rctx, keys.size(), false);
+        writeExtraFields(out, map, ctx, keys.size(), false);
         out.endObject();
       }
     }

@@ -16,9 +16,9 @@
 
 package com.google.gson.internal;
 
+import am.yagson.ReadContext;
+import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -35,9 +35,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class selects which fields and types to omit. It is configurable,
@@ -138,20 +136,20 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       /** The delegate is lazily created because it may not be needed, and creating it may fail. */
       private TypeAdapter<T> delegate;
 
-      @Override public T read(JsonReader in, ReferencesReadContext rctx) throws IOException {
+      @Override public T read(JsonReader in, ReadContext ctx) throws IOException {
         if (skipDeserialize) {
           in.skipValue();
           return null;
         }
-        return delegate().read(in, rctx);
+        return delegate().read(in, ctx);
       }
 
-      @Override public void write(JsonWriter out, T value, ReferencesWriteContext rctx) throws IOException {
+      @Override public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
         if (skipSerialize) {
           out.nullValue();
           return;
         }
-        delegate().write(out, value, rctx);
+        delegate().write(out, value, ctx);
       }
 
       private TypeAdapter<T> delegate() {
@@ -163,8 +161,16 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
     };
   }
 
+  private boolean isRequiredTransientField(Field field) {
+    // exception for backing maps in sets
+    // TODO: make it configurable
+    return Modifier.isTransient(field.getModifiers()) && !Modifier.isStatic(field.getModifiers())
+            && Set.class.isAssignableFrom(field.getDeclaringClass())
+            && Map.class.isAssignableFrom(field.getType());
+  }
+
   public boolean excludeField(Field field, boolean serialize) {
-    if ((modifiers & field.getModifiers()) != 0) {
+    if ((modifiers & field.getModifiers()) != 0 && !isRequiredTransientField(field)) {
       return true;
     }
 
