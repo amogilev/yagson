@@ -127,13 +127,15 @@ public class TestVariousMaps extends TestCase {
 
     public void testUnmodifiableMap1() {
         Map<String, String> obj = Collections.unmodifiableMap(newTestMap());
-        TestingUtils.testFully(obj, jsonStr("{'@vtype':'java.util.HashMap','m':{'foo':'bar'}}"));
+        TestingUtils.testFully(obj, jsonStr(
+                "{'m':{'@type':'java.util.HashMap','@val':{'foo':'bar'}}}"));
     }
 
     public void testUnmodifiableMap2() {
         Map<String, String> obj = Collections.unmodifiableMap(newTestMap());
         TestingUtils.testFully(obj, Map.class, jsonStr(
-                "{'@type':'java.util.Collections$UnmodifiableMap','@val':{'@vtype':'java.util.HashMap','m':{'foo':'bar'}}}"));
+                "{'@type':'java.util.Collections$UnmodifiableMap','@val':{" +
+                        "'m':{'@type':'java.util.HashMap','@val':{'foo':'bar'}}}}"));
     }
 
     public void testUnmodifiableMapInObject() {
@@ -141,7 +143,8 @@ public class TestVariousMaps extends TestCase {
         ClassWithMixedMap obj = new ClassWithMixedMap(umap);
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.Collections$UnmodifiableMap','map':{'@vtype':'java.util.HashMap','m':{'foo':'bar'}}}"));
+                "{'map':{'@type':'java.util.Collections$UnmodifiableMap','@val':{" +
+                        "'m':{'@type':'java.util.HashMap','@val':{'foo':'bar'}}}}}"));
     }
 
     public void testEmptyMap() {
@@ -154,7 +157,7 @@ public class TestVariousMaps extends TestCase {
         Map<String, String> obj = Collections.synchronizedMap(newTestMap());
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashMap','m':{'foo':'bar'},'mutex':'@root'}"));
+                "{'m':{'@type':'java.util.HashMap','@val':{'foo':'bar'}},'mutex':'@root'}"));
     }
 
     public void testSynchronizedSortedMap() {
@@ -162,23 +165,22 @@ public class TestVariousMaps extends TestCase {
 
         // NOTE: duplication in circular-only refs mode
         TestingUtils.testFully(gsonCircularOnlyMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'@vtype':'java.util.TreeMap','m':{'foo':'bar'}," +
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}}," +
+                        "'m':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}}," +
                         "'mutex':'@root'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@root.sm'," +
-                        "'mutex':'@root'}"));
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@root.sm','mutex':'@root'}"));
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@.sm'," +
-                        "'mutex':'@root'}"));
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@.sm','mutex':'@root'}"));
     }
 
     public void testCheckedMap() {
         Map<String, String> obj = Collections.checkedMap(newTestMap(), String.class, String.class);
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashMap','m':{'foo':'bar'}," +
+                "{'m':{'@type':'java.util.HashMap','@val':{'foo':'bar'}}," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
     }
 
@@ -187,15 +189,16 @@ public class TestVariousMaps extends TestCase {
 
         // NOTE: duplication in circular-only refs mode
         TestingUtils.testFully(gsonCircularOnlyMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'@vtype':'java.util.TreeMap','m':{'foo':'bar'}," +
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}}," +
+                        "'m':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}}," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@root.sm'," +
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@root.sm'," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','sm':{'foo':'bar'},'m':'@root.sm'," +
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@root.sm'," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
     }
@@ -288,8 +291,8 @@ public class TestVariousMaps extends TestCase {
         obj.putValue("foo", "bar");
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashMap','map':[[{'@type':'java.util.jar.Attributes$Name'," +
-                        "'@val':{'name':'foo','hashCode':'@hash'}},'bar']]}"));
+                "{'map':{'@type':'java.util.HashMap','@val':[[" +
+                        "{'@type':'java.util.jar.Attributes$Name','@val':{'name':'foo','hashCode':'@hash'}},'bar']]}}"));
     }
 
     public void testWeakHashMap() {

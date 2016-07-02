@@ -62,7 +62,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   private final Class<E[]> arrayType;
   private final TypeAdapter<E> componentTypeAdapter;
 
-  public ArrayTypeAdapter(Gson context, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
+  private ArrayTypeAdapter(Gson context, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
     this.componentTypeAdapter = new TypeAdapterRuntimeTypeWrapper<E>(context,
             componentTypeAdapter, componentType, TypeUtils.getEmitTypeInfoRule(context, false));
     this.componentType = componentType;
@@ -71,7 +71,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
 
   @SuppressWarnings("unchecked")
   @Override
-  protected Object readOptionallyAdvisedInstance(Object advisedInstance, JsonReader in,
+  protected Object readOptionallyAdvisedInstance(JsonReader in,
                                                  ReadContext ctx) throws IOException {
 
     List<E> list = new ArrayList<E>();
@@ -88,7 +88,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     // where this reference is used, a PlaceholderUse is created and registered. When the
     // final array object is created, it is sent to all registered uses, which insert it
     // into the places of use.
-    ctx.registerObject(arrayPlaceholder);
+    ctx.registerObject(arrayPlaceholder, false);
 
     Class advisedComponentType = null;
     boolean hasTypeAdvise = false;
@@ -99,8 +99,6 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
       }
       TypeUtils.consumeValueField(in);
       hasTypeAdvise = true;
-    } else if (advisedInstance != null && advisedInstance.getClass().isArray()) {
-      advisedComponentType = advisedInstance.getClass().getComponentType();
     }
 
     in.beginArray();

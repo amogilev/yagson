@@ -36,36 +36,6 @@ public class AdapterUtils {
         }
     }
 
-    public static <T> boolean isTypeAdvisable(TypeAdapter<T> typeAdapter) {
-        if (typeAdapter instanceof TypeAdvisableComplexTypeAdapter) {
-            return true;
-        } else if (typeAdapter instanceof DelegatingTypeAdapter) {
-            return isTypeAdvisable(((DelegatingTypeAdapter)typeAdapter).getDelegate());
-        } else {
-            return false;
-        }
-    }
-
-    public static <T> TypeAdvisableComplexTypeAdapter<T> toTypeAdvisable(TypeAdapter<T> typeAdapter) {
-        if (typeAdapter instanceof TypeAdvisableComplexTypeAdapter) {
-            return (TypeAdvisableComplexTypeAdapter<T>) typeAdapter;
-        } else if (typeAdapter instanceof DelegatingTypeAdapter) {
-            return toTypeAdvisable(((DelegatingTypeAdapter<T>)typeAdapter).getDelegate());
-        } else {
-            throw new IllegalStateException("Not TypeAdvisableComplexTypeAdapter: " + typeAdapter);
-        }
-    }
-
-    public static <T> boolean isReflective(TypeAdapter<T> typeAdapter) {
-        if (typeAdapter instanceof ReflectiveTypeAdapterFactory.Adapter) {
-            return true;
-        } else if (typeAdapter instanceof DelegatingTypeAdapter) {
-            return isReflective(((DelegatingTypeAdapter)typeAdapter).getDelegate());
-        } else {
-            return false;
-        }
-    }
-
     /**
      * Returns the fields which needs to be saved for the special container object (map, set or collection) except
      * of the standard collection entries, if these fields have non-default values in the actual serialized objects.
@@ -120,22 +90,6 @@ public class AdapterUtils {
         }
 
         return result;
-    }
-
-    public static <T> T readByReflectiveAdapter(T advisedInstance, JsonReader in, ReadContext ctx,
-                                                Gson gson, Type formalType) throws IOException {
-        // use another (i.e. reflective) type adapter
-        TypeToken<T> typeToken = (TypeToken<T>)
-                TypeToken.get(TypeUtils.mergeTypes(advisedInstance.getClass(), formalType));
-        TypeAdapter<T> adapter = gson.getAdapter(typeToken);
-        if (!(adapter instanceof ReflectiveTypeAdapterFactory.Adapter)) {
-            adapter = gson.getReflectiveTypeAdapterFactory().create(gson, typeToken);
-        }
-        if (isTypeAdvisable(adapter)) {
-            return toTypeAdvisable(adapter).readOptionallyAdvisedInstance(advisedInstance, in, ctx);
-        } else {
-            return gson.getAdapter(typeToken).read(in, ctx);
-        }
     }
 
     public static <T> void writeByReflectiveAdapter(JsonWriter out, T obj, WriteContext ctx,

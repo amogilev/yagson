@@ -55,12 +55,12 @@ final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     if (deserializer == null) {
       return delegate().read(in, ctx);
     }
-    JsonElement value = Streams.parse(in);
+    JsonElement value = Streams.parse(in, ctx);
     if (value.isJsonNull()) {
       return null;
     }
     T obj = deserializer.deserialize(value, typeToken.getType(), gson.deserializationContext);
-    ctx.registerObject(obj);
+    ctx.registerObject(obj, false);
     return obj; 
   }
 

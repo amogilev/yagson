@@ -15,49 +15,12 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> {
-
-  class Delegate extends TypeAdapter<T> {
-
-    private final Type advisedType;
-    private final Gson context;
-
-    public Delegate(Type advisedType, Gson context) {
-      this.advisedType = advisedType;
-      this.context = context;
-    }
-
-    @Override
-    public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
-      TypeAdvisableComplexTypeAdapter.this.write(out, value, ctx);
-    }
-
-    @Override
-    public T read(JsonReader in, ReadContext ctx) throws IOException {
-      JsonToken nextToken = in.peek();
-
-      if (nextToken == JsonToken.NULL) {
-        in.nextNull();
-        return null;
-      } else if (nextToken == JsonToken.STRING) {
-        // for complex type adapters, each string is a reference, no isReferenceString() match required
-        String reference = in.nextString();
-        T referenced = ctx.refsContext().getReferencedObject(reference);
-        return referenced;
-      }
-
-      T instance;
-      Class<?> rawType = $Gson$Types.getRawType(advisedType);
-      if (rawType.isArray()) {
-        Class<?> advisedComponentType = rawType.getComponentType();
-        instance = (T) Array.newInstance(advisedComponentType, 0);
-      } else {
-        instance = (T) context.getConstructorConstructor().get(TypeToken.get(advisedType)).construct();
-      }
-
-      return readOptionallyAdvisedInstance(instance, in, ctx);
-    }
-  }
+/**
+ * Helper abstract class for non-simple type adapters, which provides references read support.
+ *
+ * @author Andrey Mogilev
+ */
+abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> {
 
   public T read(JsonReader in, ReadContext ctx) throws IOException {
     JsonToken nextToken = in.peek();
@@ -72,21 +35,19 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
       return referenced;
     }
 
-    return readOptionallyAdvisedInstance(null, in, ctx);
+    return readOptionallyAdvisedInstance(in, ctx);
   }
 
   /**
-   * Read an object, optionally using the advised instance. If none
-   * advised, or if another type advice exists, a new instance may be created.
-   * A chosen instance MUST be registered with rctx.
+   * Actually reads an object, given that no references are available. The implementations of this method MUST support
+   * type advice wrappers, and MUST distinguish them from other JSON Objects.
+   * <p/>
+   * A created instance MUST be registered within the provided read context.
    *
-   * @param advisedInstance the advised instance, or {@code null}
    * @param in the reader
-   * @param ctx the references context
+   * @param ctx the read context
    *
-   * @return the chosen instance, filled with data
+   * @return the created instance, filled with data
    */
-  protected abstract T readOptionallyAdvisedInstance(T advisedInstance, JsonReader in,
-                                                     ReadContext ctx) throws IOException;
-
+  protected abstract T readOptionallyAdvisedInstance(JsonReader in, ReadContext ctx) throws IOException;
 }

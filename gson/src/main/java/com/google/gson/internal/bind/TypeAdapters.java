@@ -571,7 +571,7 @@ public final class TypeAdapters {
     @Override
     public Calendar read(JsonReader in, ReadContext ctx) throws IOException {
       Calendar value = read(in);
-      ctx.registerObject(value);
+      ctx.registerObject(value, false);
       return value;
     }
 
@@ -676,7 +676,7 @@ public final class TypeAdapters {
     @Override
     public JsonElement read(JsonReader in, ReadContext ctx) throws IOException {
       JsonElement value = read(in);
-      ctx.registerObject(value);
+      ctx.registerObject(value, false);
       return value;
     }
 
@@ -706,7 +706,7 @@ public final class TypeAdapters {
         while (in.hasNext()) {
           String name = in.nextName();
           JsonElement value = read(in);
-          if (!name.equals("@type") && !name.equals("@vtype")) {
+          if (!name.equals("@type")) {
             object.add(name, value);
           }
         }

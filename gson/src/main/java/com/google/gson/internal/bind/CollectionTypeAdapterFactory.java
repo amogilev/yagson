@@ -212,21 +212,16 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
 //    }
 
     @Override
-    protected Collection<E> readOptionallyAdvisedInstance(Collection<E> advisedInstance, JsonReader in, ReadContext ctx)
+    protected Collection<E> readOptionallyAdvisedInstance(JsonReader in, ReadContext ctx)
         throws IOException {
-
-      if (advisedInstance != null && defaultCollClass != advisedInstance.getClass() &&
-              requireReflectiveAdapter(gson, advisedInstance.getClass())) {
-        return AdapterUtils.readByReflectiveAdapter(advisedInstance, in, ctx, gson, formalCollType);
-      }
 
       if (in.peek() == JsonToken.BEGIN_OBJECT) {
         // must be a type advice
         return TypeUtils.readTypeAdvisedValue(gson, in, formalCollType, ctx);
       }
 
-      final Collection<E> instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-      ctx.registerObject(instance);
+      final Collection<E> instance = constructor.construct();
+      ctx.registerObject(instance, false);
 
       in.beginArray();
 

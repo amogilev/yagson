@@ -1,7 +1,6 @@
 package am.yagson.refs;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 
 import am.yagson.ReadContext;
 import com.google.gson.JsonSyntaxException;
@@ -17,8 +16,9 @@ public interface ReferencesReadContext {
      * @param value the object created by de-serializers, optionally without fields/contents yet. If the
      *              adapter that created the object is {@link SimpleTypeAdapter}, it may pass {@code null}
      *              as a note that the object cannot be referenced
+     * @param fromSimpleTypeAdapter whether invoked from a simple type adapter
      */
-    void registerObject(Object value);
+    void registerObject(Object value, boolean fromSimpleTypeAdapter);
 
     <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement, ReadContext ctx) throws IOException;
 

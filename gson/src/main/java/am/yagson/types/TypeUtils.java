@@ -137,12 +137,13 @@ public class TypeUtils {
         }
     }
 
-    private static <T> T readTypeAdvisedValueAfterType(Gson context, JsonReader in, ReadContext ctx,
+    private static <T> T readTypeAdvisedValueAfterType(Gson gson, JsonReader in, ReadContext ctx,
                                                        Type valueType) throws IOException {
         consumeValueField(in);
 
         // use actual type adapter instead of delegate
-        T result = (T) context.getAdapter(TypeToken.get(valueType)).read(in, ctx);
+        TypeAdapter<?> typeAdapter = gson.getAdapter(TypeToken.get(valueType));
+        T result = (T) typeAdapter.read(in, ctx);
 
         in.endObject();
         return result;
@@ -261,11 +262,6 @@ public class TypeUtils {
         out.name("@val");
         adapter.write(out, value, ctx);
         out.endObject();
-    }
-
-    public static TypeAdapter writeVTypeInfoAndUpdateAdapterForValue(JsonWriter out, Object value, TypeAdapter adapter,
-                                                    WriteContext ctx) throws IOException {
-        return writeTypeAndUpdateAdapterForValue("@vtype", out, value, adapter, ctx);
     }
 
     public static Field findField(Class declaringClass, String fieldName) {

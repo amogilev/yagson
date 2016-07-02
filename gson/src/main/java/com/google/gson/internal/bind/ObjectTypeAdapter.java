@@ -61,7 +61,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
     switch (token) {
     case BEGIN_ARRAY:
       final List<Object> list = new ArrayList<Object>();
-      ctx.registerObject(list);
+      ctx.registerObject(list, false);
       
       in.beginArray();
       for (int i = 0; in.hasNext(); i++) {
@@ -95,7 +95,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
               return TypeUtils.readTypeAdvisedValueAfterTypeField(gson, in, null, ctx);
             } else {
               result = map = new LinkedTreeMap<String, Object>();
-              ctx.registerObject(result);
+              ctx.registerObject(result, false);
             }
           }
           ReferencePlaceholder<Object> valuePlaceholder;
@@ -113,7 +113,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
         }
       } else {
         result = gson.getTypeInfoPolicy().isEnabled() ? new Object() : new LinkedTreeMap<String, Object>();
-        ctx.registerObject(result);
+        ctx.registerObject(result, false);
       }
       in.endObject();
       return result;
@@ -123,23 +123,23 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
       if (ctx.refsContext().isReferenceString(str)) {
         return ctx.refsContext().getReferencedObject(str);
       } else {
-        ctx.registerObject(str);
+        ctx.registerObject(str, false);
         return str;
       }
 
     case NUMBER:
       Number num = in.nextNumber();
-      ctx.registerObject(num);
+      ctx.registerObject(num, false);
       return num;
 
     case BOOLEAN:
       boolean boolValue = in.nextBoolean();
-      ctx.registerObject(boolValue);
+      ctx.registerObject(boolValue, false);
       return boolValue;
 
     case NULL:
       in.nextNull();
-      ctx.registerObject(null);
+      ctx.registerObject(null, false);
       return null;
 
     default:

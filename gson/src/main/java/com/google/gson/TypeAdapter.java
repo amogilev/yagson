@@ -264,7 +264,7 @@ public abstract class TypeAdapter<T> {
    */
   public final T fromJson(Reader in) throws IOException {
     JsonReader reader = new JsonReader(in);
-    return read(reader, ReadContext.create(References.defaultPolicy()));
+    return read(reader, ReadContext.nullContext());
   }
 
   /**

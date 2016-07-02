@@ -42,7 +42,8 @@ public class TestVariousSets extends TestCase {
         Set<String> obj = Collections.newSetFromMap(new HashMap<String, Boolean>());
         obj.add("foo");
 
-        TestingUtils.testFully(obj, jsonStr("{'@vtype':'java.util.HashMap','m':{'foo':true}}"));
+        TestingUtils.testFully(obj, jsonStr(
+                "{'m':{'@type':'java.util.HashMap','@val':{'foo':true}}}"));
     }
 
     public void testSetFromMapOfPersonWithWrapper() {
@@ -50,8 +51,8 @@ public class TestVariousSets extends TestCase {
         obj.add(new Person("John", "Smith"));
 
         TestingUtils.testFully(obj, new TypeToken<Set<Person>>(){}, jsonStr(
-                "{'@type':'java.util.Collections$SetFromMap','@val':{'@vtype':'java.util.HashMap'," +
-                        "'m':[[{'name':'John','family':'Smith'},true]]}}"));
+                "{'@type':'java.util.Collections$SetFromMap','@val':{" +
+                        "'m':{'@type':'java.util.HashMap','@val':[[{'name':'John','family':'Smith'},true]]}}}"));
     }
 
     public void testEmptySet1() {
@@ -72,14 +73,13 @@ public class TestVariousSets extends TestCase {
         Set<String> obj = Collections.synchronizedSet(newTestHashSet());
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashSet','c':['foo'],'mutex':'@root'}"));
+                "{'c':{'@type':'java.util.HashSet','@val':['foo']},'mutex':'@root'}"));
     }
 
     public void testSynchronizedSortedSet() {
         Set<String> obj = Collections.synchronizedSortedSet(newTestTreeSetWithComparator());
         TestingUtils.testFully(obj, jsonStr(
-                "{" +
-                        "'@vtype':'java.util.TreeSet','ss':['@.m:',{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}},'foo1','foo22']," +
+                "{'ss':{'@type':'java.util.TreeSet','@val':['@.m:',{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}},'foo1','foo22']}," +
                         "'c':'@.ss','mutex':'@root'}"));
     }
 
@@ -87,14 +87,13 @@ public class TestVariousSets extends TestCase {
         Set<String> obj = Collections.checkedSet(newTestHashSet(), String.class);
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashSet','c':['foo'],'type':'java.lang.String'}"));
+                "{'c':{'@type':'java.util.HashSet','@val':['foo']},'type':'java.lang.String'}"));
     }
 
     public void testCheckedSortedSet() {
         Set<String> obj = Collections.checkedSortedSet(newTestTreeSetWithComparator(), String.class);
         TestingUtils.testFully(obj, jsonStr(
-                "{" +
-                        "'@vtype':'java.util.TreeSet','ss':['@.m:',{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}},'foo1','foo22']," +
+                "{'ss':{'@type':'java.util.TreeSet','@val':['@.m:',{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}},'foo1','foo22']}," +
                         "'c':'@.ss','type':'java.lang.String'}"));
     }
 
@@ -105,21 +104,21 @@ public class TestVariousSets extends TestCase {
         Set<Map.Entry<String, String>> obj = map.entrySet();
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap$EntrySet','s':{'this$0':{'foo1':'foo2'}},'valueType':'java.lang.String'}"));
+                "{'s':{'@type':'java.util.TreeMap$EntrySet','@val':{'this$0':{'foo1':'foo2'}}}," +
+                        "'valueType':'java.lang.String'}"));
     }
 
     public void testUnmodifiableSet() {
         Set<String> obj = Collections.unmodifiableSet(newTestHashSet());
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.HashSet','c':['foo']}"));
+                "{'c':{'@type':'java.util.HashSet','@val':['foo']}}"));
     }
 
     public void testUnmodifiableSortedSet() {
         Set<String> obj = Collections.unmodifiableSortedSet(newTestTreeSetWithComparator());
         TestingUtils.testFully(obj, jsonStr(
-                "{" +
-                        "'@vtype':'java.util.TreeSet','ss':['@.m:',{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}},'foo1','foo22']," +
+                "{'ss':{'@type':'java.util.TreeSet','@val':['@.m:',{'@.comparator':{'@type':'am.yagson.TestingUtils$1','@val':{}}},'foo1','foo22']}," +
                         "'c':'@.ss'}"));
     }
 
@@ -131,7 +130,7 @@ public class TestVariousSets extends TestCase {
         Set<Map.Entry<String, String>> obj = map.entrySet();
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap$EntrySet','c':{'this$0':{'foo1':'foo2'}}}"));
+                "{'c':{'@type':'java.util.TreeMap$EntrySet','@val':{'this$0':{'foo1':'foo2'}}}}"));
     }
 
     public void testSingletonSet() {
@@ -145,7 +144,8 @@ public class TestVariousSets extends TestCase {
         Set<Map.Entry<String, String>> obj = map.entrySet();
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.AbstractMap$SimpleImmutableEntry','element':{'key':'foo1','value':'foo2'}}"));
+                "{'element':{'@type':'java.util.AbstractMap$SimpleImmutableEntry','@val':" +
+                        "{'key':'foo1','value':'foo2'}}}"));
     }
 
     //
@@ -249,7 +249,7 @@ public class TestVariousSets extends TestCase {
         Set<String> obj = map.keySet();
 
         TestingUtils.testFully(obj, jsonStr(
-                "{'@vtype':'java.util.TreeMap','m':{'foo1':'foo2'}}"));
+                "{'m':{'@type':'java.util.TreeMap','@val':{'foo1':'foo2'}}}"));
     }
 
     public void testTreeMapEntrySet() {
@@ -277,7 +277,7 @@ public class TestVariousSets extends TestCase {
         TestingUtils.testFully(map.keySet(), jsonStr(
                 "{'element':'foo'}"));
         TestingUtils.testFully(map.entrySet(), jsonStr(
-                "{'@vtype':'java.util.AbstractMap$SimpleImmutableEntry','element':{'key':'foo','value':'bar'}}"));
+                "{'element':{'@type':'java.util.AbstractMap$SimpleImmutableEntry','@val':{'key':'foo','value':'bar'}}}"));
     }
 
     public void testEnumMapSets() {
@@ -285,10 +285,11 @@ public class TestVariousSets extends TestCase {
         map.put(TimeUnit.DAYS, "days");
 
         TestingUtils.testFully(map.keySet(), Object.class, jsonStr(
-                "{'@type':'java.util.EnumMap$KeySet','@val':{'@vtype':'java.util.EnumMap<java.util.concurrent.TimeUnit,?>','this$0':{'DAYS':'days'}}}"));
+                "{'@type':'java.util.EnumMap$KeySet','@val':{'this$0':" +
+                        "{'@type':'java.util.EnumMap<java.util.concurrent.TimeUnit,?>','@val':{'DAYS':'days'}}}}"));
         TestingUtils.testFully(map.keySet(), jsonStr(
-                "{'@vtype':'java.util.EnumMap<java.util.concurrent.TimeUnit,?>','this$0':{'DAYS':'days'}}"));
+                "{'this$0':{'@type':'java.util.EnumMap<java.util.concurrent.TimeUnit,?>','@val':{'DAYS':'days'}}}"));
         TestingUtils.testFully(map.entrySet(), jsonStr(
-                "{'@vtype':'java.util.EnumMap<java.util.concurrent.TimeUnit,?>','this$0':{'DAYS':'days'}}"));
+                "{'this$0':{'@type':'java.util.EnumMap<java.util.concurrent.TimeUnit,?>','@val':{'DAYS':'days'}}}"));
     }
 }

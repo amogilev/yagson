@@ -36,12 +36,8 @@ public class WriteContext {
         this.rctx = rctx;
     }
 
-//    public static WriteContext create(Object root) {
-//        return new WriteContext(References.createWriteContext(null, root));
-//    }
-//
-    public static WriteContext create(Gson gson, ReferencesPolicy policy, Object root) {
-        return new WriteContext(gson, References.createWriteContext(policy, root));
+    public static WriteContext create(Gson gson, Object root) {
+        return new WriteContext(gson, References.createWriteContext(gson.getReferencesPolicy(), root));
     }
 
     public ReferencesWriteContext refsContext() {

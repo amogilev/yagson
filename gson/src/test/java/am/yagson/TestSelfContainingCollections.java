@@ -84,7 +84,8 @@ public class TestSelfContainingCollections extends TestCase {
         Object[][] arr = new Object[1][];
         arr[0] = arr;
         ClassWithObject obj = new ClassWithObject(arr);
-        TestingUtils.testFullyByToString(obj, jsonStr("{'@vtype':'[[Ljava.lang.Object;','obj':['@root.obj']}"));
+        TestingUtils.testFullyByToString(obj, jsonStr(
+                "{'obj':{'@type':'[[Ljava.lang.Object;','@val':['@root.obj']}}"));
     }
 
     public void testSelfContainingArrayThroughObj() {
@@ -119,8 +120,8 @@ public class TestSelfContainingCollections extends TestCase {
         arr[0] = obj;
 
         TestingUtils.testFully(arr, jsonStr(
-                "[{'@type':'am.yagson.ClassWithObject','@val':{'@vtype':'java.util.IdentityHashMap','obj':" +
-                        "{'@root':'@root'}}}]"));
+                "[{'@type':'am.yagson.ClassWithObject','@val':{'obj':" +
+                        "{'@type':'java.util.IdentityHashMap','@val':{'@root':'@root'}}}}]"));
     }
 
     public void testSelfContainingArrayThroughMap2() {
@@ -134,8 +135,8 @@ public class TestSelfContainingCollections extends TestCase {
         arr[0] = obj;
 
         TestingUtils.testFully(arr, jsonStr(
-                "[{'@type':'am.yagson.ClassWithObject','@val':{'@vtype':'java.util.LinkedHashMap','obj':" +
+                "[{'@type':'am.yagson.ClassWithObject','@val':{'obj':{'@type':'java.util.LinkedHashMap','@val':" +
                         "[[{'@type':'java.lang.Integer','@val':1},'@root']," +
-                        "['@root',{'@type':'java.lang.Integer','@val':2}]]}}]"));
+                        "['@root',{'@type':'java.lang.Integer','@val':2}]]}}}]"));
     }
 }

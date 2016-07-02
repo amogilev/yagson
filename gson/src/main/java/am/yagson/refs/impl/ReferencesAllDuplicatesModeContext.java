@@ -13,7 +13,6 @@ import am.yagson.refs.*;
 
 import com.google.gson.*;
 import com.google.gson.internal.bind.AdapterUtils;
-import com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -151,11 +150,6 @@ public class ReferencesAllDuplicatesModeContext {
         protected ReferencePlaceholder<?> lastReadPlaceholder = null;
         protected Map<String, Object> objectsByReference = new HashMap<String, Object>();
 
-        public RefsReadContext() {
-            currentPathElements.add(REF_ROOT);
-            awaitsObjectRead = true;
-        }
-
         protected void beforeObjectRead(String pathElement) {
             if (awaitsObjectRead) {
                 throw new IllegalStateException("Awaits object, but get another path element: " + getCurrentReference());
@@ -172,14 +166,16 @@ public class ReferencesAllDuplicatesModeContext {
          * Registers an object corresponding to the path built by previous {@link #beforeObjectRead(String)} call.
          *
          * @param value the object created by de-serializers, optionally without fields/contents yet
+         * @param fromSimpleTypeAdapter whether the value is read ny a simple type adapter. Such values are
+         *                              never referenced by this context
          */
-        public void registerObject(Object value) {
+        public void registerObject(Object value, boolean fromSimpleTypeAdapter) {
             if (!awaitsObjectRead) {
                 throw new IllegalStateException("registerObject() without corresponding beforeObjectRead(): " +
                         getCurrentReference());
             }
             awaitsObjectRead = false;
-            if (value != null) {
+            if (value != null && !fromSimpleTypeAdapter) {
                 objectsByReference.put(getCurrentReference(), value);
             }
         }
@@ -187,7 +183,7 @@ public class ReferencesAllDuplicatesModeContext {
         private Object registerReferenceUse(String reference) {
             Object value = getObjectByReference(reference);
             // the object may now be reference both with the used and the current reference
-            registerObject(value);
+            registerObject(value, false);
             return value;
         }
 
@@ -211,7 +207,7 @@ public class ReferencesAllDuplicatesModeContext {
         public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement,
                             ReadContext ctx) throws IOException {
             beforeObjectRead(pathElement);
-            T fieldValue = typeAdapter.read(reader, ctx);
+            T fieldValue = typeAdapter.read(reader, ctx); // expected registerObject() for non-null reads
             if (fieldValue == null) {
                 // registerObject is skipped for nulls in most cases, so clear 'awaits' flag
                 awaitsObjectRead = false;

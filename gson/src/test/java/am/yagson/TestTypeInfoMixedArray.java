@@ -17,20 +17,9 @@ public class TestTypeInfoMixedArray extends TestCase {
         return new ClassWithMixedArray<Object>(null, 1, 2L, 3.01f, 4.02, BigDecimal.ONE);
     }
 
-    public void testMixedNumbersInNumberArrayVtype() {
+    public void testMixedNumbersInNumberArray() {
         ClassWithMixedArray obj = objToTestWithNumberArray();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
-                "{'@vtype':'[Ljava.lang.Number;','arr':[null," +
-                "{'@type':'java.lang.Integer','@val':1}," +
-                "2," +
-                "{'@type':'java.lang.Float','@val':3.01}," +
-                "4.02," +
-                "{'@type':'java.math.BigDecimal','@val':1}]}"));
-    }
-
-    public void testMixedNumbersInNumberArrayWrapper() {
-        ClassWithMixedArray obj = objToTestWithNumberArray();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr("{'arr':" +
+        TestingUtils.testFully(obj, jsonStr("{'arr':" +
                 "{'@type':'[Ljava.lang.Number;'," +
                 "'@val':[null," +
                 "{'@type':'java.lang.Integer','@val':1}," +
@@ -40,19 +29,9 @@ public class TestTypeInfoMixedArray extends TestCase {
                 "{'@type':'java.math.BigDecimal','@val':1}]}}"));
     }
 
-    public void testMixedNumbersInObjectArrayVtype() {
+    public void testMixedNumbersInObjectArray() {
         ClassWithMixedArray obj = objToTestWithObjectArray();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr("{'arr':[null," +
-                "{'@type':'java.lang.Integer','@val':1}," +
-                "2," +
-                "{'@type':'java.lang.Float','@val':3.01}," +
-                "4.02," +
-                "{'@type':'java.math.BigDecimal','@val':1}]}"));
-    }
-
-    public void testMixedNumbersInObjectArrayWrapper() {
-        ClassWithMixedArray obj = objToTestWithObjectArray();
-        TestingUtils.testFully(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS, jsonStr("{'arr':[null," +
+        TestingUtils.testFully(obj, jsonStr("{'arr':[null," +
                 "{'@type':'java.lang.Integer','@val':1}," +
                 "2," +
                 "{'@type':'java.lang.Float','@val':3.01}," +
@@ -63,34 +42,24 @@ public class TestTypeInfoMixedArray extends TestCase {
     public void testCustomInMixedObjectArray() {
         ClassWithMixedArray obj = new ClassWithMixedArray<Object>(new Person("foo", "bar"));
 
-        TestingUtils.testFullyByToString(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
+        TestingUtils.testFullyByToString(obj, jsonStr(
                 "{'arr':[" +
                 "{'@type':'am.yagson.Person'," +
                 "'@val':{'name':'foo','family':'bar'}}]}"));
     }
 
-    public void testCustomInMixedCustomArrayVtype() {
+    public void testCustomInMixedCustomArray() {
         ClassWithMixedArray obj = new ClassWithMixedArray<Person>(new Person("foo", "bar"));
 
-        TestingUtils.testFullyByToString(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES,
-                jsonStr(
-                        "{'@vtype':'[Lam.yagson.Person;'," +
-                        "'arr':[{'@type':'am.yagson.Person','@val':{'name':'foo','family':'bar'}}]}"));
-    }
-
-    public void testCustomInMixedCustomArrayWrapper() {
-        ClassWithMixedArray obj = new ClassWithMixedArray<Person>(new Person("foo", "bar"));
-
-        TestingUtils.testFullyByToString(obj, TypeInfoPolicy.EMIT_TYPE_WRAPPERS,
-                jsonStr("{'arr':" +
-                        "{'@type':'[Lam.yagson.Person;'," +
-                        "'@val':[{'@type':'am.yagson.Person','@val':{'name':'foo','family':'bar'}}]}}"));
+        TestingUtils.testFullyByToString(obj, jsonStr("{'arr':" +
+                "{'@type':'[Lam.yagson.Person;'," +
+                "'@val':[{'@type':'am.yagson.Person','@val':{'name':'foo','family':'bar'}}]}}"));
     }
 
     public void testPureCustomArray() {
         ClassWithPersonArray obj = new ClassWithPersonArray(new Person("foo", "bar"));
 
-        TestingUtils.testFullyByToString(obj, TypeInfoPolicy.EMIT_WRAPPERS_OR_VTYPES, jsonStr(
+        TestingUtils.testFullyByToString(obj, jsonStr(
                 "{'arr':[{'name':'foo','family':'bar'}]}"));
     }
 }

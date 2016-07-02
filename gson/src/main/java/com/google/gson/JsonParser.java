@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
+import am.yagson.ReadContext;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -81,7 +82,7 @@ public final class JsonParser {
     boolean lenient = json.isLenient();
     json.setLenient(true);
     try {
-      return Streams.parse(json);
+      return Streams.parse(json, ReadContext.nullContext());
     } catch (StackOverflowError e) {
       throw new JsonParseException("Failed parsing JSON source: " + json + " to Json", e);
     } catch (OutOfMemoryError e) {

@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import am.yagson.ReadContext;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -84,7 +85,7 @@ public final class JsonStreamParser implements Iterator<JsonElement> {
     }
     
     try {
-      return Streams.parse(parser);
+      return Streams.parse(parser, ReadContext.nullContext());
     } catch (StackOverflowError e) {
       throw new JsonParseException("Failed parsing JSON source to Json", e);
     } catch (OutOfMemoryError e) {

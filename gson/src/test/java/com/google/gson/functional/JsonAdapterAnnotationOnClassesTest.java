@@ -214,7 +214,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
     @Override
     public User read(JsonReader in, ReadContext ctx) throws IOException {
       User value = read(in);
-      ctx.registerObject(value);
+      ctx.registerObject(value, false);
       return value;
     }
 

@@ -18,7 +18,6 @@ package com.google.gson.internal;
 
 import am.yagson.ReadContext;
 import am.yagson.WriteContext;
-import am.yagson.refs.ReferencesPolicy;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonNull;
@@ -43,12 +42,15 @@ public final class Streams {
   /**
    * Takes a reader in any state and returns the next value as a JsonElement.
    */
-  public static JsonElement parse(JsonReader reader) throws JsonParseException {
+  public static JsonElement parse(JsonReader reader, ReadContext ctx) throws JsonParseException {
+    if (ctx == null)
+      ctx = ReadContext.nullContext();
+
     boolean isEmpty = true;
     try {
       reader.peek();
       isEmpty = false;
-      return TypeAdapters.JSON_ELEMENT.read(reader, ReadContext.create(ReferencesPolicy.DISABLED));
+      return TypeAdapters.JSON_ELEMENT.read(reader, ctx);
     } catch (EOFException e) {
       /*
        * For compatibility with JSON 1.5 and earlier, we return a JsonNull for

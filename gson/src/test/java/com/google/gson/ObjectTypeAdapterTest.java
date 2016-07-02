@@ -39,7 +39,7 @@ public final class ObjectTypeAdapterTest extends TestCase {
   }
 
   private WriteContext wctx(Object root) {
-    return WriteContext.create(gson, References.defaultPolicy(), root);
+    return WriteContext.create(gson, root);
   }
 
   public void testSerialize() throws Exception {

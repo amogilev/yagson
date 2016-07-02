@@ -45,6 +45,8 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
 
+import static am.yagson.refs.References.REF_ROOT;
+
 /**
  * This is the main class for using Gson. Gson is typically used by first constructing a
  * Gson instance and then invoking {@link #toJson(Object)} or {@link #fromJson(String, Class)}
@@ -615,7 +617,7 @@ public class Gson {
     writer.setSerializeNulls(serializeNulls);
     
     try {
-      WriteContext ctx = WriteContext.create(this, referencesPolicy, src);
+      WriteContext ctx = WriteContext.create(this, src);
       if (isRootTypeRequired && typeInfoPolicy.isEnabled()) {
         TypeUtils.writeTypeWrapperAndValue(writer, src, adapter, ctx);
       } else {
@@ -830,13 +832,8 @@ public class Gson {
       TypeToken<T> typeToken = (TypeToken<T>) TypeToken.get(typeOfT);
       TypeAdapter<T> typeAdapter = getAdapter(typeToken);
 
-      ReadContext ctx = ReadContext.create(referencesPolicy);
-      if (reader.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(typeAdapter)) {
-        return TypeUtils.readTypeAdvisedValue(this, reader, typeToken.getType(), ctx);
-      } else {
-        T object = typeAdapter.read(reader, ctx);
-        return object;
-      }
+      ReadContext ctx = ReadContext.create(this);
+      return ctx.doRead(reader, typeAdapter, REF_ROOT);
     } catch (EOFException e) {
       /*
        * For compatibility with JSON 1.5 and earlier, we return null for empty

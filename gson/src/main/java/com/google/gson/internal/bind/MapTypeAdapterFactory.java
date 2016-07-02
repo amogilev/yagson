@@ -220,13 +220,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     @Override
-    protected Map<K, V> readOptionallyAdvisedInstance(Map<K, V> advisedInstance, JsonReader in,
+    protected Map<K, V> readOptionallyAdvisedInstance(JsonReader in,
                                                       ReadContext ctx) throws IOException {
-
-      if (advisedInstance != null && defaultMapClass != advisedInstance.getClass() &&
-              requireReflectiveAdapter(gson, advisedInstance.getClass())) {
-        return AdapterUtils.readByReflectiveAdapter(advisedInstance, in, ctx, gson, formalMapType);
-      }
 
       Map<K, V> instance = null;
 
@@ -238,8 +233,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       JsonToken peek = in.peek();
 
       if (peek == JsonToken.BEGIN_ARRAY) {
-        instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-        ctx.registerObject(instance);
+        instance = constructor.construct();
+        ctx.registerObject(instance, false);
 
         in.beginArray();
         for (int i = 0; in.hasNext(); i++) {
@@ -307,9 +302,9 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           }
         }
 
-        // otherwise use the previous @vtype advice, or the default instance
-        instance = advisedInstance == null ? constructor.construct() : advisedInstance;
-        ctx.registerObject(instance);
+        // otherwise use the default instance
+        instance = constructor.construct();
+        ctx.registerObject(instance, false);
         Map<String, FieldInfo> localReflectiveFields = null;
 
 

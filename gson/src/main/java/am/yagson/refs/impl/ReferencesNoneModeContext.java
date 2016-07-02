@@ -9,7 +9,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import am.yagson.refs.ReferencesPolicy;
@@ -34,7 +33,7 @@ public class ReferencesNoneModeContext implements ReferencesReadContext, Referen
         valueTypeAdapter.write(out, value, ctx);
     }
 
-    public void registerObject(Object value) {
+    public void registerObject(Object value, boolean fromSimpleTypeAdapter) {
         // do nothing
     }
 

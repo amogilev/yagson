@@ -48,14 +48,11 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   @Override
   public T read(JsonReader in, ReadContext ctx) throws IOException {
 
-    // PROBLEM: as JsonReader does not support lookaheads for more than one token, we cannot
-    //    distinguish regular objects like "{field:value}" from type-advised primitives like
-    //    "{@type:Long, @val:1}" here.
-    //
-    // SOLUTION: all non-Simple TypeAdapters shall handle type advices themselves, so we delegate to them.
-    //     For simple delegates, if '{' found, we expect and parse type advice here, and fail otherwise
+    // Although similar check exists in ReadContext.doRead(), we need to duplicate it here, as wrappers hide
+    //   simple delegate adapters
 
     if (in.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(delegate)) {
+      // if the delegate adapter is simple and '{' is found, we expect and parse type advice here, and fail otherwise
       return TypeUtils.readTypeAdvisedValue(gson, in, type, ctx);
 
     } else {

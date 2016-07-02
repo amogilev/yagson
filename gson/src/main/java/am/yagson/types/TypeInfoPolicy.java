@@ -13,15 +13,7 @@ public enum TypeInfoPolicy {
      * <p/>
      * No type info is emitted where the declared type equals to the runtime class.
      */
-    EMIT_TYPE_WRAPPERS,
-
-    /**
-     * Emits required type info as "next value's type" for fields/values inside JSON objects or maps, and as type
-     * wrappers for other places, like elements in arrays, keys in maps, or the root object.
-     * <p/>
-     * No type info is emitted where the declared type equals to the runtime class.
-     */
-    EMIT_WRAPPERS_OR_VTYPES;
+    EMIT_TYPE_WRAPPERS;
 
     /**
      * Whether type info is emitted (no matter how exactly)
@@ -31,6 +23,6 @@ public enum TypeInfoPolicy {
     }
 
     public static TypeInfoPolicy defaultPolicy() {
-        return EMIT_WRAPPERS_OR_VTYPES;
+        return EMIT_TYPE_WRAPPERS;
     }
 }

@@ -71,6 +71,9 @@ public final class DefaultTypeAdapterRuntimeWrapper<T> extends TypeAdapter<T> {
   @Override
   public T read(JsonReader in, ReadContext ctx) throws IOException {
 
+    // Although similar check exists in ReadContext.doRead(), we need to duplicate it here, as wrappers hide
+    //   simple delegate adapters
+
     if (in.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(defaultTypeAdapter)) {
       // if default adapter is simple and '{' is found, we expect and parse type advice here, and fail otherwise
       return TypeUtils.readTypeAdvisedValue(gson, in, formalType, ctx);

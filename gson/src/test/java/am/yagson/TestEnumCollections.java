@@ -14,14 +14,14 @@ import static am.yagson.TestingUtils.jsonStr;
 
 public class TestEnumCollections extends TestCase {
 
-    public void testEnumSetWithTypeInfo() {
+    public void testEnumSet1() {
         EnumSet<TypeInfoPolicy> obj = EnumSet.of(TypeInfoPolicy.DISABLED);
 
         TestingUtils.testFully(obj, jsonStr(
                 "{'@type':'java.util.EnumSet<am.yagson.types.TypeInfoPolicy>','@val':['DISABLED']}"));
     }
 
-    public void testEnumSetWithVTypeInfo() {
+    public void testEnumSet2() {
 
         Object obj1 = new EmptyClass() {
             EnumSet<TypeInfoPolicy> set = EnumSet.of(TypeInfoPolicy.DISABLED);
@@ -31,8 +31,8 @@ public class TestEnumCollections extends TestCase {
         };
 
         TestingUtils.testFullyByToString(obj1, jsonStr(
-                "{'@vtype':'java.util.EnumSet<am.yagson.types.TypeInfoPolicy>','set':['DISABLED']" +
-                        ",'this$0':{'fName':'testEnumSetWithVTypeInfo'}}"));
+                "{'set':{'@type':'java.util.EnumSet<am.yagson.types.TypeInfoPolicy>','@val':['DISABLED']}," +
+                        "'this$0':{'fName':'testEnumSet2'}}"));
 
         Object obj2 = new EmptyClass() {
             EnumSet set = EnumSet.of(TypeInfoPolicy.DISABLED);
@@ -42,8 +42,8 @@ public class TestEnumCollections extends TestCase {
         };
 
         TestingUtils.testFullyByToString(obj2, jsonStr(
-                "{'@vtype':'java.util.EnumSet<am.yagson.types.TypeInfoPolicy>','set':['DISABLED']" +
-                        ",'this$0':{'fName':'testEnumSetWithVTypeInfo'}}"));
+                "{'set':{'@type':'java.util.EnumSet<am.yagson.types.TypeInfoPolicy>','@val':['DISABLED']}," +
+                        "'this$0':{'fName':'testEnumSet2'}}"));
     }
 
     public void testEnumSetWithNoTypeInfo() throws Exception {
