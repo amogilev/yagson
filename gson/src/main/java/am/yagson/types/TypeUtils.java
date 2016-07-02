@@ -18,7 +18,7 @@ import java.util.*;
 
 public class TypeUtils {
 
-    static Map<String, Class<?>> primitiveWrappers = new HashMap<String, Class<?>>();
+    private static Map<String, Class<?>> primitiveWrappers = new HashMap<String, Class<?>>();
     static {
         primitiveWrappers.put(boolean.class.getName(), Boolean.class);
         primitiveWrappers.put(byte.class.getName(), Byte.class);
@@ -27,11 +27,6 @@ public class TypeUtils {
         primitiveWrappers.put(long.class.getName(), Long.class);
         primitiveWrappers.put(float.class.getName(), Float.class);
         primitiveWrappers.put(double.class.getName(), Double.class);
-    }
-
-    public static boolean typesDiffer(TypeToken<?> fieldType, Class<?> actualClass) {
-        Class<?> rawType = fieldType.getRawType();
-        return classesDiffer(rawType, actualClass);
     }
 
     public static boolean typesDiffer(Type type, Class<?> actualClass) {
@@ -310,19 +305,20 @@ public class TypeUtils {
             adapter = ctx.getGson().getAdapter(TypeToken.get(enumSetType));
         } else if (EnumMap.class.isAssignableFrom(actualClass)) {
             Class<? extends Enum> enumClass = getField(enumMapKeyTypeField, value);
-            if (EnumMap.class.equals(enumClass)) {
+            int mapKeyTypeVarIdx = -1;
+            TypeVariable[] actualClassTypeVariables = actualClass.getTypeParameters();
+            if (EnumMap.class.equals(actualClass)) {
+                mapKeyTypeVarIdx = 0;
                 parameterTypes = "<" + enumClass.getName() + ",?>";
             } else {
                 // the parameters may be overridden in subclasses
                 // print the parameters, only if the enum (key) type is still present in the parameters lists of the actuall class
-                TypeVariable[] actualClassTypeVariables = actualClass.getTypeParameters();
                 TypeVariable mapKeyTypeVar = EnumMap.class.getTypeParameters()[0];
-                int mapKeyTypeVarIdx = indexOfInheritedTypeVariable(mapKeyTypeVar, EnumMap.class, actualClass);
+                mapKeyTypeVarIdx = indexOfInheritedTypeVariable(mapKeyTypeVar, EnumMap.class, actualClass);
                 if (mapKeyTypeVarIdx >= 0) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("<");
                     for (int i = 0; i < actualClassTypeVariables.length; i++) {
-                        TypeVariable actualClassTypeVariable = actualClassTypeVariables[i];
                         if (i == mapKeyTypeVarIdx) {
                             sb.append(enumClass.getName());
                         } else {
@@ -332,23 +328,23 @@ public class TypeUtils {
                     }
                     sb.setCharAt(sb.length() - 1, '>'); // delete last ',' and add '>'
                     parameterTypes = sb.toString();
-
-                    TypeAdapter resolvedAdapter = AdapterUtils.resolve(adapter, value);
-                    if (resolvedAdapter instanceof MapTypeAdapterFactory.Adapter) {
-                        Type formalMapType = ((MapTypeAdapterFactory.Adapter) resolvedAdapter).getFormalMapType();
-                        Type[] typeArgsWithExactKeyType = new Type[actualClassTypeVariables.length];
-                        Arrays.fill(typeArgsWithExactKeyType, unknownType);
-                        typeArgsWithExactKeyType[mapKeyTypeVarIdx] = enumClass;
-
-                        Type mergedMapType = mergeTypes(
-                                $Gson$Types.newParameterizedTypeWithOwner(actualClass.getEnclosingClass(), actualClass, typeArgsWithExactKeyType),
-                                formalMapType);
-                        adapter = ctx.getGson().getAdapter(TypeToken.get(mergedMapType));
-                    }
-                } else {
-                    // key type is already fixed in subtypes, so do not print params
                 }
             }
+
+            if (mapKeyTypeVarIdx >= 0) {
+                TypeAdapter resolvedAdapter = AdapterUtils.resolve(adapter, value);
+                if (resolvedAdapter instanceof MapTypeAdapterFactory.Adapter) {
+                    Type formalMapType = ((MapTypeAdapterFactory.Adapter) resolvedAdapter).getFormalMapType();
+                    Type[] typeArgsWithExactKeyType = new Type[actualClassTypeVariables.length];
+                    Arrays.fill(typeArgsWithExactKeyType, unknownType);
+                    typeArgsWithExactKeyType[mapKeyTypeVarIdx] = enumClass;
+
+                    Type mergedMapType = mergeTypes(
+                            $Gson$Types.newParameterizedTypeWithOwner(actualClass.getEnclosingClass(), actualClass, typeArgsWithExactKeyType),
+                            formalMapType);
+                    adapter = ctx.getGson().getAdapter(TypeToken.get(mergedMapType));
+                }
+            }  // else key type is already fixed in subtypes, so do not print params and do not update adapter
         }
         out.value(actualClass.getName() + parameterTypes);
 
@@ -582,7 +578,7 @@ public class TypeUtils {
         }
     }
 
-    public static Type lookupTypeArg(TypeVariable<?> typeVar, Collection<Type> lookupSuperTypes,
+    private static Type lookupTypeArg(TypeVariable<?> typeVar, Collection<Type> lookupSuperTypes,
                                       ParameterizedType knownParameterizedSuperType) {
         for (Type lookupType : lookupSuperTypes) {
             if (lookupType instanceof ParameterizedType) {
