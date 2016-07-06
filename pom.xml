@@ -90,8 +90,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
       <plugin>
@@ -110,7 +110,7 @@
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
             <manifestEntries>
-              <Bundle-RequiredExecutionEnvironment>J2SE-1.5, JavaSE-1.6, JavaSE-1.7, JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
+              <Bundle-RequiredExecutionEnvironment>JavaSE-1.6, JavaSE-1.7, JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
               <Export-Package><![CDATA[com.google.gson;version=${project.version}, com.google.gson.annotations;version=${project.version}, com.google.gson.reflect;version=${project.version}, com.google.gson.stream;version=${project.version}, com.google.gson.internal;version=${project.version}, com.google.gson.internal.bind;version=${project.version}]]></Export-Package>
               <Bundle-Version>${project.version}</Bundle-Version>
               <Bundle-ContactAddress>https://github.com/amogilev/yagson</Bundle-ContactAddress>
@@ -165,7 +165,7 @@
            <includePackageNames>com.google.gson</includePackageNames>
            <excludePackageNames>com.google.gson.internal:com.google.gson.internal.bind</excludePackageNames>
             <links>
-             <link>http://docs.oracle.com/javase/1.5.0/docs/api/</link>
+             <link>http://docs.oracle.com/javase/1.6.0/docs/api/</link>
            </links>
            <version>true</version>
            <show>protected</show>

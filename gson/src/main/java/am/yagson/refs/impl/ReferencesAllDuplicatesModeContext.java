@@ -80,7 +80,7 @@ public class ReferencesAllDuplicatesModeContext {
          */
         protected void endObject(Object value) {
             if (value != null) {
-                Object last = currentObjects.pollLast();
+                Object last = currentObjects.removeLast();
                 if (last != value) {
                     throw new IllegalStateException("Out-of-order endObject()");
                 }
