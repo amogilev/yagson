@@ -58,14 +58,13 @@ public class AdapterUtils {
             return Collections.emptyMap();
         }
 
+        Map<String, FieldInfo> result = new TreeMap<String, FieldInfo>();
         List<Field> fields = TypeUtils.findFields(containerClass, true, fieldClassesToFind, exceptClasses);
         if (fields.isEmpty()) {
-            return Collections.emptyMap();
+            return result;
         }
 
         T defaultInstance = defaultObjectProvider.get();
-
-        Map<String, FieldInfo> result = new LinkedHashMap<String, FieldInfo>(fields.size());
 
         for (Field f : fields) {
             String fname = f.getName();

@@ -48,7 +48,8 @@ public class TestingUtils {
 	}
 
 	private static <T> T testBinding(Gson gson, T obj, TypeToken deserializationType, String expected,
-									 boolean cmpObjectsByToString, boolean cmpObjectsByEquals) {
+									 boolean cmpObjectsByToString, boolean cmpObjectsByEquals,
+									 boolean skipSecondSerialization) {
 
 		if (deserializationType == null) {
 			deserializationType = TypeToken.get(obj.getClass());
@@ -87,10 +88,12 @@ public class TestingUtils {
 					str1, str2);
 		}
 
-		// additionally compare the first and the second serialization strings
-		String str2 = gson.toJson(obj2, deserializationType.getType());
-		assertEquals("First toJson() differs from the toJson() of deserialized object",
-				json, str2);
+		if (!skipSecondSerialization) {
+			// additionally compare the first and the second serialization strings
+			String str2 = gson.toJson(obj2, deserializationType.getType());
+			assertEquals("First toJson() differs from the toJson() of deserialized object",
+					json, str2);
+		}
 
 		return (T)obj2;
 	}
@@ -112,6 +115,14 @@ public class TestingUtils {
 		return obj2;
 	}
 
+	/**
+	 * Test with single serialization/deserialization action, and comparison of the resulting object using
+	 * {@link #objectsEqual(Object, Object)}. Unlike {@link #testFully(Object)} version, the second seriaization is
+	 * not performed, and thus the changed order in unsorted sets/maps is not considered a failure.
+     */
+	public static <T> T test(T obj) {
+		return testBinding(buildGson((TypeInfoPolicy) null), obj, null, null, false, true, true);
+	}
 
 	public static <T> T testFully(T obj) {
 		return testFully(obj, (TypeInfoPolicy) null, null);
@@ -122,19 +133,19 @@ public class TestingUtils {
 	}
 
 	public static <T> T testFully(T obj, Class<?> deserializationType, String expected) {
-		return testBinding(buildGson(null), obj, TypeToken.get(deserializationType), expected, false, true);
+		return testBinding(buildGson(null), obj, TypeToken.get(deserializationType), expected, false, true, false);
 	}
 
 	public static <T> T testFully(T obj, TypeToken typeToken, String expected) {
-		return testBinding(buildGson(null), obj, typeToken, expected, false, true);
+		return testBinding(buildGson(null), obj, typeToken, expected, false, true, false);
 	}
 
 	public static <T> T testFully(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, false, true);
+		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, false, true, false);
 	}
 
 	public static <T> T testFully(Gson gson, T obj, String expected) {
-		return testBinding(gson, obj, null, expected, false, true);
+		return testBinding(gson, obj, null, expected, false, true, false);
 	}
 
 	public static <T> T testFullyByToString(T obj) {
@@ -146,11 +157,11 @@ public class TestingUtils {
 	}
 
 	public static <T> T testFullyByToString(Gson gson, T obj, String expected) {
-		return testBinding(gson, obj, null, expected, true, false);
+		return testBinding(gson, obj, null, expected, true, false, false);
 	}
 
 	public static <T> T testFullyByToString(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, true, false);
+		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, true, false, false);
 	}
 
 	/**
@@ -169,6 +180,23 @@ public class TestingUtils {
 	 * Returns whether the object are equal, supports self-referencing arrays.
      */
 	public static boolean objectsEqual(Object o1, Object o2) {
+		IdentityHashMap<Object, Object> visited = visitedObjectsLocal.get();
+		boolean isFirst = false;
+		if (visited == null) {
+			isFirst = true;
+			visited = new IdentityHashMap<Object, Object>();
+			visitedObjectsLocal.set(visited);
+		}
+		try {
+			return objectsEqual(o1, o2, visited);
+		} finally {
+			if (isFirst) {
+				visitedObjectsLocal.set(null);
+			}
+		}
+	}
+
+	private static boolean objectsEqual(Object o1, Object o2, IdentityHashMap<Object, Object> visited) {
 		if (o1 == o2) {
 			return true;
 		} else if (o1 == null || o2 == null) {
@@ -179,68 +207,148 @@ public class TestingUtils {
 			return false;
 		}
 
-		IdentityHashMap<Object, Object> visited = visitedObjectsLocal.get();
-		boolean isFirst = false;
-		if (visited == null) {
-			isFirst = true;
-			visited = new IdentityHashMap<Object, Object>();
-			visitedObjectsLocal.set(visited);
-		}
 		if (visited.containsKey(o1)) {
 			return true;
 		}
 		visited.put(o1, o1);
 
-		try {
-			if (o1.getClass().isArray()) {
-				int l1 = Array.getLength(o1);
-				int l2 = Array.getLength(o2);
-				if (l1 != l2) {
+		if (o1.getClass().isArray()) {
+			int l1 = Array.getLength(o1);
+			int l2 = Array.getLength(o2);
+			if (l1 != l2) {
+				return false;
+			}
+			for (int i = 0; i < l1; i++) {
+				Object e1 = Array.get(o1, i);
+				Object e2 = Array.get(o2, i);
+				if (!objectsEqual(e1, e2, visited)) {
 					return false;
 				}
-				for (int i = 0; i < l1; i++) {
-					Object e1 = Array.get(o1, i);
-					Object e2 = Array.get(o2, i);
-					if (!objectsEqual(e1, e2)) {
-						return false;
-					}
-				}
-				return true;
-			} else if (o1 instanceof Collection) {
-				Iterator<Object> i1 = ((Collection) o1).iterator();
-				Iterator<Object> i2 = ((Collection) o2).iterator();
-				while (i1.hasNext() && i2.hasNext()) {
-					Object e1 = i1.next();
-					Object e2 = i2.next();
-					if (!objectsEqual(e1, e2)) {
-						return false;
-					}
-				}
-				return !(i1.hasNext() || i2.hasNext());
-
-			} else if (o1 instanceof Map) {
-				Iterator<Map.Entry> i1 = ((Map) o1).entrySet().iterator();
-				Iterator<Map.Entry> i2 = ((Map) o2).entrySet().iterator();
-				while (i1.hasNext() && i2.hasNext()) {
-					Map.Entry e1 = i1.next();
-					Map.Entry e2 = i2.next();
-					if (!objectsEqual(e1.getKey(), e2.getKey())) {
-						return false;
-					}
-					if (!objectsEqual(e1.getValue(), e2.getValue())) {
-						return false;
-					}
-				}
-				return !(i1.hasNext() || i2.hasNext());
-
-			} else {
-				// objects which support self-containing should use objectsEqual() in theirs equals()
-				return o1.equals(o2);
 			}
-		} finally {
-			if (isFirst) {
-				visitedObjectsLocal.set(null);
+			return true;
+		} else if (o1 instanceof Collection) {
+			Collection c1 = (Collection) o1;
+			Collection c2 = (Collection) o2;
+
+			boolean requireOrder = o1 instanceof List || o1 instanceof Queue || o1 instanceof SortedSet;
+			if (!requireOrder) {
+				return collectionsEqualIgnoreOrder(c1, c2, visited);
 			}
+			Iterator<Object> i1 = c1.iterator();
+			Iterator<Object> i2 = c2.iterator();
+			while (i1.hasNext() && i2.hasNext()) {
+				Object e1 = i1.next();
+				Object e2 = i2.next();
+				if (!objectsEqual(e1, e2, visited)) {
+					return false;
+				}
+			}
+			return !(i1.hasNext() || i2.hasNext());
+
+		} else if (o1 instanceof Map) {
+			Map m1 = (Map) o1;
+			Map m2 = (Map) o2;
+
+			if (!(m1 instanceof SortedMap)) {
+				return mapsEqualIgnoreOrder(m1, m2, visited);
+			}
+			Iterator<Map.Entry> i1 = m1.entrySet().iterator();
+			Iterator<Map.Entry> i2 = m2.entrySet().iterator();
+			while (i1.hasNext() && i2.hasNext()) {
+				Map.Entry e1 = i1.next();
+				Map.Entry e2 = i2.next();
+				if (!objectsEqual(e1.getKey(), e2.getKey(), visited)) {
+					return false;
+				}
+				if (!objectsEqual(e1.getValue(), e2.getValue(), visited)) {
+					return false;
+				}
+			}
+			return !(i1.hasNext() || i2.hasNext());
+
+		} else {
+			// objects which support self-containing should use objectsEqual() in theirs equals()
+			return o1.equals(o2);
 		}
 	}
+
+	private static boolean collectionsEqualIgnoreOrder(Collection c1, Collection c2,
+													  IdentityHashMap<Object, Object> visited) {
+		if (c1.size() != c2.size()) {
+			return false;
+		}
+		LinkedList l1 = new LinkedList(c1);
+		LinkedList l2 = new LinkedList(c2);
+		Comparator hashCodesComparator = new Comparator() {
+			@Override
+			public int compare(Object o1, Object o2) {
+				return o1.hashCode() - o2.hashCode();
+			}
+		};
+		Collections.sort(l1, hashCodesComparator);
+		Collections.sort(l2, hashCodesComparator);
+
+		while (!l1.isEmpty()) {
+			Object e1 = l1.removeFirst();
+			Iterator i2 = l2.iterator();
+			boolean equalElementFound = false;
+			while (i2.hasNext()) {
+				Object e2 = i2.next();
+				IdentityHashMap<Object, Object> visitedClone = new IdentityHashMap<Object, Object>(visited);
+				if (objectsEqual(e1, e2, visitedClone)) {
+					visited.putAll(visitedClone);
+					equalElementFound = true;
+					i2.remove();
+					break;
+				}
+			}
+			if (!equalElementFound) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean mapsEqualIgnoreOrder(Map m1, Map m2, IdentityHashMap<Object, Object> visited) {
+		if (m1.size() != m2.size()) {
+			return false;
+		}
+		LinkedList<Map.Entry> l1 = new LinkedList<Map.Entry>(m1.entrySet());
+		LinkedList<Map.Entry> l2 = new LinkedList<Map.Entry>(m2.entrySet());
+		Comparator<Map.Entry> keysHashCodesComparator = new Comparator<Map.Entry>() {
+			@Override
+			public int compare(Map.Entry e1, Map.Entry e2) {
+				return e1.getKey().hashCode() - e2.getKey().hashCode();
+			}
+		};
+		Collections.sort(l1, keysHashCodesComparator);
+		Collections.sort(l2, keysHashCodesComparator);
+
+		while (!l1.isEmpty()) {
+			Map.Entry e1 = l1.removeFirst();
+			Iterator<Map.Entry> i2 = l2.iterator();
+			boolean equalKeyFound = false;
+			while (i2.hasNext()) {
+				Map.Entry e2 = i2.next();
+				IdentityHashMap<Object, Object> visitedClone = new IdentityHashMap<Object, Object>(visited);
+				if (objectsEqual(e1.getKey(), e2.getKey(), visitedClone)) {
+					if (!objectsEqual(e1.getValue(), e2.getValue(), visitedClone)) {
+						return false;
+					}
+
+					visited.putAll(visitedClone);
+					equalKeyFound = true;
+					i2.remove();
+					break;
+				}
+			}
+			if (!equalKeyFound) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 }

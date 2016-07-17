@@ -22,7 +22,6 @@ import am.yagson.refs.*;
 
 import am.yagson.types.*;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.internal.$Gson$Types;
@@ -34,10 +33,12 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import java.beans.beancontext.BeanContext;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 import static am.yagson.refs.References.REF_FIELD_PREFIX;
 import static am.yagson.types.TypeUtils.classOf;
@@ -108,7 +109,9 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
                 collType.getName().equals("java.util.Collections$SetFromMap") ||
                 (isAddMethodMissing && !collType.getName().contains("EmptySet"));
       } else {
-        return isDelegate || isAddMethodMissing;
+        return isDelegate || isAddMethodMissing
+                || BeanContext.class.isAssignableFrom(collType)
+                || BlockingQueue.class.isAssignableFrom(collType);
       }
     } catch (NoSuchMethodException e) {
       throw new IllegalStateException(e);
@@ -125,11 +128,24 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
     private Collection<E> defaultCollInstance; // the default Collection instance, as returned by the constructor
     private final Class<? extends Collection> defaultCollClass; // raw class of the default collection instance (defined by constructor)
 
-    // TODO: may be not required, check after completing all tests
-//    private final Map<String, FieldInfo> reflectiveFields; // reflective (extra) fields for default collection type
+    private static class ReflectiveFieldsInfo {
+      // backing map field found in the default collection class, with default instance information
+      private final FieldInfo backingMapFieldInfo;
+      // the comparator field found in the default implementation of the backing map
+      private final Field defaultBackingMapComparatorField;
+      // reflective (extra) fields for default collection type, includes backingMapFieldInfo if exists
+      private final Map<String, FieldInfo> reflectiveFields;
 
-    private final FieldInfo defaultBackingMapFieldInfo;
-    private final Field defaultBackingMapComparatorField;
+      private ReflectiveFieldsInfo(FieldInfo backingMapFieldInfo, Field defaultBackingMapComparatorField, Map<String, FieldInfo> reflectiveFields) {
+        this.backingMapFieldInfo = backingMapFieldInfo;
+        this.defaultBackingMapComparatorField = defaultBackingMapComparatorField;
+        this.reflectiveFields = reflectiveFields;
+      }
+    }
+
+    // information about the fields which may need to be written/read reflectively, in addition to the collection elements
+    private final ReflectiveFieldsInfo reflectiveFieldsInfo;
+
 
     Adapter(Gson gson, Type formalCollType, Type elementType,
                    TypeAdapter<E> elementTypeAdapter,
@@ -154,16 +170,12 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
 
       if (defaultCollInstance != null) {
         this.defaultCollClass = defaultCollInstance.getClass();
-        this.defaultBackingMapFieldInfo = findBackingMap(defaultCollClass, ExistingObjectProvider.of(defaultCollInstance));
-        this.defaultBackingMapComparatorField = findComparatorField(defaultBackingMapFieldInfo);
+        this.reflectiveFieldsInfo = buildReflectiveFieldsInfo(defaultCollClass,
+                ExistingObjectProvider.of(defaultCollInstance));
       } else {
         this.defaultCollClass = null;
-        this.defaultBackingMapFieldInfo = null;
-        this.defaultBackingMapComparatorField = null;
+        this.reflectiveFieldsInfo = null;
       }
-
-//      this.reflectiveFields = buildReflectiveFieldsInfo(defaultCollClass,
-//              new ExistingObjectProvider(defaultCollInstance));
     }
 
     private Field findComparatorField(FieldInfo backingMapFieldInfo) {
@@ -205,11 +217,17 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       return mapFields.values().iterator().next();
     }
 
-//    private Map<String, FieldInfo> buildReflectiveFieldsInfo(Class<? extends Collection> containerClass,
-//                                                             ObjectProvider<? extends Collection> objectProvider) {
-//      return AdapterUtils.buildReflectiveFieldsInfo(gson, containerClass, formalCollType,
-//              objectProvider, classOf(Comparator.class), null);
-//    }
+    private ReflectiveFieldsInfo buildReflectiveFieldsInfo(Class<? extends Collection> containerClass,
+                                                           ObjectProvider<? extends Collection> objectProvider) {
+      FieldInfo backingMapFieldInfo = findBackingMap(defaultCollClass, objectProvider);
+      Field defaultBackingMapComparatorField = findComparatorField(backingMapFieldInfo);
+      Map<String, FieldInfo> reflectiveFields = AdapterUtils.buildReflectiveFieldsInfo(gson, containerClass,
+              formalCollType, objectProvider, classOf(Comparator.class), null);
+      if (backingMapFieldInfo != null) {
+        reflectiveFields.put(backingMapFieldInfo.getField().getName(), backingMapFieldInfo);
+      }
+      return new ReflectiveFieldsInfo(backingMapFieldInfo, defaultBackingMapComparatorField, reflectiveFields);
+    }
 
     @Override
     protected Collection<E> readOptionallyAdvisedInstance(JsonReader in, ReadContext ctx)
@@ -225,36 +243,35 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
 
       in.beginArray();
 
-      boolean nextIsBackingMapValue = false;
-
-      FieldInfo localBackingMapInfo = null;
+      // whether reflective field is possible at next position
+      boolean awaitReflectiveFields = gson.getTypeInfoPolicy().isEnabled();
+      // if non-null, the next value in collection is for this reflective field
+      String nextReflectiveField = null;
+      // lazy reflective fields information for the actual collection class
+      ReflectiveFieldsInfo localReflectiveFieldsInfo = null;
 
       for (int i = 0; in.hasNext(); i++) {
-        if (nextIsBackingMapValue) {
+        if (nextReflectiveField != null) {
           // read the backing map and save into the instance
-          nextIsBackingMapValue = false;
-          String fieldName = localBackingMapInfo.getField().getName();
-          AdapterUtils.readAndSetReflectiveField(instance, fieldName,
-                  Collections.singletonMap(fieldName, localBackingMapInfo),
-                  in, ctx, fieldName);
+          AdapterUtils.readAndSetReflectiveField(instance, nextReflectiveField,
+                  localReflectiveFieldsInfo.reflectiveFields,
+                  in, ctx, Integer.toString(i));
+          nextReflectiveField = null;
           continue;
         }
-        if (i == 0 && in.peek() == JsonToken.STRING && gson.getTypeInfoPolicy().isEnabled()) {
+        if (awaitReflectiveFields && in.peek() == JsonToken.STRING) {
           String fieldRef = in.nextString();
           if (fieldRef.startsWith(REF_FIELD_PREFIX) && fieldRef.endsWith(":")) {
-            String fieldName = fieldRef.substring(REF_FIELD_PREFIX.length(), fieldRef.length() - 1);
-            localBackingMapInfo = defaultCollClass == instance.getClass() ? defaultBackingMapFieldInfo :
-                    this.findBackingMap(instance.getClass(), new ExistingObjectProvider(instance));
-            if (localBackingMapInfo == null || !fieldName.equals(localBackingMapInfo.getField().getName())) {
-              throw new JsonSyntaxException("The only expected field reference in this collection is " +
-                      REF_FIELD_PREFIX + fieldName + ":");
+            if (localReflectiveFieldsInfo == null) {
+              localReflectiveFieldsInfo = defaultCollClass == instance.getClass() ? reflectiveFieldsInfo :
+                      buildReflectiveFieldsInfo(instance.getClass(), ExistingObjectProvider.of(instance));
             }
-
-            nextIsBackingMapValue = true;
+            nextReflectiveField = fieldRef.substring(REF_FIELD_PREFIX.length(), fieldRef.length() - 1);
             continue;
           } else {
             // general string found, not an extra field
             JsonReaderInternalAccess.INSTANCE.returnStringToBuffer(in, fieldRef);
+            awaitReflectiveFields = false;
           }
         }
 
@@ -286,7 +303,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       return instance;
     }
 
-    private boolean isBackingMapDefault(FieldInfo backingMapInfo, Class<? extends Collection> actualCollClass, Object actualBackingMap) {
+    private boolean isBackingMapDefault(FieldInfo backingMapInfo, Field comparatorField, Object actualBackingMap) {
       Object defaultBackingMap = backingMapInfo.getDefaultValue();
 
       if (defaultBackingMap == null || actualBackingMap == null) {
@@ -298,9 +315,6 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       }
 
       // backing map class is default, additionally check if comparator is default
-      Field comparatorField = actualCollClass == defaultCollClass ?
-              defaultBackingMapComparatorField : findComparatorField(backingMapInfo);
-
       if (comparatorField == null) {
         return true;
       }
@@ -311,50 +325,60 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       return defaultComparator == null ? actualComparator == null : defaultComparator.equals(actualComparator);
     }
 
-    private int writeEmptyBackingMapIfNonDefault(Collection<E> actualCollInstance, JsonWriter out, WriteContext ctx) throws IOException {
-      if (!gson.getTypeInfoPolicy().isEnabled()) {
-        return 0;
-      }
-
-      Class<? extends Collection> actualCollClass = actualCollInstance.getClass();
-
-      FieldInfo backingMapInfo;
-      if (actualCollClass != defaultCollClass) {
-        backingMapInfo = findBackingMap(actualCollClass, ConstructingObjectProvider.defaultOf(actualCollInstance, constructorConstructor));
-      } else {
-        backingMapInfo = defaultBackingMapFieldInfo;
-      }
+    private int writeEmptyBackingMapIfNonDefault(ReflectiveFieldsInfo localReflectiveFieldsInfo, Collection<E> actualCollInstance,
+                                                 JsonWriter out, WriteContext ctx, int idx) throws IOException {
+      FieldInfo backingMapInfo = localReflectiveFieldsInfo.backingMapFieldInfo;
       if (backingMapInfo == null) {
-        return 0;
+        return idx;
       }
 
       Field backingMapField = backingMapInfo.getField();
       Object actualBackingMap = getField(actualCollInstance, backingMapField);
-      if (isBackingMapDefault(backingMapInfo, actualCollClass, actualBackingMap)) {
-        return 0;
+      if (isBackingMapDefault(backingMapInfo, localReflectiveFieldsInfo.defaultBackingMapComparatorField, actualBackingMap)) {
+        return idx;
       }
 
       out.value(REF_FIELD_PREFIX + backingMapField.getName() + ":");
       ctx.setSkipNextMapEntries(true);
-      ctx.doWrite(actualBackingMap, backingMapInfo.getFieldAdapter(), "1", out);
+      ctx.doWrite(actualBackingMap, backingMapInfo.getFieldAdapter(), Integer.toString(idx + 1), out);
       ctx.setSkipNextMapEntries(false);
 
-      return 2; // next element index, after written name and value elements
+      return idx + 2; // next element index, after written name and value elements
     }
 
-//    private void writeExtraFields(JsonWriter out, Collection<E> coll, ReferencesWriteContext rctx, int startIdx)
-//            throws IOException {
-//      Map<String, FieldInfo> localReflectiveFields = defaultCollClass == coll.getClass() ? reflectiveFields :
-//              buildReflectiveFieldsInfo(coll.getClass(), new ConstructingObjectProvider(
-//                      constructorConstructor.get(TypeToken.get(coll.getClass()))));
-//      final AtomicInteger mapEntryIdx = new AtomicInteger(startIdx);
-//      AdapterUtils.writeReflectiveFields(coll, localReflectiveFields, out, rctx, new PathElementProducer() {
-//        public String produce() {
-//          int i = mapEntryIdx.getAndIncrement();
-//          return Integer.toString(i);
-//        }
-//      }, true);
-//    }
+    private int writeExtraFields(Collection<E> coll, JsonWriter out, WriteContext ctx)
+            throws IOException {
+      if (!gson.getTypeInfoPolicy().isEnabled()) {
+        return 0;
+      }
+
+      ReflectiveFieldsInfo localReflectiveFieldsInfo = defaultCollClass == coll.getClass() ? reflectiveFieldsInfo :
+              buildReflectiveFieldsInfo(coll.getClass(),
+                      ConstructingObjectProvider.defaultOf(coll, constructorConstructor));
+
+      int idx = 0;
+      for (FieldInfo f : localReflectiveFieldsInfo.reflectiveFields.values()) {
+        Object fieldValue;
+        try {
+          fieldValue = f.getField().get(coll);
+        } catch (IllegalAccessException e) {
+          throw new IOException("Failed to read field", e);
+        }
+        if (f == localReflectiveFieldsInfo.backingMapFieldInfo) {
+          // special handling for backing maps - write an empty clone instead
+          idx = writeEmptyBackingMapIfNonDefault(localReflectiveFieldsInfo, coll, out, ctx, idx);
+        } else {
+          // skip default values
+          if (fieldValue != f.getDefaultValue() && (fieldValue == null || !fieldValue.equals(f.getDefaultValue()))) {
+            out.value(REF_FIELD_PREFIX + f.getField().getName() + ":");
+            ctx.doWrite(fieldValue, f.getFieldAdapter(), Integer.toString(idx + 1), out);
+            idx += 2; // spans two elements
+          }
+        }
+      }
+
+      return idx;
+    }
 
     @Override
     public void write(JsonWriter out, Collection<E> collection, WriteContext ctx) throws IOException {
@@ -373,13 +397,12 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
 
       out.beginArray();
 
-      int i = writeEmptyBackingMapIfNonDefault(collection, out, ctx);
+      int i = writeExtraFields(collection, out, ctx);
 
       for (E element : collection) {
         ctx.doWrite(element, elementTypeAdapter, Integer.toString(i), out);
         i++;
       }
-//      writeExtraFields(out, collection, rctx, i);
       out.endArray();
     }
   }
