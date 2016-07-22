@@ -153,7 +153,8 @@ public class TestVariousCollections extends TestCase {
 
     public void testProcessEnvironmentValues() throws PropertyVetoException {
         Collection<String> obj = System.getenv().values();
-        TestingUtils.test(obj);
+        Collection<String> result = TestingUtils.test(obj);
+        assertEquals(obj, result);
     }
 
     //

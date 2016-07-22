@@ -20,6 +20,7 @@ import am.yagson.ReadContext;
 import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
 
+import am.yagson.strategy.ExcludeByDeclaringClass;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -33,6 +34,9 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -52,7 +56,8 @@ import java.util.*;
  */
 public final class Excluder implements TypeAdapterFactory, Cloneable {
   private static final double IGNORE_VERSIONS = -1.0d;
-  public static final Excluder DEFAULT = new Excluder();
+  public static final Excluder DEFAULT = new Excluder().withExclusionStrategy(
+          new ExcludeByDeclaringClass(Reference.class, SoftReference.class, ReferenceQueue.class), true, false);
 
   private double version = IGNORE_VERSIONS;
   private int modifiers = Modifier.TRANSIENT | Modifier.STATIC;
@@ -163,7 +168,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
 
   private boolean isRequiredTransientField(Field field) {
     // exception for backing maps in sets
-    // TODO: make it configurable
+    // FIXME: make it configurable, or common transient behavior
     return Modifier.isTransient(field.getModifiers()) && !Modifier.isStatic(field.getModifiers())
             && Set.class.isAssignableFrom(field.getDeclaringClass())
             && Map.class.isAssignableFrom(field.getType());

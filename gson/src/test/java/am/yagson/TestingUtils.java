@@ -116,12 +116,12 @@ public class TestingUtils {
 	}
 
 	/**
-	 * Test with single serialization/deserialization action, and comparison of the resulting object using
-	 * {@link #objectsEqual(Object, Object)}. Unlike {@link #testFully(Object)} version, the second seriaization is
-	 * not performed, and thus the changed order in unsorted sets/maps is not considered a failure.
+	 * Test with single serialization/deserialization action, and with no result comparison, except of the class equality.
      */
-	public static <T> T test(T obj) {
-		return testBinding(buildGson((TypeInfoPolicy) null), obj, null, null, false, true, true);
+	public static <T> T test(T obj) { return test(obj, null); }
+
+	public static <T> T test(T obj, String expected) {
+		return testBinding(buildGson((TypeInfoPolicy) null), obj, null, expected, false, false, true);
 	}
 
 	public static <T> T testFully(T obj) {
