@@ -20,7 +20,8 @@ import am.yagson.ReadContext;
 import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
 
-import am.yagson.strategy.ExcludeByDeclaringClass;
+import am.yagson.strategy.ExcludeClassesAssignableTo;
+import am.yagson.strategy.ExcludeFieldsByDeclaringClasses;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -56,8 +57,13 @@ import java.util.*;
  */
 public final class Excluder implements TypeAdapterFactory, Cloneable {
   private static final double IGNORE_VERSIONS = -1.0d;
-  public static final Excluder DEFAULT = new Excluder().withExclusionStrategy(
-          new ExcludeByDeclaringClass(Reference.class, SoftReference.class, ReferenceQueue.class), true, false);
+  public static final Excluder DEFAULT = new Excluder()
+      .withExclusionStrategy(
+              new ExcludeFieldsByDeclaringClasses(Reference.class, SoftReference.class, ReferenceQueue.class),
+              true, false)
+      .withExclusionStrategy(
+              new ExcludeClassesAssignableTo(ClassLoader.class),
+              true, false);
 
   private double version = IGNORE_VERSIONS;
   private int modifiers = Modifier.TRANSIENT | Modifier.STATIC;
@@ -137,33 +143,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       return null;
     }
 
-    return new TypeAdapter<T>() {
-      /** The delegate is lazily created because it may not be needed, and creating it may fail. */
-      private TypeAdapter<T> delegate;
-
-      @Override public T read(JsonReader in, ReadContext ctx) throws IOException {
-        if (skipDeserialize) {
-          in.skipValue();
-          return null;
-        }
-        return delegate().read(in, ctx);
-      }
-
-      @Override public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
-        if (skipSerialize) {
-          out.nullValue();
-          return;
-        }
-        delegate().write(out, value, ctx);
-      }
-
-      private TypeAdapter<T> delegate() {
-        TypeAdapter<T> d = delegate;
-        return d != null
-            ? d
-            : (delegate = gson.getDelegateAdapter(Excluder.this, type));
-      }
-    };
+    return new ExcluderTypeAdapter<T>(skipDeserialize, skipSerialize, gson, type);
   }
 
   private boolean isRequiredTransientField(Field field) {
@@ -275,5 +255,48 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       }
     }
     return true;
+  }
+
+  public class ExcluderTypeAdapter<T> extends TypeAdapter<T> {
+    private final boolean skipDeserialize;
+    private final boolean skipSerialize;
+    private final Gson gson;
+    private final TypeToken<T> type;
+    /** The delegate is lazily created because it may not be needed, and creating it may fail. */
+    private TypeAdapter<T> delegate;
+
+    ExcluderTypeAdapter(boolean skipDeserialize, boolean skipSerialize, Gson gson, TypeToken<T> type) {
+      this.skipDeserialize = skipDeserialize;
+      this.skipSerialize = skipSerialize;
+      this.gson = gson;
+      this.type = type;
+    }
+
+    @Override public T read(JsonReader in, ReadContext ctx) throws IOException {
+      if (skipDeserialize) {
+        in.skipValue();
+        return null;
+      }
+      return delegate().read(in, ctx);
+    }
+
+    @Override public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
+      if (skipSerialize) {
+        out.nullValue();
+        return;
+      }
+      delegate().write(out, value, ctx);
+    }
+
+    private TypeAdapter<T> delegate() {
+      TypeAdapter<T> d = delegate;
+      return d != null
+          ? d
+          : (delegate = gson.getDelegateAdapter(Excluder.this, type));
+    }
+
+    public boolean isSkipSerialize() {
+      return skipSerialize;
+    }
   }
 }

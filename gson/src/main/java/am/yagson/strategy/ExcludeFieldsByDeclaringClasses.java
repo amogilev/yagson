@@ -11,11 +11,11 @@ import static java.util.Arrays.asList;
 /**
  * Excludes fields declared in one of the specified classes (not subclasses!).
  */
-public class ExcludeByDeclaringClass implements ExclusionStrategy {
+public class ExcludeFieldsByDeclaringClasses implements ExclusionStrategy {
 
     private final Set<Class<?>> skipDeclaringClasses;
 
-    public ExcludeByDeclaringClass(Class<?>...skipDeclaringClasses) {
+    public ExcludeFieldsByDeclaringClasses(Class<?>...skipDeclaringClasses) {
         this.skipDeclaringClasses = new HashSet<Class<?>>(asList(skipDeclaringClasses));
     }
 
@@ -25,7 +25,6 @@ public class ExcludeByDeclaringClass implements ExclusionStrategy {
     }
 
     @Override
-    public boolean shouldSkipClass(Class<?> clazz) {
-        return false;
-    }
+    public boolean shouldSkipClass(Class<?> clazz) { return false; }
+
 }

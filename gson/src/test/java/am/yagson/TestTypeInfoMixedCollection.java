@@ -40,7 +40,7 @@ public class TestTypeInfoMixedCollection extends TestCase {
 
 	public void testAlt1Deserialize() {
 		ClassWithMixedCollection obj = objToTest();
-		TestingUtils.testDeserialize(new YaGson(), JSON_ALT, obj, null);
+		assertEquals(obj, TestingUtils.testDeserialize(JSON_ALT, ClassWithMixedCollection.class));
 	}
 
 	public void testMixedPersonString() {

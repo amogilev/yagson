@@ -126,24 +126,27 @@ public class TypeUtils {
         }
     }
 
-    public static void consumeValueField(JsonReader in) throws IOException {
+    public static boolean consumeValueField(JsonReader in) throws IOException {
         if (!in.hasNext()) {
-            throw new JsonSyntaxException("Expected @val at path " + in.getPath());
+            // no @val means actually null value, e.g. skipped by serialization
+            return false;
         }
         String name = in.nextName();
         if (!name.equals("@val")) {
             throw new JsonSyntaxException("Only @type and @val fields are expected at the type advice " +
                     "objects at path " + in.getPath());
         }
+        return true;
     }
 
     private static <T> T readTypeAdvisedValueAfterType(Gson gson, JsonReader in, ReadContext ctx,
                                                        Type valueType) throws IOException {
-        consumeValueField(in);
-
-        // use actual type adapter instead of delegate
-        TypeAdapter<?> typeAdapter = gson.getAdapter(TypeToken.get(valueType));
-        T result = (T) typeAdapter.read(in, ctx);
+        T result = null;
+        if (consumeValueField(in)) {
+            // use actual type adapter instead of delegate
+            TypeAdapter<?> typeAdapter = gson.getAdapter(TypeToken.get(valueType));
+            result = (T) typeAdapter.read(in, ctx);
+        }
 
         in.endObject();
         return result;
@@ -257,37 +260,6 @@ public class TypeUtils {
 
     public static void writeTypeWrapperAndValue(JsonWriter out, Object value, TypeAdapter adapter,
                                                     WriteContext ctx) throws IOException {
-        out.beginObject();
-        adapter = writeTypeAndUpdateAdapterForValue("@type", out, value, adapter, ctx);
-        out.name("@val");
-        adapter.write(out, value, ctx);
-        out.endObject();
-    }
-
-    public static Field findField(Class declaringClass, String fieldName) {
-        try {
-            Field f = declaringClass.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            return f;
-        } catch (NoSuchFieldException e) {
-            throw new IllegalStateException("Field '" + fieldName + "' is not found in " + declaringClass, e);
-        }
-    }
-
-    public static <T> T getField(Field f, Object instance) {
-        try {
-            return (T) f.get(instance);
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Failed to obtain the value of field " + f + " from object " + instance, e);
-        }
-    }
-
-    private static final Field enumSetElementTypeField = findField(EnumSet.class, "elementType");
-    private static final Field enumMapKeyTypeField = findField(EnumMap.class, "keyType");
-
-    public static TypeAdapter writeTypeAndUpdateAdapterForValue(String typeLabel, JsonWriter out, Object value,
-                                                                TypeAdapter adapter, WriteContext ctx) throws IOException {
-        out.name(typeLabel);
         Class<?> actualClass = value.getClass();
         String parameterTypes = "";
         if (EnumSet.class.isAssignableFrom(actualClass)) {
@@ -342,10 +314,43 @@ public class TypeUtils {
                 }
             }  // else key type is already fixed in subtypes, so do not print params and do not update adapter
         }
-        out.value(actualClass.getName() + parameterTypes);
 
-        return adapter;
+        // do not print type wrapper if the value is known to be skipped
+
+        boolean isValueSkipped = AdapterUtils.isSkipSerializeTypeAdapter(adapter);
+        if (!isValueSkipped) {
+            out.beginObject();
+            out.name("@type");
+            out.value(actualClass.getName() + parameterTypes);
+            out.name("@val");
+        }
+
+        adapter.write(out, value, ctx);
+        if (!isValueSkipped) {
+            out.endObject();
+        }
     }
+
+    public static Field findField(Class declaringClass, String fieldName) {
+        try {
+            Field f = declaringClass.getDeclaredField(fieldName);
+            f.setAccessible(true);
+            return f;
+        } catch (NoSuchFieldException e) {
+            throw new IllegalStateException("Field '" + fieldName + "' is not found in " + declaringClass, e);
+        }
+    }
+
+    public static <T> T getField(Field f, Object instance) {
+        try {
+            return (T) f.get(instance);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Failed to obtain the value of field " + f + " from object " + instance, e);
+        }
+    }
+
+    private static final Field enumSetElementTypeField = findField(EnumSet.class, "elementType");
+    private static final Field enumMapKeyTypeField = findField(EnumMap.class, "keyType");
 
     /**
      * Returns whether the provided class is the general class (i.e. not interface, enum, array or primitive) and

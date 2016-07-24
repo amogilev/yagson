@@ -3,15 +3,12 @@ package am.yagson;
 import am.yagson.refs.ReferencesPolicy;
 import junit.framework.TestCase;
 
-import javax.annotation.processing.ProcessingEnvironment;
 import java.beans.PropertyVetoException;
-import java.beans.beancontext.BeanContextChild;
 import java.beans.beancontext.BeanContextChildSupport;
 import java.beans.beancontext.BeanContextSupport;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static am.yagson.TestingUtils.MY_STRING_CMP;
 import static am.yagson.TestingUtils.jsonStr;
 
 public class TestVariousCollections extends TestCase {
@@ -153,8 +150,8 @@ public class TestVariousCollections extends TestCase {
 
     public void testProcessEnvironmentValues() throws PropertyVetoException {
         Collection<String> obj = System.getenv().values();
-        Collection<String> result = TestingUtils.test(obj);
-        assertEquals(obj, result);
+        Collection<String> result = TestingUtils.testUnsorted(obj);
+        assertEquals(obj.size(), result.size()); // order in non-sorted Maps is not always preserved
     }
 
     //

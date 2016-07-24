@@ -47,27 +47,25 @@ public class TestingUtils {
 		}
 	}
 
-	private static <T> T testBinding(Gson gson, T obj, TypeToken deserializationType, String expected,
+	private static <T> T testBinding(Gson gson, T obj, Type deserializationType, String expected,
 									 boolean cmpObjectsByToString, boolean cmpObjectsByEquals,
-									 boolean skipSecondSerialization) {
+									 boolean skipSecondSerialization, boolean expectNull) {
 
-		if (deserializationType == null) {
-			deserializationType = TypeToken.get(obj.getClass());
-		}
-		String json = gson.toJson(obj, deserializationType.getType());
+		String json = gson.toJson(obj, deserializationType);
 		assertNotNull(json);
 		if (expected != null) {
 			assertEquals("toJson(obj) differs from the expected", expected, json);
 		}
 
-		Object obj2 = deserialize(gson, json, deserializationType.getType());
-		if (obj == null) {
+		Object obj2 = deserialize(gson, json, deserializationType);
+		if (obj == null || expectNull) {
 			assertNull(obj2);
 			return null;
+		} else {
+			assertNotNull(obj2);
 		}
 
 		Class<? extends T> objClass = (Class<? extends T>) obj.getClass();
-		assertNotNull(obj2);
 		if (obj2.getClass() != obj.getClass()) {
 			assertEquals("Deserialized object's class is not equal to the original", obj.getClass(), obj2.getClass());
 		}
@@ -90,7 +88,7 @@ public class TestingUtils {
 
 		if (!skipSecondSerialization) {
 			// additionally compare the first and the second serialization strings
-			String str2 = gson.toJson(obj2, deserializationType.getType());
+			String str2 = gson.toJson(obj2, deserializationType);
 			assertEquals("First toJson() differs from the toJson() of deserialized object",
 					json, str2);
 		}
@@ -99,20 +97,15 @@ public class TestingUtils {
 	}
 
 	private static <T> T deserialize(Gson gson, String json, Type objType) {
+		if (objType == null) {
+			objType = Object.class;
+		}
 		T obj2 = gson.fromJson(json, objType);
 		return obj2;
 	}
 
-	public static <T> T testDeserialize(Gson gson, String json, T obj, TypeToken deserializationTypeOrNull) {
-		Type deserializationType;
-		if (deserializationTypeOrNull == null) {
-			deserializationType = obj.getClass();
-		} else {
-			deserializationType = deserializationTypeOrNull.getType();
-		}
-		T obj2 = deserialize(gson, json, deserializationType);
-		assertEquals(obj, obj2);
-		return obj2;
+	public static <T> T testDeserialize(String json, Type deserializationType) {
+		return deserialize(buildGson(), json, deserializationType);
 	}
 
 	/**
@@ -121,7 +114,21 @@ public class TestingUtils {
 	public static <T> T test(T obj) { return test(obj, null); }
 
 	public static <T> T test(T obj, String expected) {
-		return testBinding(buildGson((TypeInfoPolicy) null), obj, null, expected, false, false, true);
+		return testBinding(buildGson(), obj, obj.getClass(), expected, false, false, true, false);
+	}
+
+	/**
+	 * Test for objects which includes unsorted tests/maps. All comparisons which rely on particular sorting are
+	 * skipped.
+     */
+	public static <T> T testUnsorted(T obj) {
+		return testBinding(buildGson(), obj, obj.getClass(), null, false,
+				true, true, false);
+	}
+
+	public static <T> T testWithNullExpected(T obj, Class<?> deserializationClass, String expectedJson) {
+		return testBinding(buildGson(), obj, deserializationClass, expectedJson, false,
+				false, true, true);
 	}
 
 	public static <T> T testFully(T obj) {
@@ -132,20 +139,24 @@ public class TestingUtils {
 		return testFully(obj, (TypeInfoPolicy) null, expected);
 	}
 
-	public static <T> T testFully(T obj, Class<?> deserializationType, String expected) {
-		return testBinding(buildGson(null), obj, TypeToken.get(deserializationType), expected, false, true, false);
+	public static <T> T testFully(T obj, Class<?> deserializationClass, String expected) {
+		return testBinding(buildGson(), obj, deserializationClass, expected, false, true, false, false);
 	}
 
 	public static <T> T testFully(T obj, TypeToken typeToken, String expected) {
-		return testBinding(buildGson(null), obj, typeToken, expected, false, true, false);
+		return testBinding(buildGson(), obj, toType(typeToken), expected, false, true, false, false);
+	}
+
+	private static Type toType(TypeToken typeToken) {
+		return typeToken == null ? null : typeToken.getType();
 	}
 
 	public static <T> T testFully(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, false, true, false);
+		return testBinding(buildGson(typeInfoPolicy), obj, obj.getClass(), expected, false, true, false, false);
 	}
 
 	public static <T> T testFully(Gson gson, T obj, String expected) {
-		return testBinding(gson, obj, null, expected, false, true, false);
+		return testBinding(gson, obj, obj.getClass(), expected, false, true, false, false);
 	}
 
 	public static <T> T testFullyByToString(T obj) {
@@ -157,11 +168,11 @@ public class TestingUtils {
 	}
 
 	public static <T> T testFullyByToString(Gson gson, T obj, String expected) {
-		return testBinding(gson, obj, null, expected, true, false, false);
+		return testBinding(gson, obj, obj.getClass(), expected, true, false, false, false);
 	}
 
 	public static <T> T testFullyByToString(T obj, TypeInfoPolicy typeInfoPolicy, String expected) {
-		return testBinding(buildGson(typeInfoPolicy), obj, null, expected, true, false, false);
+		return testBinding(buildGson(typeInfoPolicy), obj, obj.getClass(), expected, true, false, false, false);
 	}
 
 	/**

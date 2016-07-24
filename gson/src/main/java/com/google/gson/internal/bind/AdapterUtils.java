@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
+import com.google.gson.internal.Excluder;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -31,6 +32,16 @@ public class AdapterUtils {
             return true;
         } else if (typeAdapter instanceof DelegatingTypeAdapter) {
             return isSimpleTypeAdapter(((DelegatingTypeAdapter)typeAdapter).getDelegate());
+        } else {
+            return false;
+        }
+    }
+
+    public static <T> boolean isSkipSerializeTypeAdapter(TypeAdapter<T> typeAdapter) {
+        if (typeAdapter instanceof Excluder.ExcluderTypeAdapter) {
+            return ((Excluder.ExcluderTypeAdapter)typeAdapter).isSkipSerialize();
+        } else if (typeAdapter instanceof DelegatingTypeAdapter) {
+            return isSkipSerializeTypeAdapter(((DelegatingTypeAdapter)typeAdapter).getDelegate());
         } else {
             return false;
         }

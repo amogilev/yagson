@@ -105,7 +105,6 @@ public class TestVariousMaps extends TestCase {
     public void testDeserializeComplexTreeMapWithIncorrectExtraFields() {
         try {
             TestingUtils.testDeserialize(
-                    new YaGson(),
                     jsonStr(
                             "[" +
                                     "[{'name':'John','family':'Doe'},'foo']," +
@@ -113,8 +112,7 @@ public class TestVariousMaps extends TestCase {
                                     "{'@.comparator':{'@type':'am.yagson.TestingUtils$2','@val':{}}," +
                                     "'@.extraField':'foo'}" +
                                     "]"),
-                    null,
-                    new TypeToken<TreeMap<Person, String>>(){});
+                    new TypeToken<TreeMap<Person, String>>(){}.getType());
             fail("JsonSyntaxException expected");
         } catch (JsonSyntaxException e) {
             assertEquals(
