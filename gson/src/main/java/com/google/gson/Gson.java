@@ -29,6 +29,7 @@ import java.util.*;
 
 import am.yagson.ReadContext;
 import am.yagson.WriteContext;
+import am.yagson.adapters.ThreadTypesAdapterFactory;
 import am.yagson.refs.ReferencesPolicy;
 import am.yagson.types.PostReadProcessor;
 import am.yagson.types.SetFromMapPostReadProcessor;
@@ -240,6 +241,7 @@ public class Gson {
     factories.add(TypeAdapters.TIMESTAMP_FACTORY);
     factories.add(ArrayTypeAdapter.FACTORY);
     factories.add(TypeAdapters.CLASS_FACTORY);
+    factories.add(new ThreadTypesAdapterFactory());
 
     // type adapters for composite and user-defined types
     factories.add(new CollectionTypeAdapterFactory(constructorConstructor));
