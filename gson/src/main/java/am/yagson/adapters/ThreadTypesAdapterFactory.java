@@ -1,9 +1,6 @@
 package am.yagson.adapters;
 
-import com.google.gson.Gson;
-import com.google.gson.SimpleTypeAdapter;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -22,6 +19,16 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
     // do not use '/' as escape char as it is double-escaped by writer
     private static final char ESCAPE_CHAR = '_';
 
+    /**
+     * The backup thread group returned if no exact match for the read path is found
+     */
+    private static final ThreadGroup BACKUP_GROUP = null;
+
+    /**
+     * The backup thread returned if no exact match for the read path is found
+     */
+    private static final Thread BACKUP_THREAD = null;
+
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
         Class<? super T> rawType = typeToken.getRawType();
@@ -30,17 +37,14 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
             TypeAdapter<T> result = (TypeAdapter)new ThreadGroupAdapter();
             return result;
         } else if (Thread.class.isAssignableFrom(rawType)) {
-            // TODO
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            TypeAdapter<T> result = (TypeAdapter)new ThreadAdapter();
+            return result;
         }
         return null;
     }
 
-    private static class ThreadGroupAdapter extends SimpleTypeAdapter<ThreadGroup> {
-
-        /**
-         * The backup thread group returned if no exact match for the read path is found
-         */
-        ThreadGroup BACKUP_GROUP = null;
+    private class ThreadGroupAdapter extends SimpleTypeAdapter<ThreadGroup> {
 
         @Override
         public void write(JsonWriter out, ThreadGroup tg) throws IOException {
@@ -49,7 +53,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
                 return;
             }
 
-            out.value(getThreadGroupsPath(tg));
+            out.value(getThreadGroupPath(tg));
         }
 
         @Override
@@ -61,7 +65,44 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
         }
     }
 
-    private static ThreadGroup matchThreadGroup(List<String> groupNames) {
+    private class ThreadAdapter extends SimpleTypeAdapter<Thread> {
+
+        @Override
+        public void write(JsonWriter out, Thread t) throws IOException {
+            if (t == null) {
+                out.nullValue();
+                return;
+            }
+
+            String groupPath = getThreadGroupPath(t.getThreadGroup());
+            StringBuilder sb = new StringBuilder(groupPath);
+            sb.append(SEPARATOR_CHAR);
+            appendEscaped(sb, t.getName(), ESCAPE_CHAR, ESCAPE_CHAR, SEPARATOR_CHAR);
+            out.value(sb.toString());
+        }
+
+        @Override
+        public Thread read(JsonReader in) throws IOException {
+            String path = in.nextString();
+            List<String> groupAndThreadNames = split(path, SEPARATOR_CHAR, ESCAPE_CHAR);
+            if (groupAndThreadNames.size() < 2) {
+                throw new JsonSyntaxException("Expected both thread group and thread names in '" + path + "'");
+            }
+            ThreadGroup matchedGroup = matchThreadGroup(groupAndThreadNames.subList(0, groupAndThreadNames.size() - 1));
+            if (matchedGroup == null) {
+                return BACKUP_THREAD;
+            }
+
+            String threadName = groupAndThreadNames.get(groupAndThreadNames.size() - 1);
+            Thread[] threads = new Thread[matchedGroup.activeCount()];
+            matchedGroup.enumerate(threads, false);
+
+            Thread matchedThread = findNamedIn(threadName, threads);
+            return matchedThread == null ? BACKUP_THREAD : matchedThread;
+        }
+    }
+
+    private ThreadGroup matchThreadGroup(List<String> groupNames) {
         ThreadGroup rootGroup = getSystemThreadGroup();
 
         if (groupNames.size() <= 0 || !rootGroup.getName().equals(groupNames.get(0))) {
@@ -80,7 +121,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
         return curMatchedGroup;
     }
 
-    private static ThreadGroup findNamedIn(String groupName, ThreadGroup[] groups) {
+    private ThreadGroup findNamedIn(String groupName, ThreadGroup[] groups) {
         for (ThreadGroup group : groups) {
             if (group != null && groupName.equals(group.getName())) {
                 return group;
@@ -89,7 +130,16 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
         return null;
     }
 
-    private static ThreadGroup getSystemThreadGroup() {
+    private Thread findNamedIn(String threadName, Thread[] threads) {
+        for (Thread thread : threads) {
+            if (thread != null && threadName.equals(thread.getName())) {
+                return thread;
+            }
+        }
+        return null;
+    }
+
+    private ThreadGroup getSystemThreadGroup() {
         ThreadGroup tg = Thread.currentThread().getThreadGroup();
         while (tg.getParent() != null) {
             tg = tg.getParent();
@@ -97,7 +147,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
         return tg;
     }
 
-    private static String getThreadGroupsPath(ThreadGroup tg) {
+    private String getThreadGroupPath(ThreadGroup tg) {
         List<ThreadGroup> groups = new ArrayList<ThreadGroup>(4);
         while (tg != null) {
             groups.add(tg);
