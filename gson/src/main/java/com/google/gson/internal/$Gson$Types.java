@@ -299,13 +299,21 @@ public final class $Gson$Types {
    * @throws IllegalArgumentException if this type is not a collection.
    */
   public static Type getCollectionElementType(Type context, Class<?> contextRawType) {
-    Type collectionType = getSupertype(context, contextRawType, Collection.class);
+    return getSingleParameterType(context, contextRawType, Collection.class);
+  }
 
-    if (collectionType instanceof WildcardType) {
-      collectionType = ((WildcardType)collectionType).getUpperBounds()[0];
+  /**
+   * Returns the type of the single parameter type, which shall be a supertype of the given context type.
+   * @throws IllegalArgumentException if this type is not a subtype of the specified supertype.
+   */
+  public static Type getSingleParameterType(Type context, Class<?> contextRawType, Class<?> supertypeWithSingleParameter) {
+    Type superType = getSupertype(context, contextRawType, supertypeWithSingleParameter);
+
+    if (superType instanceof WildcardType) {
+      superType = ((WildcardType)superType).getUpperBounds()[0];
     }
-    if (collectionType instanceof ParameterizedType) {
-      return ((ParameterizedType) collectionType).getActualTypeArguments()[0];
+    if (superType instanceof ParameterizedType) {
+      return ((ParameterizedType) superType).getActualTypeArguments()[0];
     }
     return Object.class;
   }

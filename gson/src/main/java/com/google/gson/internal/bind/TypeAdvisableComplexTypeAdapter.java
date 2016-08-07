@@ -20,7 +20,7 @@ import com.google.gson.stream.JsonWriter;
  *
  * @author Andrey Mogilev
  */
-abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> {
+public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> {
 
   public T read(JsonReader in, ReadContext ctx) throws IOException {
     JsonToken nextToken = in.peek();

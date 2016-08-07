@@ -1,16 +1,28 @@
 package am.yagson.adapters;
 
+import am.yagson.WriteContext;
+import am.yagson.refs.PlaceholderUse;
+import am.yagson.refs.ReferencePlaceholder;
 import com.google.gson.*;
+import com.google.gson.internal.$Gson$Types;
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
- * Provides type adapters for {@link Thread} and {@link ThreadGroup}.
+ * Provides type adapters for {@link Thread}, {@link ThreadGroup} and {@link ThreadLocal}s.
+ * <p/>
+ * Threads and thread groups are serialized by their full names (starting from the root thread group).
+ * <p/>
+ * For thread locals, only the value for the current thread is stored. Deserialized thread locals are always
+ * registered as new to the current thread, no "merge" attempts to existing thread locals is currently performed
+ * (but it may be changed in future)
  */
 public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
 
@@ -29,6 +41,29 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
      */
     private static final Thread BACKUP_THREAD = null;
 
+    private final Method threadLocalGetMapMethod;
+    private final Method threadLocalMapGetEntryMethod;
+    private final Field threadLocalEntryValueField;
+
+    public ThreadTypesAdapterFactory() {
+        try {
+            threadLocalGetMapMethod = ThreadLocal.class.getDeclaredMethod("getMap", Thread.class);
+            threadLocalGetMapMethod.setAccessible(true);
+
+            Class<?> threadLocalMapClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap");
+            Class<?> threadLocalMapEntryClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry");
+
+            threadLocalMapGetEntryMethod = threadLocalMapClass.getDeclaredMethod("getEntry", ThreadLocal.class);
+            threadLocalMapGetEntryMethod.setAccessible(true);
+
+            threadLocalEntryValueField = threadLocalMapEntryClass.getDeclaredField("value");
+            threadLocalEntryValueField.setAccessible(true);
+
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to initialize ThreadTypesAdapterFactory");
+        }
+    }
+
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
         Class<? super T> rawType = typeToken.getRawType();
@@ -40,9 +75,79 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
             @SuppressWarnings({"unchecked", "rawtypes"})
             TypeAdapter<T> result = (TypeAdapter)new ThreadAdapter();
             return result;
+        } else if (ThreadLocal.class.isAssignableFrom(rawType)) {
+            TypeToken<?> fieldType = TypeToken.get($Gson$Types.getSingleParameterType(typeToken.getType(),
+                    typeToken.getRawType(), ThreadLocal.class));
+
+            ReflectiveTypeAdapterFactory.BoundField valueField = new ReflectiveTypeAdapterFactory.DefaultBoundField(
+                    "@.value", null, true, true, gson, fieldType) {
+                @Override
+                protected boolean writeField(Object value, WriteContext ctx) throws IOException, IllegalAccessException {
+                    if (value == null) {
+                        return false;
+                    }
+                    Object threadLocalMap = getCurrentThreadMap(value);
+                    return threadLocalMap != null && getThreadLocalEntry(threadLocalMap, value) != null;
+                }
+
+                @Override
+                @SuppressWarnings("unchecked")
+                protected void applyReadFieldValue(Object value, Object fieldValue) throws IllegalAccessException {
+                    if (fieldValue != null) {
+                        ((ThreadLocal)value).set(fieldValue);
+                    }
+                }
+
+                @Override
+                protected Object getFieldValue(Object value) throws IllegalAccessException {
+                    Object threadLocalMap = getCurrentThreadMap(value);
+                    if (threadLocalMap != null) {
+                        Object threadLocalEntry = getThreadLocalEntry(threadLocalMap, value);
+                        if (threadLocalEntry != null) {
+                            return threadLocalEntryValueField.get(threadLocalEntry);
+                        }
+                    }
+                    return null;
+                }
+
+                @SuppressWarnings("unchecked")
+                protected void applyReadPlaceholder(final Object value, Map<Field, ReferencePlaceholder> fieldPlaceholders,
+                                                    ReferencePlaceholder fieldValuePlaceholder) {
+                    // the thread local's "value" is not a real field, so do not add it to 'fieldPlaceholders' map
+                    fieldValuePlaceholder.registerUse(new PlaceholderUse() {
+                        @Override
+                        public void applyActualObject(Object actualObject) throws IOException {
+                            try {
+                                applyReadFieldValue(value, actualObject);
+                            } catch (IllegalAccessException e) {
+                                throw new IOException(e);
+                            }
+                        }
+                    });
+                }
+            };
+            return gson.getReflectiveTypeAdapterFactory().createSpecial(gson, typeToken,
+                    Collections.singletonList(valueField), null);
         }
         return null;
     }
+
+    private Object getCurrentThreadMap(Object value) {
+        try {
+            return threadLocalGetMapMethod.invoke(value, Thread.currentThread());
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to invoke getCurrentThreadMap", e);
+        }
+    }
+
+    private Object getThreadLocalEntry(Object threadLocalMap, Object value) {
+        try {
+            return threadLocalMapGetEntryMethod.invoke(threadLocalMap, value);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to invoke getThreadLocalEntry", e);
+        }
+    }
+
 
     private class ThreadGroupAdapter extends SimpleTypeAdapter<ThreadGroup> {
 

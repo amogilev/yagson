@@ -59,7 +59,8 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
   private static final double IGNORE_VERSIONS = -1.0d;
   public static final Excluder DEFAULT = new Excluder()
       .withExclusionStrategy(
-              new ExcludeFieldsByDeclaringClasses(Reference.class, SoftReference.class, ReferenceQueue.class),
+              new ExcludeFieldsByDeclaringClasses(Reference.class, SoftReference.class, ReferenceQueue.class,
+                      ThreadLocal.class),
               true, false)
       .withExclusionStrategy(
               new ExcludeClassesAssignableTo(ClassLoader.class),
@@ -121,6 +122,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
           = new ArrayList<ExclusionStrategy>(deserializationStrategies);
       result.deserializationStrategies.add(exclusionStrategy);
     }
+//    result = result.withModifiers(result.modifiers & ~Modifier.TRANSIENT);
     return result;
   }
   

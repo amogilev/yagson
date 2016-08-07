@@ -117,6 +117,10 @@ public class TestingUtils {
 		return testBinding(buildGson(), obj, obj.getClass(), expected, false, false, true, false);
 	}
 
+	public static <T> T test(T obj, TypeToken typeToken, String expected) {
+		return testBinding(buildGson(), obj, toType(typeToken), expected, false, false, true, false);
+	}
+
 	/**
 	 * Test for objects which includes unsorted tests/maps. All comparisons which rely on particular sorting are
 	 * skipped.
