@@ -22,6 +22,8 @@ import am.yagson.refs.ReferencesPolicy;
 
 import am.yagson.strategy.ExcludeClassesAssignableTo;
 import am.yagson.strategy.ExcludeFieldsByDeclaringClasses;
+import am.yagson.strategy.ExcludeTransientFieldsInClassByNames;
+import am.yagson.strategy.TransientFieldExclusionStrategy;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -64,14 +66,26 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
               true, false)
       .withExclusionStrategy(
               new ExcludeClassesAssignableTo(ClassLoader.class),
-              true, false);
+              true, false)
+      .withTransientsExclusionStrategy(
+              new ExcludeTransientFieldsInClassByNames(Map.class,
+                      "keySet", "keySetView", "entrySet", "entrySetView", "values"),
+              true, true)
+      .withTransientsExclusionStrategy(
+              new ExcludeTransientFieldsInClassByNames(
+                      Collections.newSetFromMap(Collections.<Object,Boolean>emptyMap()).getClass(),
+                      "s"),
+              true, true)
+          ;
 
   private double version = IGNORE_VERSIONS;
-  private int modifiers = Modifier.TRANSIENT | Modifier.STATIC;
+  private int modifiers = Modifier.STATIC; // YaGson change: allow TRANSIENT by default
   private boolean serializeInnerClasses = true;
   private boolean requireExpose;
   private List<ExclusionStrategy> serializationStrategies = Collections.emptyList();
   private List<ExclusionStrategy> deserializationStrategies = Collections.emptyList();
+  private List<TransientFieldExclusionStrategy> transientsSerializationStrategies = Collections.emptyList();
+  private List<TransientFieldExclusionStrategy> transientsDeserializationStrategies = Collections.emptyList();
   private boolean serializeOuterReferences;
   private boolean serializeLocalAndAnonymousClasses;
 
@@ -122,10 +136,25 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
           = new ArrayList<ExclusionStrategy>(deserializationStrategies);
       result.deserializationStrategies.add(exclusionStrategy);
     }
-//    result = result.withModifiers(result.modifiers & ~Modifier.TRANSIENT);
     return result;
   }
-  
+
+  public Excluder withTransientsExclusionStrategy(TransientFieldExclusionStrategy exclusionStrategyForTransientFields,
+                                                  boolean serialization, boolean deserialization) {
+    Excluder result = clone();
+    if (serialization) {
+      result.transientsSerializationStrategies
+              = new ArrayList<TransientFieldExclusionStrategy>(transientsSerializationStrategies);
+      result.transientsSerializationStrategies.add(exclusionStrategyForTransientFields);
+    }
+    if (deserialization) {
+      result.transientsDeserializationStrategies
+          = new ArrayList<TransientFieldExclusionStrategy>(transientsDeserializationStrategies);
+      result.transientsDeserializationStrategies.add(exclusionStrategyForTransientFields);
+    }
+    return result;
+  }
+
   public Excluder forReferencesPolicy(ReferencesPolicy referencesPolicy) {
     Excluder result = clone();
     result.serializeOuterReferences = referencesPolicy != ReferencesPolicy.DISABLED;
@@ -148,16 +177,8 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
     return new ExcluderTypeAdapter<T>(skipDeserialize, skipSerialize, gson, type);
   }
 
-  private boolean isRequiredTransientField(Field field) {
-    // exception for backing maps in sets
-    // FIXME: make it configurable, or common transient behavior
-    return Modifier.isTransient(field.getModifiers()) && !Modifier.isStatic(field.getModifiers())
-            && Set.class.isAssignableFrom(field.getDeclaringClass())
-            && Map.class.isAssignableFrom(field.getType());
-  }
-
   public boolean excludeField(Field field, boolean serialize) {
-    if ((modifiers & field.getModifiers()) != 0 && !isRequiredTransientField(field)) {
+    if ((modifiers & field.getModifiers()) != 0) {
       return true;
     }
 
@@ -191,6 +212,18 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       for (ExclusionStrategy exclusionStrategy : list) {
         if (exclusionStrategy.shouldSkipField(fieldAttributes)) {
           return true;
+        }
+      }
+    }
+
+    if (Modifier.isTransient(field.getModifiers())) {
+      List<TransientFieldExclusionStrategy> transientsExcludeList = serialize
+              ? transientsSerializationStrategies : transientsDeserializationStrategies;
+      if (!transientsExcludeList.isEmpty()) {
+        for (TransientFieldExclusionStrategy strategy : transientsExcludeList) {
+          if (strategy.shouldSkipField(field)) {
+            return true;
+          }
         }
       }
     }
