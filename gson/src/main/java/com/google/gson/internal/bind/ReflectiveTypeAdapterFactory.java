@@ -196,10 +196,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       if (reader.peek() == JsonToken.STRING) {
         String token = reader.nextString();
         if (token.startsWith("@")) {
-          if (token.startsWith(References.REF_FIELD_PREFIX)) {
-            String fieldName = token.substring(References.REF_FIELD_PREFIX.length());
-            fieldValuePlaceholder = new FieldReferencePlaceholder(fieldName);
-          } else if (isPrimitive && name.equalsIgnoreCase("hashcode") &&
+          if (isPrimitive && name.equalsIgnoreCase("hashcode") &&
                   fieldType.getRawType().equals(int.class)) {
             fieldValuePlaceholder = new HashReferencePlaceholder();
           }
@@ -362,6 +359,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         }
 
         if (!fieldPlaceholders.isEmpty()) {
+          // NOTE: may contain FieldReferencePlaceholder if RefsContext fail to resolve them due to re-ordering,
+          //    or by implementation (i.e. in CircularAndSibling mode)
           PlaceholderUtils.applyOrDeferHashAndFieldPlaceholders(instance, fieldPlaceholders, boundFields);
         }
         in.endObject();

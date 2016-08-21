@@ -39,6 +39,9 @@ public class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDupli
 
             boolean isField = pathElement.length() > 0 && Character.isJavaIdentifierStart(pathElement.charAt(0));
             if (isField) {
+                // NOTE: only 'fields' are allowed, as this context require assistance of the reflective adapter to
+                // resolve the sibling references during read (in the current implementation). No other adapters
+                // currently support resolving FieldReferencePlaceholders
                 Map<Object, String> siblingReferences = siblingReferencesStack.getLast();
                 String ref = siblingReferences.get(value);
                 if (ref != null) {

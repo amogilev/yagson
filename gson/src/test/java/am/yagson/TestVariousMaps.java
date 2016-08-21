@@ -168,7 +168,7 @@ public class TestVariousMaps extends TestCase {
                         "'mutex':'@root'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@root.sm','mutex':'@root'}"));
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@.sm','mutex':'@root'}"));
 
         TestingUtils.testFully(obj, jsonStr(
                 "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@.sm','mutex':'@root'}"));
@@ -192,11 +192,11 @@ public class TestVariousMaps extends TestCase {
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@root.sm'," +
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@.sm'," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
         TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
-                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@root.sm'," +
+                "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@.sm'," +
                         "'keyType':'java.lang.String','valueType':'java.lang.String'}"));
 
     }

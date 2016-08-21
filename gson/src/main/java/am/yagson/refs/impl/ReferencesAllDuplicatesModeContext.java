@@ -1,11 +1,7 @@
 package am.yagson.refs.impl;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.*;
 
 import am.yagson.ReadContext;
 import am.yagson.WriteContext;
@@ -16,6 +12,7 @@ import com.google.gson.internal.bind.AdapterUtils;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import static am.yagson.refs.References.REF_FIELD_PREFIX;
 import static am.yagson.refs.References.REF_ROOT;
 
 /**
@@ -30,13 +27,28 @@ public class ReferencesAllDuplicatesModeContext {
 
     static ReferencesPolicy policy = ReferencesPolicy.DUPLICATE_OBJECTS;
 
-    protected Deque<String> currentPathElements = new ArrayDeque<String>();
+    protected List<String> currentPathElements = new ArrayList<String>();
+
+    protected String removeLastPathElement() {
+        return currentPathElements.remove(currentPathElements.size() - 1);
+    }
 
     protected String getCurrentReference() {
-        // TODO: optimize - cache last, maybe keep paths in stack etc.
+        // TODO: optimize - cache last, maybe keep 'parent references' stack etc.
         StringBuilder sb = new StringBuilder();
         for (String el : currentPathElements) {
             sb.append(el).append('.');
+        }
+        if (sb.length() > 0) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        return sb.toString();
+    }
+    protected String getParentReference() {
+        // TODO: refactor
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < currentPathElements.size() - 1; i++) {
+            sb.append(currentPathElements.get(i)).append('.');
         }
         if (sb.length() > 0) {
             sb.deleteCharAt(sb.length() - 1);
@@ -68,7 +80,7 @@ public class ReferencesAllDuplicatesModeContext {
          */
         protected void startObject(Object value, String pathElement) {
             currentObjects.addLast(value);
-            currentPathElements.addLast(pathElement);
+            currentPathElements.add(pathElement);
             references.put(value, getCurrentReference());
         }
 
@@ -84,7 +96,7 @@ public class ReferencesAllDuplicatesModeContext {
                 if (last != value) {
                     throw new IllegalStateException("Out-of-order endObject()");
                 }
-                currentPathElements.removeLast();
+                removeLastPathElement();
             }
         }
 
@@ -98,7 +110,18 @@ public class ReferencesAllDuplicatesModeContext {
                 return null;
             }
 
-            return references.get(value);
+            String ref = references.get(value);
+            if (ref != null) {
+                String curRef = getCurrentReference();
+                if (ref.startsWith(curRef + ".") && ref.indexOf('.', curRef.length() + 1) < 0) {
+                    // use shorter 'sibling field' reference istsead of the full reference
+                    // NOTE: unlike ReferencesPolicy.CIRCULAR_AND_SIBLINGS mode, not only 'fields' are
+                    //  supported
+                    String siblingRef = References.REF_FIELD_PREFIX + ref.substring(curRef.length() + 1);
+                    return siblingRef;
+                }
+            }
+            return ref;
         }
 
         public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement,
@@ -158,7 +181,7 @@ public class ReferencesAllDuplicatesModeContext {
                 throw new IllegalStateException("The last reference placeholder was not consumed, at " +
                         getCurrentReference());
             }
-            currentPathElements.addLast(pathElement);
+            currentPathElements.add(pathElement);
             awaitsObjectRead = true;
         }
 
@@ -192,12 +215,16 @@ public class ReferencesAllDuplicatesModeContext {
                 throw new IllegalStateException("afterObjectRead() without corresponding registerObject(): " +
                         getCurrentReference());
             }
-            currentPathElements.removeLast();
+            removeLastPathElement();
         }
 
 
         protected Object getObjectByReference(String reference) throws JsonSyntaxException {
-            Object value = objectsByReference.get(reference);
+            String key = reference;
+            if (reference.startsWith(REF_FIELD_PREFIX)) {
+                key = getParentReference() + "." + reference.substring(REF_FIELD_PREFIX.length());
+            }
+            Object value = objectsByReference.get(key);
             if (value == null) {
                 throw new JsonSyntaxException("Missing reference '" + reference + "'");
             }
