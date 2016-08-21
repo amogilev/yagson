@@ -27,35 +27,31 @@ public class ReferencesAllDuplicatesModeContext {
 
     static ReferencesPolicy policy = ReferencesPolicy.DUPLICATE_OBJECTS;
 
-    protected List<String> currentPathElements = new ArrayList<String>();
+//    protected List<String> currentPathElements = new ArrayList<String>();
+    protected List<String> referencePaths = new ArrayList<String>();
 
-    protected String removeLastPathElement() {
-        return currentPathElements.remove(currentPathElements.size() - 1);
+    protected void addPathElement(String pathElement) {
+        String parentRefPath = getCurrentReference();
+        String newRefPath = parentRefPath == null ? pathElement : parentRefPath + "." + pathElement;
+        referencePaths.add(newRefPath);
+    }
+    protected void removeLastPathElement() {
+        referencePaths.remove(referencePaths.size() - 1);
     }
 
     protected String getCurrentReference() {
-        // TODO: optimize - cache last, maybe keep 'parent references' stack etc.
-        StringBuilder sb = new StringBuilder();
-        for (String el : currentPathElements) {
-            sb.append(el).append('.');
+        if (referencePaths.size() > 0) {
+            return referencePaths.get(referencePaths.size() - 1);
         }
-        if (sb.length() > 0) {
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return sb.toString();
-    }
-    protected String getParentReference() {
-        // TODO: refactor
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < currentPathElements.size() - 1; i++) {
-            sb.append(currentPathElements.get(i)).append('.');
-        }
-        if (sb.length() > 0) {
-            sb.deleteCharAt(sb.length() - 1);
-        }
-        return sb.toString();
+        return null;
     }
 
+    protected String getParentReference() {
+        if (referencePaths.size() > 1) {
+            return referencePaths.get(referencePaths.size() - 2);
+        }
+        return null;
+    }
 
     class RefsWriteContext implements ReferencesWriteContext {
         protected IdentityHashMap<Object, String> references = new IdentityHashMap<Object, String>();
@@ -80,7 +76,7 @@ public class ReferencesAllDuplicatesModeContext {
          */
         protected void startObject(Object value, String pathElement) {
             currentObjects.addLast(value);
-            currentPathElements.add(pathElement);
+            addPathElement(pathElement);
             references.put(value, getCurrentReference());
         }
 
@@ -181,7 +177,7 @@ public class ReferencesAllDuplicatesModeContext {
                 throw new IllegalStateException("The last reference placeholder was not consumed, at " +
                         getCurrentReference());
             }
-            currentPathElements.add(pathElement);
+            addPathElement(pathElement);
             awaitsObjectRead = true;
         }
 
