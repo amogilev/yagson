@@ -12,17 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.jar.Attributes;
 
-import static am.yagson.TestingUtils.jsonStr;
+import static am.yagson.TestingUtils.*;
 
 public class TestVariousMaps extends TestCase {
-
-    // instances of YaGson for testing with alternative references policy
-    private static YaGson gsonAllDuplicatesMode = new YaGsonBuilder()
-            .setReferencesPolicy(ReferencesPolicy.DUPLICATE_OBJECTS)
-            .create();
-    private static YaGson gsonCircularOnlyMode = new YaGsonBuilder()
-            .setReferencesPolicy(ReferencesPolicy.CIRCULAR_ONLY)
-            .create();
 
     private static Map<String, String> newTestMap() {
         Map<String, String> map = new HashMap<String, String>();
@@ -167,7 +159,7 @@ public class TestVariousMaps extends TestCase {
                         "'m':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}}," +
                         "'mutex':'@root'}"));
 
-        TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
+        TestingUtils.testFully(gsonCircularAndSiblingMode, obj, jsonStr(
                 "{'sm':{'@type':'java.util.TreeMap','@val':{'foo':'bar'}},'m':'@.sm','mutex':'@root'}"));
 
         TestingUtils.testFully(obj, jsonStr(

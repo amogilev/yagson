@@ -1,5 +1,6 @@
 package am.yagson;
 
+import am.yagson.refs.ReferencesPolicy;
 import am.yagson.types.TypeInfoPolicy;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -32,6 +33,21 @@ public class TestingUtils {
             return cmp;
         }
     };
+
+	// instances of YaGson with custom references policies
+
+	static YaGson gsonCircularOnlyMode = new YaGsonBuilder()
+			.setReferencesPolicy(ReferencesPolicy.CIRCULAR_ONLY)
+			.create();
+
+	static YaGson gsonCircularAndSiblingMode = new YaGsonBuilder()
+			.setReferencesPolicy(ReferencesPolicy.CIRCULAR_AND_SIBLINGS)
+			.create();
+
+	static YaGson gsonAllDuplicatesMode = new YaGsonBuilder()
+			.setReferencesPolicy(ReferencesPolicy.DUPLICATE_OBJECTS)
+			.create();
+
 
 	private static YaGson buildGson() {
 		return buildGson(null);

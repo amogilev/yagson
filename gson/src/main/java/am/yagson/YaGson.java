@@ -32,9 +32,12 @@ public class YaGson extends Gson {
      * Constructs a Gson object with default configuration. The default configuration has the
      * following settings:
      * <ul>
-     *   <li>By default, YaGson's detects circular references and emits them as links, see
-     *   {@link ReferencesPolicy#CIRCULAR_ONLY}. Use {@link YaGsonBuilder#setReferencesPolicy(ReferencesPolicy)}
-     *   to change it if necessary.</li>
+     *   <li>By default, YaGson's detects all references to the same objects in the whole references graph of the
+     *   serialized object. All such references except the first one are emitted as links, see
+     *   {@link ReferencesPolicy#DUPLICATE_OBJECTS}. Although this policy may be changed to the alternative ones by
+     *   {@link YaGsonBuilder#setReferencesPolicy(ReferencesPolicy)}, it is not recommended in case of arbitrary objects,
+     *   as the functionality of the deserialized objects may be broken if it relies on the identity of such referenced
+     *   objects.</li>
      *   <li>By default, the type information is emitted as {@literal @type/@value} wrappers when the actual types
      *   would be lost otherwise, i.e. when the known de-serialization type is less specific than the actual class
      *   of an abject or its part being serialized. Use

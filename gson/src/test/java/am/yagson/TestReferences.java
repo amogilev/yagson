@@ -4,22 +4,11 @@ import am.yagson.refs.ReferencesPolicy;
 import am.yagson.types.TypeInfoPolicy;
 import junit.framework.TestCase;
 
+import static am.yagson.TestingUtils.gsonAllDuplicatesMode;
+import static am.yagson.TestingUtils.gsonCircularOnlyMode;
 import static am.yagson.TestingUtils.jsonStr;
 
 public class TestReferences extends TestCase {
-
-	// instances of YaGson for two references policies being tested
-	// type info is disabled for convenience
-
-	private static YaGson gsonCircularOnlyMode = new YaGsonBuilder()
-			.setReferencesPolicy(ReferencesPolicy.CIRCULAR_ONLY)
-			.setTypeInfoPolicy(TypeInfoPolicy.DISABLED)
-			.create();
-
-	private static YaGson gsonAllDuplicatesMode = new YaGsonBuilder()
-			.setReferencesPolicy(ReferencesPolicy.DUPLICATE_OBJECTS)
-			.setTypeInfoPolicy(TypeInfoPolicy.DISABLED)
-			.create();
 
 	public void testParentChild() {
 		ParentClass parent = new ParentClass(10);

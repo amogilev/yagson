@@ -1,6 +1,5 @@
 package am.yagson;
 
-import am.yagson.refs.ReferencesPolicy;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.TestCase;
 
@@ -27,33 +26,44 @@ public class TestVariousQueues extends TestCase {
 
     // NOTE: JSON for blocking queues is ugly, but it is required for keeping the correct blocking functionality
 
-    public void testLinkedBlockingDeque() {
-        Deque<Long> obj = new LinkedBlockingDeque<Long>();
+    public void testLinkedBlockingDeque() throws InterruptedException {
+        LinkedBlockingDeque<Long> obj = new LinkedBlockingDeque<Long>(2);
         obj.add(1L);
 
-        // FIXME: transient policy required!
-//        TestingUtils.testFully(obj);
-    }
+        final LinkedBlockingDeque result = TestingUtils.testFully(obj, jsonStr(
+                "{'first':{'item':1}," +
+                        "'last':'@.first'," +
+                        "'count':1,'capacity':2," +
+                        "'lock':{'sync':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}," +
+                        "'notEmpty':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
+                        "'@val':{'this$0':'@root.lock.sync'}}," +
+                        "'notFull':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
+                        "'@val':{'this$0':'@root.lock.sync'}}}"));
 
-    public void testArrayBlockingQueue() {
+        checkBlockingFunctionality(result, 100L);
+
+    }
+    public void testArrayBlockingQueue() throws Exception {
         ArrayBlockingQueue<Long> obj = new ArrayBlockingQueue<Long>(10);
         obj.add(1L);
 
-//        obj = TestingUtils.testFully(obj, jsonStr("" +
-//                "{'items':[1,null,null,null,null,null,null,null,null,null],'takeIndex':0,'putIndex':1,'count':1," +
-//                "'lock':{'sync':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}," +
-//                "'notEmpty':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
-//                "'@val':{'this$0':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}}," +
-//                "'notFull':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject','@val':" +
-//                "{'this$0':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}}}"));
-        obj = TestingUtils.testFully(obj);
+        obj = TestingUtils.testFully(obj, jsonStr("" +
+                "{'items':[1,null,null,null,null,null,null,null,null,null],'takeIndex':0,'putIndex':1,'count':1," +
+                "'lock':{'sync':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}," +
+                "'notEmpty':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
+                "'@val':{'this$0':'@root.lock.sync'}}," +
+                "'notFull':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
+                "'@val':{'this$0':'@root.lock.sync'}}}"));
         assertEquals(9, obj.remainingCapacity());
+
+        checkBlockingFunctionality(obj, 100L);
     }
 
     public void testSynchronousQueue() throws InterruptedException {
         SynchronousQueue<Long> obj = new SynchronousQueue<Long>(true);
-        // FIXME: 'fair' is not kept, requires transient policy
-        TestingUtils.testFully(obj, "{}");
+        TestingUtils.testFully(obj, jsonStr(
+                "{'transferer':{'@type':'java.util.concurrent.SynchronousQueue$TransferQueue','@val':" +
+                        "{'head':{'isData':false},'tail':'@.head'}}}"));
     }
 
     public void testPriorityQueue() {
@@ -74,12 +84,13 @@ public class TestVariousQueues extends TestCase {
                 jsonStr("['@.comparator:',{'@type':'am.yagson.TestingUtils$1','@val':{}},'bar','foo']"));
     }
 
-    public void testPriorityBlockingQueue() {
+    public void testPriorityBlockingQueue() throws Exception {
         PriorityBlockingQueue<String> obj = new PriorityBlockingQueue<String>(10, MY_STRING_CMP);
         obj.add("foo");
         obj.add("bar");
 
         TestingUtils.testFully(obj);
+        checkBlockingFunctionality(obj, "baz");
     }
 
     public void testConcurrentLinkedQueue() {
@@ -92,10 +103,10 @@ public class TestVariousQueues extends TestCase {
 
     public void testDelayQueue() {
         class DelayedString implements Delayed {
-            String str;
-            int delaySec;
+            private String str;
+            private int delaySec;
 
-            public DelayedString(String str, int delaySec) {
+            private DelayedString(String str, int delaySec) {
                 this.str = str;
                 this.delaySec = delaySec;
             }
@@ -133,8 +144,11 @@ public class TestVariousQueues extends TestCase {
         Queue<DelayedString> obj = new DelayQueue<DelayedString>();
         obj.add(new DelayedString("foo", 10));
 
-        TestingUtils.testFully(obj, new TypeToken<DelayQueue<DelayedString>>(){},
-                jsonStr("{'q':[{'str':'foo','delaySec':10,'this$0':{'fName':'testDelayQueue'}}]}"));
+        TestingUtils.testFully(obj, new TypeToken<DelayQueue<DelayedString>>(){}, jsonStr(
+                "{'lock':{'sync':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}," +
+                        "'available':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
+                        "'@val':{'this$0':'@root.lock.sync'}}," +
+                        "'q':[{'str':'foo','delaySec':10,'this$0':{'fName':'testDelayQueue'}}]}"));
     }
 
     public void testAsLifoQueue() {
@@ -155,12 +169,30 @@ public class TestVariousQueues extends TestCase {
         BeanContextChildSupport bean = new BeanContextChildSupport();
         context.add(bean);
 
-        // FIXME: requires advanced transient policies to work
-//        context = TestingUtils.testFully(context);
-//        assertEquals(1, context.size());
-//        assertEquals(Locale.CHINESE, context.getLocale());
+        context = TestingUtils.test(context);
+        assertEquals(1, context.size());
+        assertEquals(Locale.CHINESE, context.getLocale());
     }
 
-    // TODO: test lists (separate test file?): checkedList(), emptyList(), list(), singletonList(), nCopies(),
-    //   synchronizedList, unmodifiableList
+    private void checkBlockingFunctionality(final BlockingQueue bq, Object element) throws InterruptedException {
+        bq.clear();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Object[] foundResult = new Object[1];
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    foundResult[0] = bq.poll(1, TimeUnit.SECONDS);
+                    latch.countDown();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+        bq.add(element);
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertEquals(element, foundResult[0]);
+    }
 }

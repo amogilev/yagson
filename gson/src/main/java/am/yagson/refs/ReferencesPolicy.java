@@ -14,22 +14,25 @@ public enum ReferencesPolicy {
 
   /**
    * Only the circular references are checked. This is the minimal mode required to avoid
-   * {@link StackOverflowError}
+   * {@link StackOverflowError}. However, a lot of standard collections may function improperly, as
+   * they contain multiple "views" to the same backing object, e.g. see Collections$SynchronizedSortedSet.
    */
   CIRCULAR_ONLY(new ReferencesCircularOnlyModeContextFactory()),
 
   /**
    * Checks the circular references and duplicate fields in each object.
    * <p/>
-   * This mode is default one, as it provides correct serialization of many standard collections (such as
-   * Collections$SynchronizedSortedSet) while no so time-consuming as the full checks.
+   * Fixes some (but not all!) of the issues with multiple "views" in the standard collections. For example,
+   * Collections$SynchronizedSortedSet is deserialized correctly in this mode, but
+   * {@link java.util.concurrent.BlockingQueue}s} is not.
    */
   CIRCULAR_AND_SIBLINGS(new ReferencesCircularAndSiblingsContextFactory()),
 
   /**
-   * 'Full' mode - all objects are checked for duplication.
+   * 'Full' mode - all objects (except of Numbers and Strings) are checked for duplication.
    * <p/>
-   * NOTE: This is the most CPU- and RAM- consuming mode
+   * This mode is default one, as other modes may yield incorrect behavior of the de-serialized objects, such as
+   * {@link java.util.concurrent.BlockingQueue}s}.
    */
   DUPLICATE_OBJECTS(new ReferencesAllDuplicatesModeContextFactory());
 

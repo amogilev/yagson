@@ -13,8 +13,12 @@ import static am.yagson.TestingUtils.jsonStr;
 
 public class TestVariousCollections extends TestCase {
 
-    private static YaGson gsonAllDuplicatesMode = new YaGsonBuilder()
-            .setReferencesPolicy(ReferencesPolicy.DUPLICATE_OBJECTS)
+    private static YaGson gsonCircularOnlyMode = new YaGsonBuilder()
+            .setReferencesPolicy(ReferencesPolicy.CIRCULAR_ONLY)
+            .create();
+
+    private static YaGson gsonCircularAndSiblingsMode = new YaGsonBuilder()
+            .setReferencesPolicy(ReferencesPolicy.CIRCULAR_AND_SIBLINGS)
             .create();
     //
     // Tests for the special collections from java.util.Collections
@@ -119,11 +123,16 @@ public class TestVariousCollections extends TestCase {
         Collection<String> obj = map.values();
 
         // NOTE: duplication in refs modes other than 'all duplicates'
-        TestingUtils.testFully(obj, jsonStr(
+        TestingUtils.testFully(gsonCircularOnlyMode, obj, jsonStr(
                 "{'c':{'@type':'java.util.Hashtable$ValueCollection','@val':{'this$0':{'foo1':'foo2'}}}," +
                         "'mutex':{'@type':'java.util.Hashtable','@val':{'foo1':'foo2'}}}"));
 
-        TestingUtils.testFully(gsonAllDuplicatesMode, obj, jsonStr(
+        TestingUtils.testFully(gsonCircularAndSiblingsMode, obj, jsonStr(
+                "{'c':{'@type':'java.util.Hashtable$ValueCollection','@val':{'this$0':{'foo1':'foo2'}}}," +
+                        "'mutex':{'@type':'java.util.Hashtable','@val':{'foo1':'foo2'}}}"));
+
+        // the default 'all duplicates' mode works fine
+        TestingUtils.testFully(obj, jsonStr(
                 "{'c':{'@type':'java.util.Hashtable$ValueCollection','@val':{'this$0':{'foo1':'foo2'}}}," +
                         "'mutex':'@root.c.this$0'}"));
     }
