@@ -91,9 +91,16 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       return false;
     }
     boolean isSet = Set.class.isAssignableFrom(collType);
+    boolean isList = List.class.isAssignableFrom(collType);
     try {
-      boolean isAddMethodMissing = AbstractCollection.class.isAssignableFrom(collType) &&
-              !TypeUtils.isOverridden(collType, AbstractCollection.class.getDeclaredMethod("add", Object.class));
+      boolean isAddMethodMissing;
+      if (isList) {
+        isAddMethodMissing = AbstractList.class.isAssignableFrom(collType) &&
+                !TypeUtils.isOverridden(collType, AbstractList.class.getDeclaredMethod("add", int.class, Object.class));
+      } else {
+        isAddMethodMissing = AbstractCollection.class.isAssignableFrom(collType) &&
+                !TypeUtils.isOverridden(collType, AbstractCollection.class.getDeclaredMethod("add", Object.class));
+      }
       // consider delegate collection if contains another collection and has no public no-arg constructors
       boolean isDelegate = false;
       if (TypeUtils.containsField(collType, false, classOf(Collection.class), null)) {
@@ -108,6 +115,8 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return isDelegate ||
                 collType.getName().equals("java.util.Collections$SetFromMap") ||
                 (isAddMethodMissing && !collType.getName().contains("EmptySet"));
+      } else if (isList) {
+        return isDelegate || (isAddMethodMissing && !collType.getName().contains("EmptyList"));
       } else {
         return isDelegate || isAddMethodMissing
                 || BeanContext.class.isAssignableFrom(collType)

@@ -20,10 +20,7 @@ import am.yagson.ReadContext;
 import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
 
-import am.yagson.strategy.ExcludeClassesAssignableTo;
-import am.yagson.strategy.ExcludeFieldsByDeclaringClasses;
-import am.yagson.strategy.ExcludeTransientFieldsInClassByNames;
-import am.yagson.strategy.TransientFieldExclusionStrategy;
+import am.yagson.strategy.*;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -72,7 +69,11 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
                       "keySet", "keySetView", "entrySet", "entrySetView", "values"),
               true, true)
       .withTransientsExclusionStrategy(
-              new ExcludeTransientFieldsInClassByNames(
+              new ExcludeTransientFieldsInDeclaringClassByNames(AbstractList.class,
+                      "modCount"),
+              true, true)
+      .withTransientsExclusionStrategy(
+              new ExcludeTransientFieldsInDeclaringClassByNames(
                       Collections.newSetFromMap(Collections.<Object,Boolean>emptyMap()).getClass(),
                       "s"),
               true, true)
