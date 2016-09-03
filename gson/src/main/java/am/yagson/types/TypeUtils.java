@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
 
+import static java.util.Arrays.asList;
+
 public class TypeUtils {
 
     private static Map<String, Class<?>> primitiveWrappers = new HashMap<String, Class<?>>();
@@ -126,6 +128,19 @@ public class TypeUtils {
         }
     }
 
+    /**
+     * Runs {@link Class#forName(String)}, with a wrapping of {@link ClassNotFoundException} to
+     * {@link IllegalStateException}, which allows to use it in initializers and other places where checked
+     * exceptions are not allowed.
+     */
+    public static Class<?> classForName(String name) {
+        try {
+            return Class.forName(name);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Missing class specified in @type info", e);
+        }
+    }
+
     public static boolean consumeValueField(JsonReader in) throws IOException {
         if (!in.hasNext()) {
             // no @val means actually null value, e.g. skipped by serialization
@@ -212,7 +227,7 @@ public class TypeUtils {
     }
 
     @SuppressWarnings("unchecked")
-    private static Set<Class<?>> generalDefaultClasses = new HashSet<Class<?>>(Arrays.asList(
+    private static Set<Class<?>> generalDefaultClasses = new HashSet<Class<?>>(asList(
             String.class, Object.class, Double.class, double.class,
             Boolean.class, boolean.class, Long.class, long.class
     ));
@@ -331,7 +346,7 @@ public class TypeUtils {
         }
     }
 
-    public static Field findField(Class declaringClass, String fieldName) {
+    public static Field getDeclaredField(Class declaringClass, String fieldName) {
         try {
             Field f = declaringClass.getDeclaredField(fieldName);
             f.setAccessible(true);
@@ -339,6 +354,23 @@ public class TypeUtils {
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException("Field '" + fieldName + "' is not found in " + declaringClass, e);
         }
+    }
+
+    /**
+     * Gets field by name, declared in the class or its superclasses.
+     */
+    public static Field findField(Class c, String fieldName) {
+        while (c != null) {
+            for (Field f : c.getDeclaredFields()) {
+                if (fieldName.equals(f.getName())) {
+                    // found
+                    f.setAccessible(true);
+                    return f;
+                }
+            }
+            c = c.getSuperclass();
+        }
+        return null;
     }
 
     public static <T> T getField(Field f, Object instance) {
@@ -349,8 +381,8 @@ public class TypeUtils {
         }
     }
 
-    private static final Field enumSetElementTypeField = findField(EnumSet.class, "elementType");
-    private static final Field enumMapKeyTypeField = findField(EnumMap.class, "keyType");
+    private static final Field enumSetElementTypeField = getDeclaredField(EnumSet.class, "elementType");
+    private static final Field enumMapKeyTypeField = getDeclaredField(EnumMap.class, "keyType");
 
     /**
      * Returns whether the provided class is the general class (i.e. not interface, enum, array or primitive) and
@@ -419,6 +451,18 @@ public class TypeUtils {
     public static List<Field> findFields(Class<?> c, boolean allowTransient, Iterable<Class<?>> fieldClassesToFind,
                                          Iterable<Class<?>> exceptClasses) {
         return findFields(c, allowTransient, 0, fieldClassesToFind, exceptClasses);
+    }
+
+    public static Field findOneFieldByType(Class<?> c, Class<?> fieldClassToFind) {
+        List<Class<?>> fieldClassesToFind = Collections.<Class<?>>singletonList(fieldClassToFind);
+        List<Field> found = findFields(c, true, 1, fieldClassesToFind, null);
+        if (found.size() > 0) {
+            Field foundField = found.get(0);
+            foundField.setAccessible(true);
+            return foundField;
+        }
+
+        return null;
     }
 
     /**
@@ -523,7 +567,7 @@ public class TypeUtils {
         if (genericSuperclass != null) {
             superTypes.add(genericSuperclass);
         }
-        superTypes.addAll(Arrays.asList(genericInterfaces));
+        superTypes.addAll(asList(genericInterfaces));
         return superTypes;
     }
 
@@ -661,7 +705,7 @@ public class TypeUtils {
     }
 
     public static Iterable<Class<?>> classes(Class<?>...classes) {
-        return Arrays.asList(classes);
+        return asList(classes);
     }
 
     public static void initEnumMapKeyType(EnumMap<?,?> instance, Class<?> keyType) {

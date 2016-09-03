@@ -21,6 +21,7 @@ import am.yagson.WriteContext;
 import am.yagson.refs.ReferencesPolicy;
 
 import am.yagson.strategy.*;
+import am.yagson.types.TypeUtils;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -40,6 +41,7 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * This class selects which fields and types to omit. It is configurable,
@@ -62,15 +64,29 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
                       ThreadLocal.class),
               true, false)
       .withExclusionStrategy(
+              new ExcludeFieldsInClassByNames(Iterator.class, "expectedModCount"),
+              true, true)
+      .withExclusionStrategy(
+              new ExcludeFieldsInClassByNames(TypeUtils.classForName("java.util.SubList"), "expectedModCount"),
+              true, true)
+      .withExclusionStrategy(
+              new ExcludeFieldsInClassByNames(TypeUtils.classForName(
+                      "java.util.concurrent.CopyOnWriteArrayList$COWSubList"), "expectedArray"),
+              true, true)
+      .withExclusionStrategy(
               new ExcludeClassesAssignableTo(ClassLoader.class),
               true, false)
       .withTransientsExclusionStrategy(
               new ExcludeTransientFieldsInClassByNames(Map.class,
-                      "keySet", "keySetView", "entrySet", "entrySetView", "values"),
+                      "keySet", "keySetView", "entrySet", "entrySetView", "values", "modCount"),
               true, true)
       .withTransientsExclusionStrategy(
-              new ExcludeTransientFieldsInDeclaringClassByNames(AbstractList.class,
+              new ExcludeTransientFieldsInClassByNames(Collection.class,
                       "modCount"),
+              true, true)
+      .withTransientsExclusionStrategy(
+              new ExcludeTransientFieldsInClassByNames(CopyOnWriteArrayList.class,
+                      "array"),
               true, true)
       .withTransientsExclusionStrategy(
               new ExcludeTransientFieldsInDeclaringClassByNames(

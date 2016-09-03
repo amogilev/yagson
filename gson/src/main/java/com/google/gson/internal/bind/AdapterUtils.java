@@ -174,4 +174,17 @@ public class AdapterUtils {
             return typeAdapter;
         }
     }
+
+    /**
+     * Sets integer 'modCount' field, which is found in some collections and maps, to zero.
+     */
+    public static void clearModCount(Field modCountField, Object instance) {
+      if (modCountField != null && instance != null) {
+        try {
+          modCountField.set(instance, 0);
+        } catch (IllegalAccessException e) {
+          throw new IllegalStateException("Failed to clear " + modCountField, e);
+        }
+      }
+    }
 }

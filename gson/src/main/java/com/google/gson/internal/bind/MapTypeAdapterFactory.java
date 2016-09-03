@@ -45,6 +45,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -187,6 +188,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
     private final Type formalMapType; // declared map type, e.g. SortedMap<String, String>
     private final Class<? extends Map> defaultMapClass; // raw class of the default map instance (defined by constructor)
     private final Map<K, V> defaultMapInstance; // the default Map instance, as returned by the constructor
+    private final Field modCountField; // modCount field found in the default map class, if any
     private final Map<String, FieldInfo> reflectiveFields; // reflective (extra) fields for raw map type
 
     public Adapter(Gson gson, Type formalMapType, Type keyType, TypeAdapter<K> keyTypeAdapter,
@@ -204,9 +206,19 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       this.gson = gson;
 
       this.defaultMapInstance = constructor.construct();
-      this.defaultMapClass = defaultMapInstance.getClass();
-      this.reflectiveFields = buildReflectiveFieldsInfo(defaultMapClass,
-              new ExistingObjectProvider(defaultMapInstance));
+      if (defaultMapInstance != null) {
+        this.defaultMapClass = defaultMapInstance.getClass();
+        this.reflectiveFields = buildReflectiveFieldsInfo(defaultMapClass,
+                new ExistingObjectProvider(defaultMapInstance));
+      } else {
+        this.defaultMapClass = null;
+        this.reflectiveFields = null;
+      }
+      this.modCountField = getModCountField(defaultMapClass);
+    }
+
+    private Field getModCountField(Class<?> mapClass) {
+      return TypeUtils.findField(mapClass, "modCount");
     }
 
     public Type getFormalMapType() {
@@ -232,11 +244,17 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
       JsonToken peek = in.peek();
 
+      // modCount field for the actual map class; created only if map is not empty
+      final Field localModCountField;
+
       if (peek == JsonToken.BEGIN_ARRAY) {
         instance = constructor.construct();
         ctx.registerObject(instance, false);
 
         in.beginArray();
+        localModCountField = !in.hasNext() ? null :
+                (defaultMapClass == instance.getClass() ? modCountField : getModCountField(instance.getClass()));
+
         for (int i = 0; in.hasNext(); i++) {
           if (in.peek() == JsonToken.BEGIN_OBJECT) {
             // extra fields object found
@@ -265,7 +283,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           K key = ctx.doRead(in, keyTypeAdapter, keyRef(i));
           if (key == null && (keyPlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             keys.add(keyPlaceholder);
-            PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i);
+            PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i, modCountField);
             keyPlaceholder.registerUse(keyUse);
           } else {
             keys.add(key);
@@ -274,7 +292,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           V value = ctx.doRead(in, valueTypeAdapter, valRef(i));
           if (value == null && (valuePlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             values.add(valuePlaceholder);
-            PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i);
+            PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i, modCountField);
             valuePlaceholder.registerUse(valueUse);
           } else {
             values.add(value);
@@ -307,6 +325,8 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         ctx.registerObject(instance, false);
         Map<String, FieldInfo> localReflectiveFields = null;
 
+        localModCountField = !in.hasNext() ? null :
+                (defaultMapClass == instance.getClass() ? modCountField : getModCountField(instance.getClass()));
 
         for (int i = 0; in.hasNext(); i++) {
           // lookup for extra fields ("@.name")
@@ -338,7 +358,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           K key = ctx.doRead(in, keyTypeAdapter, keyRef(i));
           if (key == null && (keyPlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             keys.add(keyPlaceholder);
-            PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i);
+            PlaceholderUse<K> keyUse = MapPlaceholderUse.keyUse(instance, keys, values, i, modCountField);
             keyPlaceholder.registerUse(keyUse);
           } else {
             keys.add(key);
@@ -347,7 +367,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
           V value = ctx.doRead(in, valueTypeAdapter, valRef(i));
           if (value == null && (valuePlaceholder = ctx.refsContext().consumeLastPlaceholderIfAny()) != null) {
             values.add(valuePlaceholder);
-            PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i);
+            PlaceholderUse<V> valueUse = MapPlaceholderUse.valueUse(instance, keys, values, i, modCountField);
             valuePlaceholder.registerUse(valueUse);
           } else {
             values.add(value);
@@ -369,6 +389,9 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
             throw new JsonSyntaxException("duplicate key: " + keyOrPlaceholder);
           }
         }
+      }
+      if (keys.size() > 0 && localModCountField != null) {
+        AdapterUtils.clearModCount(localModCountField, instance);
       }
 
       return instance;

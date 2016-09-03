@@ -2,8 +2,10 @@ package am.yagson.refs.impl;
 
 import am.yagson.refs.PlaceholderUse;
 import am.yagson.refs.ReferencePlaceholder;
+import com.google.gson.internal.bind.AdapterUtils;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
@@ -15,22 +17,24 @@ public class MapPlaceholderUse<K, V>  {
     private final List<Object> keys;
     private final List<Object> values;
     private final int entryIdx;
+    private final Field modCountField;
 
-    private MapPlaceholderUse(Map<K, V> map, List<Object> keys, List<Object> values, int entryIdx) {
+    private MapPlaceholderUse(Map<K, V> map, List<Object> keys, List<Object> values, int entryIdx, Field modCountField) {
         this.map = map;
         this.keys = keys;
         this.values = values;
         this.entryIdx = entryIdx;
+        this.modCountField = modCountField;
     }
 
     public static <K,V> MapPlaceholderUse<K, V>.KeyUse keyUse(
-            Map<K, V> map, List<Object> keys, List<Object> values, int entryIdx) {
-        return new MapPlaceholderUse<K,V>(map, keys, values, entryIdx).new KeyUse();
+            Map<K, V> map, List<Object> keys, List<Object> values, int entryIdx, Field modCountField) {
+        return new MapPlaceholderUse<K,V>(map, keys, values, entryIdx, modCountField).new KeyUse();
     }
 
     public static <K,V> MapPlaceholderUse<K, V>.ValueUse valueUse(
-            Map<K, V> map, List<Object> keys, List<Object> values, int entryIdx) {
-        return new MapPlaceholderUse<K,V>(map, keys, values, entryIdx).new ValueUse();
+            Map<K, V> map, List<Object> keys, List<Object> values, int entryIdx, Field modCountField) {
+        return new MapPlaceholderUse<K,V>(map, keys, values, entryIdx, modCountField).new ValueUse();
     }
 
     public class KeyUse implements PlaceholderUse<K> {
@@ -73,5 +77,6 @@ public class MapPlaceholderUse<K, V>  {
                 map.put((K)keyOrPlaceholder, (V)valueOrPlaceholder);
             }
         }
+        AdapterUtils.clearModCount(modCountField, map);
     }
 }

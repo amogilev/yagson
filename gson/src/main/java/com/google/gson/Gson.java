@@ -31,10 +31,7 @@ import am.yagson.ReadContext;
 import am.yagson.WriteContext;
 import am.yagson.adapters.ThreadTypesAdapterFactory;
 import am.yagson.refs.ReferencesPolicy;
-import am.yagson.types.PostReadProcessor;
-import am.yagson.types.SetFromMapPostReadProcessor;
-import am.yagson.types.TypeInfoPolicy;
-import am.yagson.types.TypeUtils;
+import am.yagson.types.*;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.Primitives;
@@ -255,7 +252,7 @@ public class Gson {
   }
 
   private List<PostReadProcessor> createDefaultReflectivePostReadProcessors() {
-    return Arrays.<PostReadProcessor>asList(new SetFromMapPostReadProcessor());
+    return Arrays.<PostReadProcessor>asList(new SetFromMapPostReadProcessor(), new COWSubListPostReadProcessor());
   }
 
   private TypeAdapter<Number> doubleAdapter(boolean serializeSpecialFloatingPointValues) {

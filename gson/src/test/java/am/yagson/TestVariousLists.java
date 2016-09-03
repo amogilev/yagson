@@ -129,23 +129,6 @@ public class TestVariousLists extends TestCase {
     //
 
     public void testSubList() {
-        /* FIXME: issue with different modcount of AbstractLists filled at once and one by one
-         The field is currently transient&ignored, may be changed only for reflective
-         Used in subList (compared to expectedModCount), maybe somewhere else (TODO check!)
-
-         V1: write as extra field if differs from expected (!=size())
-         '-' complicates lists representation!
-
-         V2: restore expectedModcount in sublists
-         "-" does not help for other uses (iteratorz?)
-
-         -----------
-         For COWSubList, COW.'array' identity is compared, but array is not saved (transient)
-         V1: save array
-         V2: restore expectedArray
-
-         */
-
         List<Long> l = new LinkedList<Long>();
         l.add(1L);
         l.add(2L);
@@ -154,7 +137,7 @@ public class TestVariousLists extends TestCase {
 
         TestingUtils.testFully(obj, Object.class, jsonStr(
                 "{'@type':'java.util.SubList','@val':{'l':{'@type':'java.util.LinkedList','@val':[1,2,3]}," +
-                        "'offset':1,'size':1,'expectedModCount':3}}"));
+                        "'offset':1,'size':1}}"));
     }
 
     public void testRandomAccessSubList() {
@@ -163,7 +146,7 @@ public class TestVariousLists extends TestCase {
 
         TestingUtils.testFully(obj, Object.class, jsonStr(
                 "{'@type':'java.util.RandomAccessSubList','@val':{'l':{'@type':'java.util.ArrayList','@val':[1,2,3]}," +
-                        "'offset':1,'size':1,'expectedModCount':0}}"));
+                        "'offset':1,'size':1}}"));
     }
 
     public void testCOWSubList() {
@@ -172,14 +155,6 @@ public class TestVariousLists extends TestCase {
 
         TestingUtils.testFully(obj, Object.class, jsonStr(
                 "{'@type':'java.util.concurrent.CopyOnWriteArrayList$COWSubList','@val':{'l':[1,2,3]," +
-                        "'offset':1,'size':1,'expectedArray':[1,2,3]}}"));
+                        "'offset':1,'size':1}}"));
     }
-
-
-    // TODO: test other list classes: CopyOnWriteArrayList & sublist
-    // sublists (collections?):
-    //
-
-
-
 }

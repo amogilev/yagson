@@ -129,14 +129,6 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
 
 
   private static final class Adapter<E> extends TypeAdvisableComplexTypeAdapter<Collection<E>> {
-    private final TypeAdapter<E> elementTypeAdapter;
-    private final ObjectConstructor<? extends Collection<E>> constructor;
-    private final ConstructorConstructor constructorConstructor;
-    private final Gson gson;
-    private final Type formalCollType; // declared collection type, e.g. SortedSet<String>
-    private Collection<E> defaultCollInstance; // the default Collection instance, as returned by the constructor
-    private final Class<? extends Collection> defaultCollClass; // raw class of the default collection instance (defined by constructor)
-
     private static class ReflectiveFieldsInfo {
       // backing map field found in the default collection class, with default instance information
       private final FieldInfo backingMapFieldInfo;
@@ -145,16 +137,25 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       // reflective (extra) fields for default collection type, includes backingMapFieldInfo if exists
       private final Map<String, FieldInfo> reflectiveFields;
 
-      private ReflectiveFieldsInfo(FieldInfo backingMapFieldInfo, Field defaultBackingMapComparatorField, Map<String, FieldInfo> reflectiveFields) {
+      private ReflectiveFieldsInfo(FieldInfo backingMapFieldInfo, Field defaultBackingMapComparatorField,
+                                   Map<String, FieldInfo> reflectiveFields) {
         this.backingMapFieldInfo = backingMapFieldInfo;
         this.defaultBackingMapComparatorField = defaultBackingMapComparatorField;
         this.reflectiveFields = reflectiveFields;
       }
     }
 
+    private final TypeAdapter<E> elementTypeAdapter;
+    private final ObjectConstructor<? extends Collection<E>> constructor;
+    private final ConstructorConstructor constructorConstructor;
+    private final Gson gson;
+    private final Type formalCollType; // declared collection type, e.g. SortedSet<String>
+    private Collection<E> defaultCollInstance; // the default Collection instance, as returned by the constructor
+    private final Class<? extends Collection> defaultCollClass; // raw class of the default collection instance (defined by constructor)
+    private final Field modCountField; // modCount field found in the default collection class, if any
+
     // information about the fields which may need to be written/read reflectively, in addition to the collection elements
     private final ReflectiveFieldsInfo reflectiveFieldsInfo;
-
 
     Adapter(Gson gson, Type formalCollType, Type elementType,
                    TypeAdapter<E> elementTypeAdapter,
@@ -185,6 +186,11 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         this.defaultCollClass = null;
         this.reflectiveFieldsInfo = null;
       }
+      this.modCountField = getModCountField(defaultCollClass);
+    }
+
+    private Field getModCountField(Class<?> collClass) {
+      return TypeUtils.findField(collClass, "modCount");
     }
 
     private Field findComparatorField(FieldInfo backingMapFieldInfo) {
@@ -259,6 +265,10 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       // lazy reflective fields information for the actual collection class
       ReflectiveFieldsInfo localReflectiveFieldsInfo = null;
 
+      // modCount field for the actual collection class; created only if collection is not empty
+      final Field localModCountField = !in.hasNext() ? null :
+              (defaultCollClass == instance.getClass() ? modCountField : getModCountField(instance.getClass()));
+
       for (int i = 0; in.hasNext(); i++) {
         if (nextReflectiveField != null) {
           // read the backing map and save into the instance
@@ -300,6 +310,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
                 instance.add(actualObject);
                 instance.addAll(l.subList(fi + 1, l.size()));
               }
+              AdapterUtils.clearModCount(localModCountField, instance);
             }
           });
           // null will be added to the list now, and it will be replaced to an actual object in future
@@ -308,6 +319,9 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         instance.add(elementInstance);
       }
       in.endArray();
+      if (localModCountField != null) {
+        AdapterUtils.clearModCount(localModCountField, instance);
+      }
 
       return instance;
     }
