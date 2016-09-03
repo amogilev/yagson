@@ -26,7 +26,6 @@ import java.util.*;
 import am.yagson.ReadContext;
 import am.yagson.WriteContext;
 import am.yagson.refs.*;
-import am.yagson.refs.impl.FieldReferencePlaceholder;
 import am.yagson.refs.impl.PlaceholderUtils;
 import am.yagson.types.PostReadProcessor;
 import am.yagson.types.TypeUtils;
@@ -259,6 +258,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
 
     Type declaredType = type.getType();
+    int superLevel = 0;
     while (raw != Object.class) {
       Field[] fields = raw.getDeclaredFields();
       for (Field field : fields) {
@@ -270,21 +270,23 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         field.setAccessible(true);
         Type fieldType = $Gson$Types.resolve(type.getType(), raw, field.getGenericType());
         List<String> fieldNames = getFieldNames(field);
-        BoundField previous = null;
         for (int i = 0; i < fieldNames.size(); ++i) {
           String name = fieldNames.get(i);
           if (i != 0) serialize = false; // only serialize the default name
+          if(result.containsKey(name)) {
+            name = name + "^" + superLevel;
+            if (superLevel == 0 || result.containsKey(name)) {
+              throw new IllegalArgumentException(declaredType
+                      + " declares multiple JSON fields named " + fieldNames.get(i));
+            }
+          }
           BoundField boundField = new DefaultBoundField(name, field, serialize, deserialize, context, TypeToken.get(fieldType));
-          BoundField replaced = result.put(name, boundField);
-          if (previous == null) previous = replaced;
-        }
-        if (previous != null) {
-          throw new IllegalArgumentException(declaredType
-              + " declares multiple JSON fields named " + previous.name);
+          result.put(name, boundField);
         }
       }
       type = TypeToken.get($Gson$Types.resolve(type.getType(), raw, raw.getGenericSuperclass()));
       raw = type.getRawType();
+      superLevel++;
     }
     return result;
   }
