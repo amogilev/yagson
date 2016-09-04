@@ -195,7 +195,16 @@ public class ReferencesAllDuplicatesModeContext {
             }
             awaitsObjectRead = false;
             if (value != null && !fromSimpleTypeAdapter) {
-                objectsByReference.put(getCurrentReference(), value);
+                final String ref = getCurrentReference();
+                objectsByReference.put(ref, value);
+                if (value instanceof ReferencePlaceholder) {
+                    ((ReferencePlaceholder) value).registerUse(new PlaceholderUse() {
+                        @Override
+                        public void applyActualObject(Object actualObject) throws IOException {
+                            objectsByReference.put(ref, actualObject);
+                        }
+                    });
+                }
             }
         }
 
@@ -218,13 +227,18 @@ public class ReferencesAllDuplicatesModeContext {
         protected Object getObjectByReference(String reference) throws JsonSyntaxException {
             String key = reference;
             if (reference.startsWith(REF_FIELD_PREFIX)) {
-                key = getParentReference() + "." + reference.substring(REF_FIELD_PREFIX.length());
+                key = toFullReference(reference);
             }
             Object value = objectsByReference.get(key);
             if (value == null) {
                 throw new JsonSyntaxException("Missing reference '" + reference + "'");
             }
             return value;
+        }
+
+        private String toFullReference(String fieldReference) {
+            assert fieldReference.startsWith(REF_FIELD_PREFIX);
+            return getParentReference() + "." + fieldReference.substring(REF_FIELD_PREFIX.length());
         }
 
         public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement,
@@ -240,7 +254,13 @@ public class ReferencesAllDuplicatesModeContext {
         }
 
         public boolean isReferenceString(String str) {
-            return str.startsWith(REF_ROOT) && objectsByReference.containsKey(str);
+            if (str.startsWith(REF_ROOT)) {
+                return objectsByReference.containsKey(str);
+            } else if (str.startsWith(REF_FIELD_PREFIX)) {
+                return objectsByReference.containsKey(toFullReference(str));
+            } else {
+                return false;
+            }
         }
 
         @SuppressWarnings("unchecked")

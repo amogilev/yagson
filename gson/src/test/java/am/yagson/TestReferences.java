@@ -98,4 +98,11 @@ public class TestReferences extends TestCase {
 		arr[0] = arr[1] = "foo";
 		TestingUtils.testFully(gsonAllDuplicatesMode, arr, jsonStr("['foo','foo']"));
 	}
+
+	public void testObjectRefs() {
+		Object[] arr = new Object[2];
+		Node n = new Node(1);
+		arr[0] = arr[1] = n;
+		TestingUtils.testFully(arr, jsonStr("[{'@type':'am.yagson.Node','@val':{'id':1,'connections':[]}},'@.0']"));
+	}
 }

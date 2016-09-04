@@ -88,6 +88,26 @@ public class TestSelfContainingCollections extends TestCase {
                 "{'obj':{'@type':'[[Ljava.lang.Object;','@val':['@root.obj']}}"));
     }
 
+    public void testSelfContainingArray5() {
+        Object[] container = new Object[2];
+        Object[] arr = new Object[1];
+        arr[0] = arr;
+        container[0] = container[1] = arr;
+
+        TestingUtils.testFullyByToString(container, jsonStr(
+                "[{'@type':'[Ljava.lang.Object;','@val':['@root.0']},'@.0']"));
+    }
+
+    public void testSelfContainingArray6() {
+        Object[] container = new Object[2];
+        Object[] arr = new Object[1];
+        arr[0] = container;
+        container[0] = container[1] = arr;
+
+        TestingUtils.testFullyByToString(container, jsonStr(
+                "[{'@type':'[Ljava.lang.Object;','@val':['@root']},'@.0']"));
+    }
+
     public void testSelfContainingArrayThroughObj() {
         Object[] arr = new Object[1];
         ClassWithObject obj = new ClassWithObject(arr);
