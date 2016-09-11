@@ -56,6 +56,11 @@ public class TestVariousMaps extends TestCase {
         return map;
     }
 
+    public void testHashMap() {
+        Map<String, String> obj = newTestMap();
+        TestingUtils.testFully(obj, jsonStr("{'foo':'bar'}"));
+    }
+
     public void testTreeMap() {
         SortedMap<String, String> obj = newTestSortedMap();
         TestingUtils.testFully(obj, jsonStr("{'foo':'bar'}"));

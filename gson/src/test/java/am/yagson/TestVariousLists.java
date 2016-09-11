@@ -2,8 +2,6 @@ package am.yagson;
 
 import com.google.gson.reflect.TypeToken;
 import junit.framework.TestCase;
-import sun.awt.util.IdentityArrayList;
-import sun.awt.util.IdentityLinkedList;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -86,22 +84,10 @@ public class TestVariousLists extends TestCase {
         TestingUtils.testFully(l, jsonStr("[1,2,3]"));
     }
 
-    public void testIdentityArrayList() {
-        List<Long> l = new IdentityArrayList<Long>(asList(1L, 1L, 2L));
-
-        TestingUtils.testFully(l, jsonStr("[1,1,2]"));
-    }
-
     public void testLinkedList() {
         List<Long> l = new LinkedList<Long>(asList(1L, 2L, 3L));
 
         TestingUtils.testFully(l, jsonStr("[1,2,3]"));
-    }
-
-    public void testIdentityLinkedList() {
-        List<Long> l = new IdentityLinkedList<Long>(asList(1L, 1L, 2L));
-
-        TestingUtils.testFully(l, jsonStr("[1,1,2]"));
     }
 
     public void testVector() {
@@ -141,12 +127,13 @@ public class TestVariousLists extends TestCase {
     }
 
     public void testRandomAccessSubList() {
-        List<Long> l = new ArrayList<Long>(asList(1L, 2L, 3L));
-        List<Long> obj = l.subList(1, 2);
+        List<Long> l = Collections.singletonList(2L);
+        List<Long> obj = l.subList(0, 1);
 
         TestingUtils.testFully(obj, Object.class, jsonStr(
-                "{'@type':'java.util.RandomAccessSubList','@val':{'l':{'@type':'java.util.ArrayList','@val':[1,2,3]}," +
-                        "'offset':1,'size':1}}"));
+                "{'@type':'java.util.RandomAccessSubList','@val':{" +
+                        "'l':{'@type':'java.util.Collections$SingletonList','@val':{'element':2}},'" +
+                        "offset':0,'size':1}}"));
     }
 
     public void testCOWSubList() {

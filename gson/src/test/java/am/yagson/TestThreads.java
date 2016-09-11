@@ -67,15 +67,22 @@ public class TestThreads extends TestCase {
         latch.countDown();
     }
 
-    private static AtomicLong cnt = new AtomicLong(1);
-    private static ThreadLocal<Long> threadLocalId = new ThreadLocal<Long>() {
-        @Override
-        protected Long initialValue() {
-            return cnt.getAndIncrement();
-        }
-    };
+    private static AtomicLong cnt;
+    private static ThreadLocal<Long> threadLocalId;
+
+    private static void initThreadLocalId() {
+        cnt = new AtomicLong(1);
+        threadLocalId = new ThreadLocal<Long>() {
+            @Override
+            protected Long initialValue() {
+                return cnt.getAndIncrement();
+            }
+        };
+    }
 
     public void testThreadLocalInSameThread() {
+        initThreadLocalId();
+
         long cntBeforeTest = cnt.get();
         ThreadLocal<Long> readThreadLocal =
                 TestingUtils.test(threadLocalId, new TypeToken<ThreadLocal<Long>>() {}, jsonStr(
@@ -94,6 +101,8 @@ public class TestThreads extends TestCase {
     }
 
     public void testThreadLocalInDifferentThreads() throws InterruptedException {
+        initThreadLocalId();
+
         final AtomicLong otherThreadId = new AtomicLong();
         final AtomicReference<String> jsonRef = new AtomicReference<String>();
         long thisThreadId = threadLocalId.get();

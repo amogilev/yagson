@@ -70,7 +70,7 @@ public class TestingUtils {
 		String json = gson.toJson(obj, deserializationType);
 		assertNotNull(json);
 		if (expected != null) {
-			assertEquals("toJson(obj) differs from the expected", expected, json);
+			assertEquals("toJson(obj) differs from the expected: ", expected, json);
 		}
 
 		Object obj2 = deserialize(gson, json, deserializationType);

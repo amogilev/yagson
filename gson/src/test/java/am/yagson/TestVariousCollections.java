@@ -102,8 +102,7 @@ public class TestVariousCollections extends TestCase {
 
         Collection<String> obj = map.values();
 
-        TestingUtils.testFully(obj, jsonStr(
-                "{'this$0':{'foo1':'foo2'}}"));
+        TestingUtils.testFully(obj);
     }
 
     public void testIdentityHashMapValues() {
@@ -173,9 +172,8 @@ public class TestVariousCollections extends TestCase {
         BeanContextChildSupport bean = new BeanContextChildSupport();
         context.add(bean);
 
-        // FIXME: requires advanced transient policies to work
-//        context = TestingUtils.testFully(context);
-//        assertEquals(1, context.size());
-//        assertEquals(Locale.CHINESE, context.getLocale());
+        context = TestingUtils.test(context);
+        assertEquals(1, context.size());
+        assertEquals(Locale.CHINESE, context.getLocale());
     }
 }

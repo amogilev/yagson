@@ -90,6 +90,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
     if (!gson.getTypeInfoPolicy().isEnabled() || !TypeUtils.isGeneralNonAbstractClass(collType)) {
       return false;
     }
+    boolean isEnclosed = collType.getEnclosingClass() != null;
     boolean isSet = Set.class.isAssignableFrom(collType);
     boolean isList = List.class.isAssignableFrom(collType);
     try {
@@ -114,11 +115,12 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       if (isSet) {
         return isDelegate ||
                 collType.getName().equals("java.util.Collections$SetFromMap") ||
-                (isAddMethodMissing && !collType.getName().contains("EmptySet"));
+                ((isAddMethodMissing || isEnclosed) && !collType.getName().contains("EmptySet"));
       } else if (isList) {
-        return isDelegate || (isAddMethodMissing && !collType.getName().contains("EmptyList"));
+        return isDelegate ||
+                ((isAddMethodMissing || isEnclosed) && !collType.getName().contains("EmptyList"));
       } else {
-        return isDelegate || isAddMethodMissing
+        return isDelegate || isAddMethodMissing || isEnclosed
                 || BeanContext.class.isAssignableFrom(collType)
                 || BlockingQueue.class.isAssignableFrom(collType);
       }

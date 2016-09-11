@@ -61,9 +61,7 @@ public class TestVariousQueues extends TestCase {
 
     public void testSynchronousQueue() throws InterruptedException {
         SynchronousQueue<Long> obj = new SynchronousQueue<Long>(true);
-        TestingUtils.testFully(obj, jsonStr(
-                "{'transferer':{'@type':'java.util.concurrent.SynchronousQueue$TransferQueue','@val':" +
-                        "{'head':{'isData':false},'tail':'@.head'}}}"));
+        TestingUtils.testFully(obj);
     }
 
     public void testPriorityQueue() {
@@ -144,11 +142,7 @@ public class TestVariousQueues extends TestCase {
         Queue<DelayedString> obj = new DelayQueue<DelayedString>();
         obj.add(new DelayedString("foo", 10));
 
-        TestingUtils.testFully(obj, new TypeToken<DelayQueue<DelayedString>>(){}, jsonStr(
-                "{'lock':{'sync':{'@type':'java.util.concurrent.locks.ReentrantLock$NonfairSync','@val':{'state':0}}}," +
-                        "'available':{'@type':'java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject'," +
-                        "'@val':{'this$0':'@root.lock.sync'}}," +
-                        "'q':[{'str':'foo','delaySec':10,'this$0':{'fName':'testDelayQueue'}}]}"));
+        TestingUtils.testFully(obj, new TypeToken<DelayQueue<DelayedString>>(){}, null);
     }
 
     public void testAsLifoQueue() {
@@ -157,21 +151,6 @@ public class TestVariousQueues extends TestCase {
         obj.add(1L);
 
         TestingUtils.testFully(obj, jsonStr("{'q':{'@type':'java.util.ArrayDeque','@val':[1]}}"));
-    }
-
-    //
-    // Tests for other non-Set non-Queue non-List Collections
-    //
-    public void testBeanContextSupport() throws PropertyVetoException {
-        BeanContextSupport context = new BeanContextSupport();
-        context.setLocale(Locale.CHINESE);
-
-        BeanContextChildSupport bean = new BeanContextChildSupport();
-        context.add(bean);
-
-        context = TestingUtils.test(context);
-        assertEquals(1, context.size());
-        assertEquals(Locale.CHINESE, context.getLocale());
     }
 
     private void checkBlockingFunctionality(final BlockingQueue bq, Object element) throws InterruptedException {
