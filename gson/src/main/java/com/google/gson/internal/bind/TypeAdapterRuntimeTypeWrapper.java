@@ -95,7 +95,7 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     // Fourth preference: reflective type adapter for the declared type
     TypeAdapter chosen = delegate;
     Type runtimeType = getRuntimeTypeIfMoreSpecific(type, value);
-    if (runtimeType != type) {
+    if (runtimeType != type && !runtimeType.equals(type)) {
       TypeAdapter runtimeTypeAdapter = gson.getAdapter(TypeToken.get(runtimeType));
       if (!(runtimeTypeAdapter instanceof ReflectiveTypeAdapterFactory.Adapter)) {
         // The user registered a type adapter for the runtime type, so we will use that
@@ -117,9 +117,8 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
    * Finds a compatible runtime type if it is more specific
    */
   private Type getRuntimeTypeIfMoreSpecific(Type type, Object value) {
-    if (value != null
-        && (type == Object.class || type instanceof TypeVariable<?> || type instanceof Class<?>)) {
-      type = value.getClass();
+    if (value != null) {
+      return TypeUtils.mergeTypes(value.getClass(), type);
     }
     return type;
   }

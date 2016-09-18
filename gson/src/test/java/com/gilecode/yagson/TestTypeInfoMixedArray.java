@@ -52,7 +52,7 @@ public class TestTypeInfoMixedArray extends TestCase {
 
         TestingUtils.testFullyByToString(obj, jsonStr("{'arr':" +
                 "{'@type':'[Lcom.gilecode.yagson.Person;'," +
-                "'@val':[{'@type':'com.gilecode.yagson.Person','@val':{'name':'foo','family':'bar'}}]}}"));
+                "'@val':[{'name':'foo','family':'bar'}]}}"));
     }
 
     public void testPureCustomArray() {

@@ -78,7 +78,8 @@ public class MoreSpecificTypeSerializationTest extends TestCase {
         new ParameterizedSub<String>("one", "two"));
     String json = gson.toJson(target);
     assertTrue(json.contains("\"t\":\"one\""));
-    assertFalse(json.contains("\"s\""));
+    // changed in YaGson
+//    assertFalse(json.contains("\"s\""));
   }
 
   /**
@@ -93,7 +94,8 @@ public class MoreSpecificTypeSerializationTest extends TestCase {
       new ClassWithContainersOfParameterizedBaseFields(list, null);
     String json = gson.toJson(target);
     assertTrue(json, json.contains("{\"t\":\"one\"}"));
-    assertFalse(json, json.contains("\"s\":"));
+    // changed in YaGson
+//    assertFalse(json, json.contains("\"s\":"));
   }
 
   /**
@@ -110,7 +112,8 @@ public class MoreSpecificTypeSerializationTest extends TestCase {
     assertEquals("one", json.get("base").getAsJsonObject().get("t").getAsString());
     JsonObject sub = json.get("sub").getAsJsonObject();
     assertEquals("two", sub.get("t").getAsString());
-    assertNull(sub.get("s"));
+    // changed in YaGson
+//    assertNull(sub.get("s"));
   }
 
   private static class Base {

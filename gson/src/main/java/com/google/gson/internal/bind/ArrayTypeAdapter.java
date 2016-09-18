@@ -61,10 +61,12 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   private final Class<E> componentType;
   private final Class<E[]> arrayType;
   private final TypeAdapter<E> componentTypeAdapter;
+  private final Gson gson;
 
-  private ArrayTypeAdapter(Gson context, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
-    this.componentTypeAdapter = new TypeAdapterRuntimeTypeWrapper<E>(context,
-            componentTypeAdapter, componentType, TypeUtils.getEmitTypeInfoRule(context, false));
+  private ArrayTypeAdapter(Gson gson, TypeAdapter<E> componentTypeAdapter, Class<E> componentType) {
+    this.gson = gson;
+    this.componentTypeAdapter = new TypeAdapterRuntimeTypeWrapper<E>(gson,
+            componentTypeAdapter, componentType, TypeUtils.getEmitTypeInfoRule(gson, false));
     this.componentType = componentType;
     arrayType = (Class<E[]>) Array.newInstance(componentType, 0).getClass();
   }
@@ -73,6 +75,11 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
   @Override
   protected Object readOptionallyAdvisedInstance(JsonReader in,
                                                  ReadContext ctx) throws IOException {
+
+    if (in.peek() == JsonToken.BEGIN_OBJECT) {
+      // must be a type advice
+      return TypeUtils.readTypeAdvisedValue(gson, in, arrayType, ctx);
+    }
 
     List<E> list = new ArrayList<E>();
 
@@ -89,17 +96,6 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     // final array object is created, it is sent to all registered uses, which insert it
     // into the places of use.
     ctx.registerObject(arrayPlaceholder, false);
-
-    Class advisedComponentType = null;
-    boolean hasTypeAdvise = false;
-    if (in.peek() == JsonToken.BEGIN_OBJECT) {
-      Class typeAdvise = $Gson$Types.getRawType(TypeUtils.readTypeAdvice(in));
-      if (typeAdvise.isArray()) {
-        advisedComponentType = typeAdvise.getComponentType();
-      }
-      TypeUtils.consumeValueField(in);
-      hasTypeAdvise = true;
-    }
 
     in.beginArray();
     for (int i = 0; in.hasNext(); i++) {
@@ -121,11 +117,7 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     }
     in.endArray();
 
-    if (hasTypeAdvise) {
-      in.endObject();
-    }
-
-    Object array = Array.newInstance(advisedComponentType == null ? componentType : advisedComponentType, list.size());
+    Object array = Array.newInstance(componentType, list.size());
     for (int i = 0; i < list.size(); i++) {
       Array.set(array, i, list.get(i));
     }
