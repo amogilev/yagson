@@ -16,12 +16,12 @@
 
 package com.google.gson.internal;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.refs.ReferencesPolicy;
 
-import am.yagson.strategy.*;
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.strategy.*;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;

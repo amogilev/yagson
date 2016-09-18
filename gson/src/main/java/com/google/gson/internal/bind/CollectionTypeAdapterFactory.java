@@ -16,11 +16,11 @@
 
 package com.google.gson.internal.bind;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.*;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.refs.*;
+import com.gilecode.yagson.types.*;
 
-import am.yagson.types.*;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -40,8 +40,8 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
-import static am.yagson.refs.References.REF_FIELD_PREFIX;
-import static am.yagson.types.TypeUtils.classOf;
+import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
+import static com.gilecode.yagson.types.TypeUtils.classOf;
 
 /**
  * Adapt a homogeneous collection of objects.

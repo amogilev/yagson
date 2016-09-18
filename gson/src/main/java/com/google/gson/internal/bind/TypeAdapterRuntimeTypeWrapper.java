@@ -15,10 +15,10 @@
  */
 package com.google.gson.internal.bind;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.types.EmitTypeInfoPredicate;
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.types.EmitTypeInfoPredicate;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;

@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
 import junit.framework.TestCase;
 
 import com.google.gson.Gson;

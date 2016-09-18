@@ -2,12 +2,10 @@ package com.google.gson;
 
 import java.io.IOException;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
 
-import am.yagson.types.TypeUtils;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 /**

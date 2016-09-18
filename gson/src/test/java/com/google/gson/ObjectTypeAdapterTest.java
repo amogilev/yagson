@@ -21,9 +21,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import am.yagson.WriteContext;
-import am.yagson.refs.References;
-import am.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.WriteContext;
 import junit.framework.TestCase;
 
 public final class ObjectTypeAdapterTest extends TestCase {

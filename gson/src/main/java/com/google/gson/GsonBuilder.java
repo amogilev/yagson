@@ -26,8 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import am.yagson.refs.ReferencesPolicy;
-import am.yagson.types.TypeInfoPolicy;
+import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.types.TypeInfoPolicy;
 
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Excluder;

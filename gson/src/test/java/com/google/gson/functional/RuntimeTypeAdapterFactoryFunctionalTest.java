@@ -19,11 +19,9 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
 import junit.framework.TestCase;
-import am.yagson.refs.ReferencesReadContext;
-import am.yagson.refs.ReferencesWriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

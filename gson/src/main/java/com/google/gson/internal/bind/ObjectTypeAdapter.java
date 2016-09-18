@@ -16,12 +16,12 @@
 
 package com.google.gson.internal.bind;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.PlaceholderUse;
-import am.yagson.refs.ReferencePlaceholder;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.refs.PlaceholderUse;
+import com.gilecode.yagson.refs.ReferencePlaceholder;
 
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;

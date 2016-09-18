@@ -1,11 +1,11 @@
 package com.google.gson.internal.bind;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.PathElementProducer;
-import am.yagson.types.FieldInfo;
-import am.yagson.types.ObjectProvider;
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.refs.PathElementProducer;
+import com.gilecode.yagson.types.FieldInfo;
+import com.gilecode.yagson.types.ObjectProvider;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.SimpleTypeAdapter;
@@ -20,7 +20,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static am.yagson.refs.References.REF_FIELD_PREFIX;
+import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 
 /**
  * Utility methods for working with type adapters and delegates.

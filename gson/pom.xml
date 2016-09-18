@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>am.yagson</groupId>
+  <groupId>com.gilecode.yagson</groupId>
   <artifactId>yagson</artifactId>
   <packaging>jar</packaging>
-  <version>2.5-SNAPSHOT</version>
-  <inceptionYear>2008</inceptionYear>
+  <version>0.1-SNAPSHOT</version>
+  <inceptionYear>2015</inceptionYear>
   <name>YaGson</name>
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -15,6 +15,7 @@
   <url>https://github.com/amogilev/yagson</url>
   <description>YaGson library</description>
   <properties>
+    <gson.version>y${project.version}</gson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <licenses>
@@ -120,14 +121,14 @@
             <addMavenDescriptor>false</addMavenDescriptor>
             <manifestEntries>
               <Bundle-RequiredExecutionEnvironment>JavaSE-1.6, JavaSE-1.7, JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-              <Export-Package><![CDATA[com.google.gson;version=${project.version}, com.google.gson.annotations;version=${project.version}, com.google.gson.reflect;version=${project.version}, com.google.gson.stream;version=${project.version}, com.google.gson.internal;version=${project.version}, com.google.gson.internal.bind;version=${project.version}]]></Export-Package>
+              <Export-Package><![CDATA[com.gilecode.yagson;version=${project.version}, com.gilecode.yagson.adapters;version=${project.version}, com.gilecode.yagson.refs;version=${project.version}, com.gilecode.yagson.refs.impl;version=${project.version}, com.gilecode.yagson.strategy;version=${project.version}, com.gilecode.yagson.types;version=${project.version}, com.google.gson;version=${gson.version}, com.google.gson.annotations;version=${gson.version}, com.google.gson.reflect;version=${gson.version}, com.google.gson.stream;version=${gson.version}, com.google.gson.internal;version=${gson.version}, com.google.gson.internal.bind;version=${gson.version}]]></Export-Package>
               <Bundle-Version>${project.version}</Bundle-Version>
               <Bundle-ContactAddress>https://github.com/amogilev/yagson</Bundle-ContactAddress>
               <Bundle-Name>${project.name}</Bundle-Name>
               <Bundle-Description>${project.description}</Bundle-Description>
               <Bundle-ClassPath>.</Bundle-ClassPath>
               <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
-              <Bundle-SymbolicName>am.yagson</Bundle-SymbolicName>
+              <Bundle-SymbolicName>com.gilecode.yagson</Bundle-SymbolicName>
             </manifestEntries>
           </archive>
         </configuration>
@@ -149,8 +150,8 @@
          <configuration>
            <archive>
              <manifestEntries>
-               <Eclipse-SourceBundle>com.google.gson;version="${project.version}"</Eclipse-SourceBundle>
-               <Bundle-SymbolicName>am.yagson.source</Bundle-SymbolicName>
+               <Eclipse-SourceBundle>com.gilecode.yagson;version="${project.version}"</Eclipse-SourceBundle>
+               <Bundle-SymbolicName>com.gilecode.yagson.source</Bundle-SymbolicName>
                <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
                <Bundle-Version>${project.version}</Bundle-Version>
              </manifestEntries>
@@ -171,7 +172,7 @@
            </execution>
          </executions>
          <configuration>
-           <includePackageNames>com.google.gson</includePackageNames>
+           <includePackageNames>com.gilecode.yagson:com.google.gson</includePackageNames>
            <excludePackageNames>com.google.gson.internal:com.google.gson.internal.bind</excludePackageNames>
             <links>
              <link>http://docs.oracle.com/javase/1.6.0/docs/api/</link>

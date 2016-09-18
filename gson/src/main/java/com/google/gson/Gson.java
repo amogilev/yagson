@@ -27,11 +27,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.adapters.ThreadTypesAdapterFactory;
-import am.yagson.refs.ReferencesPolicy;
-import am.yagson.types.*;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.adapters.ThreadTypesAdapterFactory;
+import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.types.*;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.Primitives;
@@ -43,7 +43,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.google.gson.stream.MalformedJsonException;
 
-import static am.yagson.refs.References.REF_ROOT;
+import static com.gilecode.yagson.refs.References.REF_ROOT;
 
 /**
  * This is the main class for using Gson. Gson is typically used by first constructing a

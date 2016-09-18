@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import junit.framework.TestCase;
-import am.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.refs.ReferencesPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

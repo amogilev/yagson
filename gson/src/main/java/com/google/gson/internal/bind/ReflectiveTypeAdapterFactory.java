@@ -23,12 +23,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.*;
-import am.yagson.refs.impl.PlaceholderUtils;
-import am.yagson.types.PostReadProcessor;
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.refs.*;
+import com.gilecode.yagson.refs.impl.PlaceholderUtils;
+import com.gilecode.yagson.types.PostReadProcessor;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;

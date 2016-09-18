@@ -16,8 +16,8 @@
 
 package com.google.gson.internal;
 
-import am.yagson.types.PostAllocateProcessor;
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.types.PostAllocateProcessor;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.InstanceCreator;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;

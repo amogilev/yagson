@@ -16,8 +16,7 @@
 
 package com.google.gson.internal;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
+import com.gilecode.yagson.ReadContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonNull;

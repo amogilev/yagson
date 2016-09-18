@@ -16,18 +16,18 @@
 
 package com.google.gson.internal.bind;
 
-import static am.yagson.refs.References.REF_FIELD_PREFIX;
-import static am.yagson.refs.References.keyRef;
-import static am.yagson.refs.References.valRef;
-import static am.yagson.types.TypeUtils.classOf;
-import static am.yagson.types.TypeUtils.classes;
+import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
+import static com.gilecode.yagson.refs.References.keyRef;
+import static com.gilecode.yagson.refs.References.valRef;
+import static com.gilecode.yagson.types.TypeUtils.classOf;
+import static com.gilecode.yagson.types.TypeUtils.classes;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.*;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.refs.*;
+import com.gilecode.yagson.refs.impl.MapPlaceholderUse;
+import com.gilecode.yagson.types.*;
 
-import am.yagson.refs.impl.MapPlaceholderUse;
-import am.yagson.types.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;

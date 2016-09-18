@@ -16,9 +16,8 @@
 
 package com.google.gson;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.References;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
 
 import com.google.gson.internal.bind.JsonTreeWriter;
 import com.google.gson.internal.bind.JsonTreeReader;

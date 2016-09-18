@@ -16,7 +16,7 @@
 
 package com.google.gson.functional;
 
-import am.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.refs.ReferencesPolicy;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

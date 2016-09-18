@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
 
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;

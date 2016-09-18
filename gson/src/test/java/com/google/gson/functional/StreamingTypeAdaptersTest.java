@@ -16,9 +16,8 @@
 
 package com.google.gson.functional;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.refs.References;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

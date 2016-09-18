@@ -15,19 +15,16 @@
  */
 package com.google.gson.internal.bind;
 
-import am.yagson.ReadContext;
-import am.yagson.WriteContext;
-import am.yagson.types.TypeUtils;
+import com.gilecode.yagson.ReadContext;
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 
 /**
  * Type adapter wrapper with the support of the type advices at the reading stage. Used to provide type advices support

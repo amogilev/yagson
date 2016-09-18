@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-import am.yagson.ReadContext;
+import com.gilecode.yagson.ReadContext;
 import com.google.gson.internal.Streams;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
