@@ -10,11 +10,16 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
 
+/**
+ * Unit tests for {@link TypeUtils}
+ *
+ * @author Andrey Mogilev
+ */
 public class TestTypeUtils extends TestCase {
 
-    public interface TestParamsClass1<A, B, C> {}
-    public interface TestParamsClass2<A, B extends String, C extends Number> extends TestParamsClass1<C, B, A> {}
-    public static class TestParamsClass3<D extends String> implements TestParamsClass2<Long, D, Integer>{}
+    interface TestParamsClass1<A, B, C> {}
+    interface TestParamsClass2<A, B extends String, C extends Number> extends TestParamsClass1<C, B, A> {}
+    private static class TestParamsClass3<D extends String> implements TestParamsClass2<Long, D, Integer>{}
 
     public void testIndexOfInheritedTypeVariable() {
         TypeVariable[] typeVariables = TestParamsClass1.class.getTypeParameters();

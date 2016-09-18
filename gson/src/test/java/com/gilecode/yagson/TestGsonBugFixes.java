@@ -4,12 +4,17 @@ import com.google.gson.Gson;
 import com.google.gson.internal.$Gson$Types;
 import junit.framework.TestCase;
 
+/**
+ * Tests some of bugfixes made in the original Gson code.
+ *
+ * @author Andrey Mogilev
+ */
 public class TestGsonBugFixes extends TestCase {
-    static class Foo1<A> {
+    private static class Foo1<A> {
         Foo2<? extends A> foo2;
     }
 
-    static class Foo2<B> {
+    private static class Foo2<B> {
         Foo1<? super B> foo1;
     }
 
