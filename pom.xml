@@ -5,7 +5,6 @@
   <packaging>pom</packaging>
   <version>0.1-SNAPSHOT</version>
   <properties>
-    <gson.version>y${project.version}</gson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <inceptionYear>2015</inceptionYear>
@@ -112,7 +111,7 @@
             <addMavenDescriptor>false</addMavenDescriptor>
             <manifestEntries>
               <Bundle-RequiredExecutionEnvironment>JavaSE-1.6, JavaSE-1.7, JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-              <Export-Package><![CDATA[com.gilecode.yagson;version=${project.version}, com.gilecode.yagson.adapters;version=${project.version}, com.gilecode.yagson.refs;version=${project.version}, com.gilecode.yagson.refs.impl;version=${project.version}, com.gilecode.yagson.strategy;version=${project.version}, com.gilecode.yagson.types;version=${project.version}, com.google.gson;version=${gson.version}, com.google.gson.annotations;version=${gson.version}, com.google.gson.reflect;version=${gson.version}, com.google.gson.stream;version=${gson.version}, com.google.gson.internal;version=${gson.version}, com.google.gson.internal.bind;version=${gson.version}]]></Export-Package>
+              <Export-Package><![CDATA[com.gilecode.yagson;version=${project.version}, com.gilecode.yagson.adapters;version=${project.version}, com.gilecode.yagson.refs;version=${project.version}, com.gilecode.yagson.refs.impl;version=${project.version}, com.gilecode.yagson.strategy;version=${project.version}, com.gilecode.yagson.types;version=${project.version}]]></Export-Package>
               <Bundle-Version>${project.version}</Bundle-Version>
               <Bundle-ContactAddress>https://github.com/amogilev/yagson</Bundle-ContactAddress>
               <Bundle-Name>${project.name}</Bundle-Name>
@@ -132,7 +131,7 @@
          <executions>
            <execution>
              <id>attach-sources</id>
-             <phase>verify</phase>
+             <phase>package</phase>
              <goals>
                <goal>jar</goal>
              </goals>

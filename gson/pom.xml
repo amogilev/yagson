@@ -15,7 +15,6 @@
   <url>https://github.com/amogilev/yagson</url>
   <description>YaGson library</description>
   <properties>
-    <gson.version>y${project.version}</gson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <licenses>
@@ -121,7 +120,7 @@
             <addMavenDescriptor>false</addMavenDescriptor>
             <manifestEntries>
               <Bundle-RequiredExecutionEnvironment>JavaSE-1.6, JavaSE-1.7, JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-              <Export-Package><![CDATA[com.gilecode.yagson;version=${project.version}, com.gilecode.yagson.adapters;version=${project.version}, com.gilecode.yagson.refs;version=${project.version}, com.gilecode.yagson.refs.impl;version=${project.version}, com.gilecode.yagson.strategy;version=${project.version}, com.gilecode.yagson.types;version=${project.version}, com.google.gson;version=${gson.version}, com.google.gson.annotations;version=${gson.version}, com.google.gson.reflect;version=${gson.version}, com.google.gson.stream;version=${gson.version}, com.google.gson.internal;version=${gson.version}, com.google.gson.internal.bind;version=${gson.version}]]></Export-Package>
+              <Export-Package><![CDATA[com.gilecode.yagson;version=${project.version}, com.gilecode.yagson.adapters;version=${project.version}, com.gilecode.yagson.refs;version=${project.version}, com.gilecode.yagson.refs.impl;version=${project.version}, com.gilecode.yagson.strategy;version=${project.version}, com.gilecode.yagson.types;version=${project.version}]]></Export-Package>
               <Bundle-Version>${project.version}</Bundle-Version>
               <Bundle-ContactAddress>https://github.com/amogilev/yagson</Bundle-ContactAddress>
               <Bundle-Name>${project.name}</Bundle-Name>
@@ -141,7 +140,7 @@
          <executions>
            <execution>
              <id>attach-sources</id>
-             <phase>verify</phase>
+             <phase>package</phase>
              <goals>
                <goal>jar</goal>
              </goals>
@@ -213,6 +212,28 @@
           <outputDirectory>target/dist</outputDirectory>
           <workDirectory>target/assembly/work</workDirectory>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <relocations>
+                <relocation>
+                  <pattern>com.google.gson</pattern>
+                  <shadedPattern>com.gilecode.yagson.com.google.gson</shadedPattern>
+                </relocation>
+              </relocations>
+              <createSourcesJar>true</createSourcesJar>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

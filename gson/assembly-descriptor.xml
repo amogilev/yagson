@@ -14,7 +14,7 @@
       <directory>target</directory>
       <outputDirectory></outputDirectory>
       <includes>
-        <include>gson-*.jar</include>
+        <include>yagson-*.jar</include>
       </includes>
     </fileSet>
   </fileSets>
