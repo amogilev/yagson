@@ -21,7 +21,6 @@ import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.refs.ReferencesPolicy;
 
 import com.gilecode.yagson.strategy.*;
-import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
@@ -42,6 +41,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.gilecode.yagson.types.TypeUtils.safeClassForName;
 
 /**
  * This class selects which fields and types to omit. It is configurable,
@@ -64,13 +65,16 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
                       ThreadLocal.class),
               true, false)
       .withExclusionStrategy(
-              new ExcludeFieldsInClassByNames(Iterator.class, "expectedModCount"),
+              new ExcludeFieldsInClassesByNames(Arrays.<Class<?>>asList(
+                        Iterator.class,
+                        safeClassForName("java.util.SubList"),
+                        safeClassForName("java.util.HashMap$HashIterator"),
+                        safeClassForName("java.util.LinkedHashMap$LinkedHashIterator")
+                      ),
+                      "expectedModCount"),
               true, true)
       .withExclusionStrategy(
-              new ExcludeFieldsInClassByNames(TypeUtils.classForName("java.util.SubList"), "expectedModCount"),
-              true, true)
-      .withExclusionStrategy(
-              new ExcludeFieldsInClassByNames(TypeUtils.classForName(
+              new ExcludeFieldsInClassesByNames(safeClassForName(
                       "java.util.concurrent.CopyOnWriteArrayList$COWSubList"), "expectedArray"),
               true, true)
       .withExclusionStrategy(
@@ -204,7 +208,7 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       return true;
     }
 
-    if (field.isSynthetic() && (!serializeOuterReferences || !field.getName().startsWith("this$"))) {
+    if (field.isSynthetic() && !serializeOuterReferences) {
       return true;
     }
 

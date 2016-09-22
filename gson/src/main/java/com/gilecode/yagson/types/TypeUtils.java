@@ -129,15 +129,13 @@ public class TypeUtils {
     }
 
     /**
-     * Runs {@link Class#forName(String)}, with a wrapping of {@link ClassNotFoundException} to
-     * {@link IllegalStateException}, which allows to use it in initializers and other places where checked
-     * exceptions are not allowed.
+     * Returns a class for name if it exists, and {@code null} otherwise.
      */
-    public static Class<?> classForName(String name) {
+    public static Class<?> safeClassForName(String name) {
         try {
             return Class.forName(name);
         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Missing class specified in @type info", e);
+            return null;
         }
     }
 
