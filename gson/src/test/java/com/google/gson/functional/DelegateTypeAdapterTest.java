@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Google Inc.
+ * Modifications copyright (C) 2016 Andrey Mogilev
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

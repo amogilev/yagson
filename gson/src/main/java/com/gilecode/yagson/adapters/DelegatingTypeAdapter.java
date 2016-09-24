@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gilecode.yagson.refs;
+package com.gilecode.yagson.adapters;
 
-import java.io.IOException;
+import com.google.gson.TypeAdapter;
 
 /**
- * Specifies the use site of the reference placeholder, such as an object field, an array's element, or map's key
- * or value. When the actual object is instantiated, it is applied to all registered use sites.
+ * Abstract for type adapter wrappers with known delegates.
+ * Once initialized, returns the same delegate on each call to {@link #getDelegate()} }
  */
-public interface PlaceholderUse<T> {
+public abstract class DelegatingTypeAdapter<T> extends TypeAdapter<T> {
 
-    /**
-     * Sets the actual object to this use site, e.g. assigns it to a field, to an array's element etc.
-     *
-     * @param actualObject the actual object crated as the replacement of a placeholder
-     */
-    void applyActualObject(T actualObject) throws IOException;
+    protected TypeAdapter<T> delegate;
+
+    public TypeAdapter<T> getDelegate() {
+        return delegate;
+    }
 }

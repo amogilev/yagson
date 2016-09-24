@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 Google Inc.
+ * Modifications copyright (C) 2016 Andrey Mogilev
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,8 @@ package com.google.gson.internal.bind;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.adapters.AdapterUtils;
+import com.gilecode.yagson.adapters.TypeInfoEmittingTypeAdapterWrapper;
 import com.gilecode.yagson.types.EmitTypeInfoPredicate;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
@@ -28,7 +31,6 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 
 public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   private final Gson gson;

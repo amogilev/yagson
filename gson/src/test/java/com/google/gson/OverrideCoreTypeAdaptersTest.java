@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012 Google Inc.
+ * Modifications copyright (C) 2016 Andrey Mogilev
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import java.io.IOException;

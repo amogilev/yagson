@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 Google Inc.
+ * Modifications copyright (C) 2016 Andrey Mogilev
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +26,9 @@ import java.util.*;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.adapters.HasField;
+import com.gilecode.yagson.adapters.TypeAdvisableComplexTypeAdapter;
+import com.gilecode.yagson.adapters.TypeInfoEmittingTypeAdapterWrapper;
 import com.gilecode.yagson.refs.*;
 import com.gilecode.yagson.refs.impl.PlaceholderUtils;
 import com.gilecode.yagson.types.PostReadProcessor;

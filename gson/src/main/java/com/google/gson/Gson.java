@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 Google Inc.
+ * Modifications copyright (C) 2016 Andrey Mogilev
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +30,8 @@ import java.util.*;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.adapters.DelegatingTypeAdapter;
+import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.gilecode.yagson.adapters.ThreadTypesAdapterFactory;
 import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.types.*;
