@@ -38,6 +38,8 @@ import java.util.*;
  * For thread locals, only the value for the current thread is stored. Deserialized thread locals are always
  * registered as new to the current thread, no "merge" attempts to existing thread locals is currently performed
  * (but it may be changed in future)
+ *
+ * @author Andrey Mogilev
  */
 public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
 

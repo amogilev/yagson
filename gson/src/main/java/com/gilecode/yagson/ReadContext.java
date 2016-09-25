@@ -29,6 +29,8 @@ import java.io.IOException;
 
 /**
  * The context used by type adapters for reading from JSON.
+ *
+ * @author Andrey Mogilev
  */
 public class ReadContext {
 

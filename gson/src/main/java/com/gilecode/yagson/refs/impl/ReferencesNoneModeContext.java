@@ -29,7 +29,13 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
-public class ReferencesNoneModeContext implements ReferencesReadContext, ReferencesWriteContext {
+/**
+ * Provides dummy {@link ReferencesReadContext} and {@link ReferencesWriteContext} for the
+ * {@link ReferencesPolicy#DISABLED} references policy, which do nothing.
+ *
+ * @author Andrey Mogilev
+ */
+class ReferencesNoneModeContext implements ReferencesReadContext, ReferencesWriteContext {
 
     public static ReferencesNoneModeContext instance = new ReferencesNoneModeContext();
 

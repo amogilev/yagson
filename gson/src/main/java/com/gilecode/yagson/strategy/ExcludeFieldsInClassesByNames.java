@@ -23,10 +23,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
 
 /**
- * Excludes fields in the specified class or its subclasses by names.
+ * Excludes fields in the specified classes or their subclasses by the field names.
+ *
+ * @author Andrey Mogilev
  */
 public class ExcludeFieldsInClassesByNames implements ExclusionStrategy {
 

@@ -27,6 +27,8 @@ import java.io.IOException;
 
 /**
  * The context used by type adapters for writing to JSON.
+ *
+ * @author Andrey Mogilev
  */
 public class WriteContext {
 

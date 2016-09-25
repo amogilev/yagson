@@ -32,39 +32,41 @@ import java.io.IOException;
  * for simple type adapters.
  * <p/>
  * This wrapper may only be used when the type info is enabled.
+ *
+ * @author Andrey Mogilev
  */
 public final class TypeAdviceReadingSimpleAdapterWrapper<T> extends TypeAdapter<T> {
 
-  private final Gson gson;
+    private final Gson gson;
 
-  /**
-   * The type adapter used for objects of the default type.
-   */
-  private final TypeAdapter<T> delegateTypeAdapter;
+    /**
+     * The type adapter used for objects of the default type.
+     */
+    private final TypeAdapter<T> delegateTypeAdapter;
 
-  public TypeAdviceReadingSimpleAdapterWrapper(Gson gson, TypeAdapter<T> delegateSimpleTypeAdapter) {
-    this.gson = gson;
-    this.delegateTypeAdapter = delegateSimpleTypeAdapter;
+    public TypeAdviceReadingSimpleAdapterWrapper(Gson gson, TypeAdapter<T> delegateSimpleTypeAdapter) {
+        this.gson = gson;
+        this.delegateTypeAdapter = delegateSimpleTypeAdapter;
 
-    assert gson.getTypeInfoPolicy().isEnabled() : "Requires enabled type info";
-    assert AdapterUtils.isSimpleTypeAdapter(delegateSimpleTypeAdapter) : "Expects delegate type adapter to be simple";
-  }
-
-  @Override
-  public T read(JsonReader in, ReadContext ctx) throws IOException {
-
-    if (in.peek() == JsonToken.BEGIN_OBJECT) {
-      // if '{' is found for the simple type, we expect and parse type advice here, and fail otherwise
-      return TypeUtils.readTypeAdvisedValue(gson, in, null, ctx);
-
-    } else {
-      // no type advice, use delegate
-      return delegateTypeAdapter.read(in, ctx);
+        assert gson.getTypeInfoPolicy().isEnabled() : "Requires enabled type info";
+        assert AdapterUtils.isSimpleTypeAdapter(delegateSimpleTypeAdapter) : "Expects delegate type adapter to be simple";
     }
-  }
 
-  @Override
-  public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
-    throw new IllegalStateException("This TypeAdapter is read-only");
-  }
+    @Override
+    public T read(JsonReader in, ReadContext ctx) throws IOException {
+
+        if (in.peek() == JsonToken.BEGIN_OBJECT) {
+            // if '{' is found for the simple type, we expect and parse type advice here, and fail otherwise
+            return TypeUtils.readTypeAdvisedValue(gson, in, null, ctx);
+
+        } else {
+            // no type advice, use delegate
+            return delegateTypeAdapter.read(in, ctx);
+        }
+    }
+
+    @Override
+    public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
+        throw new IllegalStateException("This TypeAdapter is read-only");
+    }
 }

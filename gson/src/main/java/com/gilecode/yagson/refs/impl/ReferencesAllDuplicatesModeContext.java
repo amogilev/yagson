@@ -31,18 +31,20 @@ import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 import static com.gilecode.yagson.refs.References.REF_ROOT;
 
 /**
- * Used to find circular dependencies and duplicate references during the 
- * serialization.
+ * Provides {@link ReferencesReadContext} and {@link ReferencesWriteContext} for the
+ * {@link ReferencesPolicy#DUPLICATE_OBJECTS} references policy.
+ * <p/>
+ * Used to find circular dependencies and duplicate objects during the
+ * serialization, and write them as references.
  * <p/>
  * Neither this context, nor the Write or Read contexts are thread-safe!
  *
  * @author Andrey Mogilev
  */
-public class ReferencesAllDuplicatesModeContext {
+class ReferencesAllDuplicatesModeContext {
 
     static ReferencesPolicy policy = ReferencesPolicy.DUPLICATE_OBJECTS;
 
-//    protected List<String> currentPathElements = new ArrayList<String>();
     protected List<String> referencePaths = new ArrayList<String>();
 
     protected void addPathElement(String pathElement) {

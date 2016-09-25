@@ -230,7 +230,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
 
     private Map<String, FieldInfo> buildReflectiveFieldsInfo(Class<? extends Map> containerClass,
                                                              ObjectProvider<? extends Map> objectProvider) {
-      return AdapterUtils.buildReflectiveFieldsInfo(gson, containerClass, formalMapType,
+      return AdapterUtils.buildReflectiveFieldsInfo(gson, containerClass,
               objectProvider, classes(Comparator.class, Properties.class), null);
     }
 

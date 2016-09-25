@@ -23,6 +23,12 @@ import com.google.gson.TypeAdapter;
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.google.gson.stream.JsonReader;
 
+/**
+ * A context which provides correct reading of references and replacing them with previously read
+ * actual objects.
+ *
+ * @author Andrey Mogilev
+ */
 public interface ReferencesReadContext {
 
     /**

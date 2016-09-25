@@ -33,6 +33,11 @@ import java.util.*;
 
 import static java.util.Arrays.asList;
 
+/**
+ * Collection of types-related utility methods.
+ *
+ * @author Andrey Mogilev
+ */
 public class TypeUtils {
 
     private static Map<String, Class<?>> primitiveWrappers = new HashMap<String, Class<?>>();
@@ -46,7 +51,7 @@ public class TypeUtils {
         primitiveWrappers.put(double.class.getName(), Double.class);
     }
 
-    public static boolean typesDiffer(Type type, Class<?> actualClass) {
+    private static boolean typesDiffer(Type type, Class<?> actualClass) {
         if (type instanceof GenericArrayType && actualClass.isArray()) {
             return typesDiffer(((GenericArrayType)type).getGenericComponentType(), actualClass.getComponentType());
         } else {
@@ -54,7 +59,7 @@ public class TypeUtils {
         }
     }
 
-    public static boolean classesDiffer(Class<?> declaredClass, Class<?> actualClass) {
+    private static boolean classesDiffer(Class<?> declaredClass, Class<?> actualClass) {
         if (declaredClass == actualClass) {
             return false;
         }
@@ -85,7 +90,7 @@ public class TypeUtils {
         return readTypeAdvisedValueAfterType(gson, in, ctx, type);
     }
 
-    public static Type readTypeAdvice(JsonReader in) throws IOException {
+    private static Type readTypeAdvice(JsonReader in) throws IOException {
         in.beginObject();
         if (!in.hasNext()) {
             throw new JsonSyntaxException("BEGIN_OBJECT is not expected at path " + in.getPath());
@@ -99,7 +104,7 @@ public class TypeUtils {
 
     private static final WildcardType unknownType = $Gson$Types.subtypeOf(Object.class);
 
-    public static Type readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
+    private static Type readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
         // Check whether next tokens are type advise, fail if not
         String advisedTypeStr = in.nextString();
         String advisedClassStr = advisedTypeStr;
@@ -128,8 +133,7 @@ public class TypeUtils {
                 return $Gson$Types.newParameterizedTypeWithOwner(advisedClass.getEnclosingClass(), advisedClass, parameterTypes);
             }
         }
-        Type valueType = toType(advisedClassStr);
-        return valueType;
+        return toType(advisedClassStr);
     }
 
     private static Type toType(String name) {
@@ -154,7 +158,7 @@ public class TypeUtils {
         }
     }
 
-    public static boolean consumeValueField(JsonReader in) throws IOException {
+    private static boolean consumeValueField(JsonReader in) throws IOException {
         if (!in.hasNext()) {
             // no @val means actually null value, e.g. skipped by serialization
             return false;
@@ -178,16 +182,6 @@ public class TypeUtils {
 
         in.endObject();
         return result;
-    }
-
-    public static boolean safeClassEquals(Object obj1, Object obj2) {
-        if (obj1 == obj2) {
-            return true;
-        } else if (obj1 == null || obj2 == null) {
-            return false;
-        } else {
-            return obj1.getClass().equals(obj2.getClass());
-        }
     }
 
     /**
@@ -301,7 +295,7 @@ public class TypeUtils {
             adapter = ctx.getGson().getAdapter(TypeToken.get(enumSetType));
         } else if (EnumMap.class.isAssignableFrom(actualClass)) {
             Class<? extends Enum> enumClass = getField(enumMapKeyTypeField, value);
-            int mapKeyTypeVarIdx = -1;
+            int mapKeyTypeVarIdx;
             TypeVariable[] actualClassTypeVariables = actualClass.getTypeParameters();
             if (EnumMap.class.equals(actualClass)) {
                 mapKeyTypeVarIdx = 0;
@@ -359,7 +353,7 @@ public class TypeUtils {
         }
     }
 
-    public static Field getDeclaredField(Class declaringClass, String fieldName) {
+    static Field getDeclaredField(Class declaringClass, String fieldName) {
         try {
             Field f = declaringClass.getDeclaredField(fieldName);
             f.setAccessible(true);
@@ -386,6 +380,7 @@ public class TypeUtils {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T getField(Field f, Object instance) {
         try {
             return (T) f.get(instance);
@@ -466,7 +461,7 @@ public class TypeUtils {
         return findFields(c, allowTransient, 0, fieldClassesToFind, exceptClasses);
     }
 
-    public static Field findOneFieldByType(Class<?> c, Class<?> fieldClassToFind) {
+    static Field findOneFieldByType(Class<?> c, Class<?> fieldClassToFind) {
         List<Class<?>> fieldClassesToFind = Collections.<Class<?>>singletonList(fieldClassToFind);
         List<Field> found = findFields(c, true, 1, fieldClassesToFind, null);
         if (found.size() > 0) {
@@ -623,6 +618,7 @@ public class TypeUtils {
         return -1;
     }
 
+    @SuppressWarnings("unchecked")
     private static void fillGenericInheritanceChain(List<Type> inheritanceChain, Class superType, Class inheritedClass) {
         for (Type t : getGenericSuperTypes(inheritedClass)) {
             Class c = $Gson$Types.getRawType(t);

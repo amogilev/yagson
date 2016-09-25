@@ -18,8 +18,10 @@ package com.gilecode.yagson.adapters;
 import com.google.gson.TypeAdapter;
 
 /**
- * Abstract for type adapter wrappers with known delegates.
+ * An abstract for type adapter wrappers with known delegates.
  * Once initialized, returns the same delegate on each call to {@link #getDelegate()} }
+ *
+ * @author Andrey Mogilev
  */
 public abstract class DelegatingTypeAdapter<T> extends TypeAdapter<T> {
 

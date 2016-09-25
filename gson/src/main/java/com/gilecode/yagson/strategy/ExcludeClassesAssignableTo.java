@@ -18,13 +18,14 @@ package com.gilecode.yagson.strategy;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 
-import java.util.HashSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 
 /**
  * Excludes classes which are assignable to one of the specified classes, i.e. these classes and all subclasses.
+ *
+ * @author Andrey Mogilev
  */
 public class ExcludeClassesAssignableTo implements ExclusionStrategy {
 

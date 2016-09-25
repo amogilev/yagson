@@ -15,9 +15,20 @@
  */
 package com.gilecode.yagson.refs;
 
+/**
+ * An abstract factory which creates {@link ReferencesReadContext} and {@link ReferencesWriteContext}.
+ *
+ * @author Andrey Mogilev
+ */
 public interface ReferencesContextFactory {
-  
-  ReferencesReadContext createReadContext();
-  
-  ReferencesWriteContext createWriteContext(Object root);
+
+    /**
+     * Creates and returns a read context.
+     */
+    ReferencesReadContext createReadContext();
+
+    /**
+     * Creates and returns a write context with a specified root object.
+     */
+    ReferencesWriteContext createWriteContext(Object root);
 }

@@ -19,14 +19,20 @@ import com.gilecode.yagson.refs.ReferencesContextFactory;
 import com.gilecode.yagson.refs.ReferencesReadContext;
 import com.gilecode.yagson.refs.ReferencesWriteContext;
 
+/**
+ * A factory which creates {@link ReferencesReadContext} and {@link ReferencesWriteContext} for a
+ * {@link com.gilecode.yagson.refs.ReferencesPolicy#DUPLICATE_OBJECTS} references policy.
+ *
+ * @author Andrey Mogilev
+ */
 public class ReferencesAllDuplicatesModeContextFactory implements ReferencesContextFactory {
 
-  public ReferencesReadContext createReadContext() {
-    return new ReferencesAllDuplicatesModeContext().new RefsReadContext();
-  }
+    public ReferencesReadContext createReadContext() {
+        return new ReferencesAllDuplicatesModeContext().new RefsReadContext();
+    }
 
-  public ReferencesWriteContext createWriteContext(Object root) {
-    return new ReferencesAllDuplicatesModeContext().new RefsWriteContext(root);
-  }
+    public ReferencesWriteContext createWriteContext(Object root) {
+        return new ReferencesAllDuplicatesModeContext().new RefsWriteContext(root);
+    }
 
 }

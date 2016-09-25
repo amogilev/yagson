@@ -28,6 +28,8 @@ import java.io.IOException;
 /**
  * The wrapper type adapter with the known delegate type, used for additional emitting of the type info.
  * Created for known values only.
+ *
+ * @author Andrey Mogilev
  */
 public final class TypeInfoEmittingTypeAdapterWrapper<T> extends DelegatingTypeAdapter<T> {
 

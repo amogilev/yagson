@@ -23,6 +23,8 @@ import static java.util.Arrays.asList;
 
 /**
  * Excludes transient fields in the specified class or its subclasses by names.
+ *
+ * @author Andrey Mogilev
  */
 public class ExcludeTransientFieldsInClassByNames implements TransientFieldExclusionStrategy {
 

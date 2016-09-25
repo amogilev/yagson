@@ -16,11 +16,22 @@
 package com.gilecode.yagson.types;
 
 /**
- * A postprocessor which may be run after some specific class is deserialized
+ * A postprocessor which may be run after a class is deserialized, to apply
+ * actions specific for this class.
+ *
+ * @author Andrey Mogilev
  */
 public interface PostReadProcessor {
 
+    /**
+     * Apply actions for the de-serialized object
+     *
+     * @param instance a de-serialized object to process
+     */
     void apply(Object instance);
 
+    /**
+     * Returns the names of the classes to be processed by this processor.
+     */
     Iterable<String> getNamesOfProcessedClasses();
 }

@@ -17,6 +17,8 @@ package com.gilecode.yagson.types;
 
 /**
  * Object provider which returns existing instance of the object.
+ *
+ * @author Andrey Mogilev
  */
 public class ExistingObjectProvider<T> implements ObjectProvider<T> {
 

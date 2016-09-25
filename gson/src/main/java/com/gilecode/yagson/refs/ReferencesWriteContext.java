@@ -22,7 +22,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonWriter;
 
+/**
+ * A context which provides detection of self-references and, depending on the current {@link ReferencesPolicy},
+ * duplicate objects, and serializing them as references like {@code "@root.myarr.2"}.
+ *
+ * @author Andrey Mogilev
+ */
 public interface ReferencesWriteContext {
+
     /**
      * Writes the value using the specified type adapter, with the specified reference path element.
      * <p/>

@@ -17,8 +17,15 @@ package com.gilecode.yagson.types;
 
 /**
  * A postprocessor which may be run after some specific class is constructed by the unsafe allocator.
+ * <p/>
+ * In particular, is used to init 'key' type in the {@link java.util.EnumMap} instances.
+ *
+ * @author Andrey Mogilev
  */
 public interface PostAllocateProcessor {
 
+    /**
+     * Process the newly created object instance.
+     */
     void apply(Object instance);
 }

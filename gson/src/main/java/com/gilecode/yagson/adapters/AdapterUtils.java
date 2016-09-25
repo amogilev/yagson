@@ -40,9 +40,15 @@ import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 
 /**
  * Utility methods for working with type adapters and delegates.
+ *
+ * @author Andrey Mogilev
  */
 public class AdapterUtils {
 
+    /**
+     * Returns whether the specified type adapter is a {@link SimpleTypeAdapter}, or delegates
+     * to a {@link SimpleTypeAdapter}.
+     */
     public static <T> boolean isSimpleTypeAdapter(TypeAdapter<T> typeAdapter) {
         if (typeAdapter instanceof SimpleTypeAdapter) {
             return true;
@@ -53,6 +59,10 @@ public class AdapterUtils {
         }
     }
 
+    /**
+     * Returns whether the specified type adapter is a special adapter created by {@link Excluder} to exclude classes,
+     * or delegates to it.
+     */
     public static <T> boolean isSkipSerializeTypeAdapter(TypeAdapter<T> typeAdapter) {
         if (typeAdapter instanceof Excluder.ExcluderTypeAdapter) {
             return ((Excluder.ExcluderTypeAdapter)typeAdapter).isSkipSerialize();
@@ -68,15 +78,13 @@ public class AdapterUtils {
      * of the standard collection entries, if these fields have non-default values in the actual serialized objects.
      * <p/>
      * For example, non-null comparators in maps/sets need to be saved.
-     *
      * @param containerClass the class containing the reflective fields; e.g. HashMap.class
-     * @param formalContainerType the formal type of the container, e.g. Map&ltString,String&gt;
      * @param defaultObjectProvider the provider of the default container object for checking the default values
      * @param fieldClassesToFind the field classes to find
      * @param exceptClasses the field classes to skip from search
      */
+    @SuppressWarnings("unchecked")
     public static <T> Map<String, FieldInfo> buildReflectiveFieldsInfo(Gson gson, Class<? extends T> containerClass,
-                                                                       Type formalContainerType,
                                                                        ObjectProvider<? extends T> defaultObjectProvider,
                                                                        Iterable<Class<?>> fieldClassesToFind,
                                                                        Iterable<Class<?>> exceptClasses) {
@@ -118,6 +126,7 @@ public class AdapterUtils {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> void writeByReflectiveAdapter(JsonWriter out, T obj, WriteContext ctx,
                                                     Gson gson, Type formalType) throws IOException {
         TypeToken<T> typeToken = (TypeToken<T>)
@@ -181,6 +190,7 @@ public class AdapterUtils {
      * @param value the actual object to be serialized with that adapter
      * @return returns the non-dynamic (resolved) type adapter which will be used for serializing the object
      */
+    @SuppressWarnings("unchecked")
     public static <T> TypeAdapter<T> resolve(TypeAdapter<T> typeAdapter, Object value) {
         if (typeAdapter instanceof DelegatingTypeAdapter && !(typeAdapter instanceof TypeInfoEmittingTypeAdapterWrapper)) {
             return resolve(((DelegatingTypeAdapter) typeAdapter).getDelegate(), value);

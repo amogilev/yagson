@@ -19,7 +19,12 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
+/**
+ * A {@link PostReadProcessor} for sublists of {@link CopyOnWriteArrayList}. Sets the 'expectedArray'
+ * field to match the correpsonding 'array' list in the backing full list.
+ *
+ * @author Andrey Mogilev
+ */
 public class COWSubListPostReadProcessor implements PostReadProcessor {
 
     public void apply(Object instance) {

@@ -50,7 +50,7 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
    * Actually reads an object, given that no references are available. The implementations of this method MUST support
    * type advice wrappers, and MUST distinguish them from other JSON Objects.
    * <p/>
-   * A created instance MUST be registered within the provided read context.
+   * A created instance MUST be registered within the provided read context, before any child element is read.
    *
    * @param in the reader
    * @param ctx the read context

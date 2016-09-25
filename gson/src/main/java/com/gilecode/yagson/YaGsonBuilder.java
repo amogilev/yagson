@@ -27,6 +27,8 @@ import java.lang.reflect.Type;
  * creation and usage patterns as the basic {@link GsonBuilder}, but creates instances of
  * {@link YaGson} instead, and the references emitting and the type info emitting are enabled
  * by default.
+ *
+ * @author Andrey Mogilev
  */
 public class YaGsonBuilder extends GsonBuilder {
 

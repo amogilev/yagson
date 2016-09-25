@@ -226,7 +226,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return null;
       }
 
-      Map<String, FieldInfo> mapFields = AdapterUtils.buildReflectiveFieldsInfo(gson, collClass, formalCollType,
+      Map<String, FieldInfo> mapFields = AdapterUtils.buildReflectiveFieldsInfo(gson, collClass,
               collProvider, classOf(Map.class), classOf(Properties.class));
 
       if (mapFields.size() != 1) {
@@ -242,7 +242,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
       FieldInfo backingMapFieldInfo = findBackingMap(defaultCollClass, objectProvider);
       Field defaultBackingMapComparatorField = findComparatorField(backingMapFieldInfo);
       Map<String, FieldInfo> reflectiveFields = AdapterUtils.buildReflectiveFieldsInfo(gson, containerClass,
-              formalCollType, objectProvider, classOf(Comparator.class), null);
+              objectProvider, classOf(Comparator.class), null);
       if (backingMapFieldInfo != null) {
         reflectiveFields.put(backingMapFieldInfo.getField().getName(), backingMapFieldInfo);
       }

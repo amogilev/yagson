@@ -19,10 +19,18 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.Map;
 
 
+/**
+ * A {@link PostReadProcessor} for sets created from maps by {@link Collections#newSetFromMap(Map)}.
+ * Performs the same actions as the general Java serialization does.
+ *
+ * @author Andrey Mogilev
+ */
 public class SetFromMapPostReadProcessor implements PostReadProcessor {
 
+    @SuppressWarnings("unchecked")
     public void apply(Object instance) {
         Class c = instance.getClass();
         try {
@@ -41,7 +49,7 @@ public class SetFromMapPostReadProcessor implements PostReadProcessor {
     }
 
     private static class VoidObjectInputStream extends ObjectInputStream {
-        protected VoidObjectInputStream() throws IOException, SecurityException {
+        VoidObjectInputStream() throws IOException, SecurityException {
         }
 
         @Override

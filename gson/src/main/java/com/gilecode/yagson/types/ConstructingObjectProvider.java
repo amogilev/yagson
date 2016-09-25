@@ -22,6 +22,8 @@ import com.google.gson.reflect.TypeToken;
 /**
  * Object provider which wraps {@link ObjectConstructor} used to
  * create an object instance.
+ *
+ * @author Andrey Mogilev
  */
 public class ConstructingObjectProvider<T> implements ObjectProvider<T> {
 
@@ -38,6 +40,7 @@ public class ConstructingObjectProvider<T> implements ObjectProvider<T> {
         return constructor.construct();
     }
 
+    @SuppressWarnings("unchecked")
     public static <E> ObjectProvider<E> defaultOf(E instance, ConstructorConstructor cc) {
         TypeToken<E> typeToken = (TypeToken<E>) TypeToken.get(instance.getClass());
         return new ConstructingObjectProvider<E>(cc.get(typeToken));

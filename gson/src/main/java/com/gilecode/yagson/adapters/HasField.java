@@ -17,6 +17,16 @@ package com.gilecode.yagson.adapters;
 
 import java.lang.reflect.Field;
 
+/**
+ * An interface used to get an access to a {@link Field} stored in classes like
+ * {@link com.google.gson.internal.bind.ReflectiveTypeAdapterFactory.BoundField}
+ *
+ * @author Andrey Mogilev
+ */
 public interface HasField {
+
+    /**
+     * Returns the stored field.
+     */
     Field getField();
 }

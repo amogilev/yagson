@@ -17,8 +17,12 @@ package com.gilecode.yagson.refs;
 
 /**
  * Dynamic producer of reference path elements.
+ *
+ * @author Andrey Mogilev
  */
 public interface PathElementProducer {
+
     String produce();
+
 }
 

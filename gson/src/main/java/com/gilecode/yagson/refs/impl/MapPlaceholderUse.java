@@ -26,6 +26,8 @@ import java.util.Map;
 
 /**
  * Provides implementations of {@link PlaceholderUse} for keys and values of a map.
+ *
+ * @author Andrey Mogilev
  */
 public class MapPlaceholderUse<K, V>  {
     private final Map<K, V> map;
@@ -52,7 +54,7 @@ public class MapPlaceholderUse<K, V>  {
         return new MapPlaceholderUse<K,V>(map, keys, values, entryIdx, modCountField).new ValueUse();
     }
 
-    public class KeyUse implements PlaceholderUse<K> {
+    private class KeyUse implements PlaceholderUse<K> {
         /**
          * If both key and value are available at this moment, adds them to the map. Otherwise, the map's update is
          * deferred to the corresponding {@link ValueUse}
@@ -65,7 +67,7 @@ public class MapPlaceholderUse<K, V>  {
         }
     }
 
-    public class ValueUse implements PlaceholderUse<V> {
+    private class ValueUse implements PlaceholderUse<V> {
         /**
          * If both key and value are available at this moment, adds them to the map. Otherwise, the map's update is
          * deferred to the corresponding {@link KeyUse}
@@ -78,6 +80,7 @@ public class MapPlaceholderUse<K, V>  {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void updateMap() {
         map.clear();
         if (keys.size() != values.size()) {

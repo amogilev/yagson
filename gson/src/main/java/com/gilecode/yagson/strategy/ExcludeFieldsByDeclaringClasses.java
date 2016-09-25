@@ -25,6 +25,8 @@ import static java.util.Arrays.asList;
 
 /**
  * Excludes fields declared in one of the specified classes (not subclasses!).
+ *
+ * @author Andrey Mogilev
  */
 public class ExcludeFieldsByDeclaringClasses implements ExclusionStrategy {
 

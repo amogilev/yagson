@@ -22,8 +22,13 @@ import java.util.List;
 /**
  * A placeholder to a referenced object used when the final object is not known at the moment of
  * the reference registration.
+ * <p/>
+ * This is a typical case for a self-referenced arrays, as an array instance cannot be created until we
+ * read all its elements to count the array length.
  *
  * @param <T> the expected type of the actual object, to which the placeholder if finally replaced
+ *
+ * @author Andrey Mogilev
  */
 public class ReferencePlaceholder<T> {
 

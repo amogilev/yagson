@@ -19,14 +19,22 @@ import com.gilecode.yagson.refs.ReferencesContextFactory;
 import com.gilecode.yagson.refs.ReferencesReadContext;
 import com.gilecode.yagson.refs.ReferencesWriteContext;
 
+/**
+ * A factory which creates {@link ReferencesReadContext} and {@link ReferencesWriteContext} for a
+ * {@link com.gilecode.yagson.refs.ReferencesPolicy#CIRCULAR_ONLY} references policy.
+ * <p/>
+ * NOTE: This is a non-default policy, use with care!
+ *
+ * @author Andrey Mogilev
+ */
 public class ReferencesCircularOnlyModeContextFactory implements ReferencesContextFactory {
 
-  public ReferencesReadContext createReadContext() {
-    return new ReferencesCircularOnlyModeContext().new RefsReadContext();
-  }
+    public ReferencesReadContext createReadContext() {
+        return new ReferencesCircularOnlyModeContext().new RefsReadContext();
+    }
 
-  public ReferencesWriteContext createWriteContext(Object root) {
-    return new ReferencesCircularOnlyModeContext().new RefsWriteContext(root);
-  }
+    public ReferencesWriteContext createWriteContext(Object root) {
+        return new ReferencesCircularOnlyModeContext().new RefsWriteContext(root);
+    }
 
 }

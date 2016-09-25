@@ -15,6 +15,13 @@
  */
 package com.gilecode.yagson.types;
 
+/**
+ * Enumerates supported type-emitting policies.
+ * <p/>
+ * Currently, only two options are available: whether the types emitting is enabled or disabled.
+ *
+ * @author Andrey Mogilev
+ */
 public enum TypeInfoPolicy {
 
     /**

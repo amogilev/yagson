@@ -21,6 +21,8 @@ import java.lang.reflect.Field;
 /**
  * Information about a reflective field, which includes the field, its default value,
  * and the type adapter.
+ *
+ * @author Andrey Mogilev
  */
 public class FieldInfo {
     private final Field field;

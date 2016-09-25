@@ -27,7 +27,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Utility functions related to {@link ReferencePlaceholder}
+ * Utility functions related to {@link ReferencePlaceholder}s
+ *
+ * @author Andrey Mogilev
  */
 public class PlaceholderUtils {
 
@@ -41,6 +43,7 @@ public class PlaceholderUtils {
      *
      * @throws IOException
      */
+    @SuppressWarnings("unchecked")
     public static <T> void applyOrDeferHashAndFieldPlaceholders(final T instance,
                                                                 final Map<Field, ReferencePlaceholder> placeholders,
                                                                 Map<String, ? extends HasField> fieldsByName) throws IOException {
@@ -103,6 +106,7 @@ public class PlaceholderUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> void tryResolveFieldPlaceholder(Field fieldToResolve, Map<Field, ReferencePlaceholder> placeholders,
                                                        Map<String, ? extends HasField> fieldsByName, T instance,
                                                        Set<Field> unresolvedFields, Set<Field> hashFields,

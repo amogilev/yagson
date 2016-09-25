@@ -20,10 +20,12 @@ import com.gilecode.yagson.refs.ReferencePlaceholder;
 import java.lang.reflect.Field;
 
 /**
- * A special kind of the reference placeholders, used to return the reference to the
- * reflective field of the object being read, i.e. '@.field' references.
+ * A special kind of the reference placeholders, used to return references to other
+ * fields of the object being read, i.e. '@.field' references.
+ *
+ * @author Andrey Mogilev
  */
-public class FieldReferencePlaceholder<T> extends ReferencePlaceholder<T> {
+class FieldReferencePlaceholder<T> extends ReferencePlaceholder<T> {
 
     /**
      * The (serialization) field name, is known at creation time.
@@ -35,23 +37,23 @@ public class FieldReferencePlaceholder<T> extends ReferencePlaceholder<T> {
      */
     private Field referencedField;
 
-    public FieldReferencePlaceholder(String referencedFieldName) {
+    FieldReferencePlaceholder(String referencedFieldName) {
         this.referencedFieldName = referencedFieldName;
     }
 
-    public String getReferencedFieldName() {
+    String getReferencedFieldName() {
         return referencedFieldName;
     }
 
-    public Field getReferencedField() {
+    Field getReferencedField() {
         return referencedField;
     }
 
-    public void setReferencedField(Field referencedField) {
+    void setReferencedField(Field referencedField) {
         this.referencedField = referencedField;
     }
 
-    public boolean isResolved() {
+    boolean isResolved() {
         return referencedField != null;
     }
 

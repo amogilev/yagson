@@ -17,13 +17,26 @@ package com.gilecode.yagson.refs.impl;
 
 import com.gilecode.yagson.refs.References;
 import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.refs.ReferencesReadContext;
+import com.gilecode.yagson.refs.ReferencesWriteContext;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 
 import java.util.*;
 
-public class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesModeContext {
-    static ReferencesPolicy policy = ReferencesPolicy.CIRCULAR_AND_SIBLINGS;
+/**
+ * Provides {@link ReferencesReadContext} and {@link ReferencesWriteContext} for the
+ * {@link ReferencesPolicy#CIRCULAR_AND_SIBLINGS} references policy.
+ * <p/>
+ * Used to find circular dependencies and duplicate field values during the
+ * serialization, and write them as references.
+ * <p/>
+ * Neither this context, nor the Write or Read contexts are thread-safe!
+ *
+ * @author Andrey Mogilev
+ */
+class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesModeContext {
+    private static ReferencesPolicy policy = ReferencesPolicy.CIRCULAR_AND_SIBLINGS;
 
     class RefsWriteContext extends ReferencesAllDuplicatesModeContext.RefsWriteContext {
 
@@ -37,7 +50,7 @@ public class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDupli
             disposedRefsMapsCache = new ArrayDeque<Map<Object, String>>();
         }
 
-        public RefsWriteContext(Object root) {
+        RefsWriteContext(Object root) {
             super(root);
         }
 

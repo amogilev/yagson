@@ -24,6 +24,8 @@ import java.lang.reflect.Type;
  * <p/>
  * There may be different implementations of this predicate depending on the circumstances. For example,
  * the rules for the map's keys differ from the general rules.
+ *
+ * @author Andrey Mogilev
  */
 public interface EmitTypeInfoPredicate {
 

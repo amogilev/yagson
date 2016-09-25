@@ -15,6 +15,11 @@
  */
 package com.gilecode.yagson.refs;
 
+/**
+ * Provides references-related constants and simple utility methods.
+ *
+ * @author Andrey Mogilev
+ */
 public final class References {
 
     /**

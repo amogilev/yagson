@@ -20,6 +20,8 @@ import java.lang.reflect.Field;
 /**
  * An alternative to {@link com.google.gson.ExclusionStrategy} which is applied only for transient fields allowed by the
  * general exclusion strategies.
+ *
+ * @author Andrey Mogilev
  */
 public interface TransientFieldExclusionStrategy {
 

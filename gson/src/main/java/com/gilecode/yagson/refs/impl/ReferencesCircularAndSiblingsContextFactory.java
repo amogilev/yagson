@@ -19,6 +19,14 @@ import com.gilecode.yagson.refs.ReferencesContextFactory;
 import com.gilecode.yagson.refs.ReferencesReadContext;
 import com.gilecode.yagson.refs.ReferencesWriteContext;
 
+/**
+ * A factory which creates {@link ReferencesReadContext} and {@link ReferencesWriteContext} for a
+ * {@link com.gilecode.yagson.refs.ReferencesPolicy#CIRCULAR_AND_SIBLINGS} references policy.
+ * <p/>
+ * NOTE: This is a non-default policy, use with care!
+ *
+ * @author Andrey Mogilev
+ */
 public class ReferencesCircularAndSiblingsContextFactory implements ReferencesContextFactory {
 
     public ReferencesReadContext createReadContext() {

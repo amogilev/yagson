@@ -16,7 +16,7 @@
 package com.gilecode.yagson.types;
 
 /**
- * Generic provider of an object, either existing or nwly constructed.
+ * Generic provider of an object, either existing or newly constructed.
  *
  * @author Andrey Mogilev
  */

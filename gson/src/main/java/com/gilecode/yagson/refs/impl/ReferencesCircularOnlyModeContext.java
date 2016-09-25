@@ -16,61 +16,67 @@
 package com.gilecode.yagson.refs.impl;
 
 import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.refs.ReferencesReadContext;
+import com.gilecode.yagson.refs.ReferencesWriteContext;
 import com.google.gson.JsonSyntaxException;
 
 /**
- * Used to find circular dependencies and duplicate references during the 
- * serialization.
- * 
+ * Provides {@link ReferencesReadContext} and {@link ReferencesWriteContext} for the
+ * {@link ReferencesPolicy#CIRCULAR_ONLY} references policy.
+ * <p/>
+ * Used to find circular dependencies during the serialization, and write them as references.
+ * <p/>
+ * Neither this context, nor the Write or Read contexts are thread-safe!
+ *
  * @author Andrey Mogilev
  */
-public class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesModeContext {
-  
-  static ReferencesPolicy policy = ReferencesPolicy.CIRCULAR_ONLY;
-  
-  class RefsWriteContext extends ReferencesAllDuplicatesModeContext.RefsWriteContext {
-    public RefsWriteContext(Object root) {
-      super(root);
-    }
+class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesModeContext {
 
-    @Override
-    public ReferencesPolicy getPolicy() {
-      return policy;
-    }
+    private static ReferencesPolicy policy = ReferencesPolicy.CIRCULAR_ONLY;
 
-    @Override
-    protected void endObject(Object value) {
-      super.endObject(value);
-      if (value != null) {
-        references.remove(value);        
-      }
-    }
-  }
-  
-  class RefsReadContext extends ReferencesAllDuplicatesModeContext.RefsReadContext {
-
-    @Override
-    public ReferencesPolicy getPolicy() {
-      return policy;
-    }
-
-    @Override
-    protected void afterObjectRead() {
-      objectsByReference.remove(getCurrentReference());
-      super.afterObjectRead();
-    }
-
-    @Override
-    protected Object getObjectByReference(String reference) throws JsonSyntaxException {
-      Object value = objectsByReference.get(reference);
-      if (value == null) {
-        if (!getCurrentReference().contains(reference)) {
-          throw new JsonSyntaxException("The reference cannot be read, as the current ReferencesPolicy " +
-                  "allows only circular references: '" + reference + "'");
+    class RefsWriteContext extends ReferencesAllDuplicatesModeContext.RefsWriteContext {
+        RefsWriteContext(Object root) {
+            super(root);
         }
-        throw new JsonSyntaxException("Missing reference '" + reference + "'");
-      }
-      return value;
+
+        @Override
+        public ReferencesPolicy getPolicy() {
+            return policy;
+        }
+
+        @Override
+        protected void endObject(Object value) {
+            super.endObject(value);
+            if (value != null) {
+                references.remove(value);
+            }
+        }
     }
-  }
+
+    class RefsReadContext extends ReferencesAllDuplicatesModeContext.RefsReadContext {
+
+        @Override
+        public ReferencesPolicy getPolicy() {
+            return policy;
+        }
+
+        @Override
+        protected void afterObjectRead() {
+            objectsByReference.remove(getCurrentReference());
+            super.afterObjectRead();
+        }
+
+        @Override
+        protected Object getObjectByReference(String reference) throws JsonSyntaxException {
+            Object value = objectsByReference.get(reference);
+            if (value == null) {
+                if (!getCurrentReference().contains(reference)) {
+                    throw new JsonSyntaxException("The reference cannot be read, as the current ReferencesPolicy " +
+                            "allows only circular references: '" + reference + "'");
+                }
+                throw new JsonSyntaxException("Missing reference '" + reference + "'");
+            }
+            return value;
+        }
+    }
 }
