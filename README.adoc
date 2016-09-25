@@ -1,0 +1,135 @@
+= YaGson
+
+== Overview
+
+YaGson ia a universal types-preserving Java serialization library that can convert 
+link:UserGuide.adoc#Limitations[(almost)] 
+arbitrary Java Objects into JSON and
+back, with a transparent support of any kind of circular references.
+
+Comparing to the other JSON serializers, like
+https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], it implies almost no restrictions
+to the serialized classes, and requires neither changes to the serialized classes (likes adding Jackson's annotations)
+nor custom Gson's adapters for out-of-the-box support of the complicated cases like:
+
+* parent-child references, self-references, and any other kind of circular references
+* mixed-type arrays, collections and objects
+* inner, local classes and anonymous ones classes.
+
+Thanks to such universality, YaGson works best for the REST interfaces between Java server and client machines,
+e.g. for Java-based *microservices*.
+
+YaGson is heavily based on Gson, so its name is an abbreviation for "**y**et **a**nother *Gson*"
+
+== Sample usage
+
+The basic usage of YaGson is quite simple and is very similar to the usage of Gson, but one shall
+use classes `YaGson` or `YaGsonBuilder` instead of `Gson`/`GsonBuilder`.
+[source,java]
+----
+@Test
+public void testYagson_Person() {
+    Person obj = new Person("John", "Doe");
+
+    YaGson mapper = new YaGson(); // // <1>
+    // or:
+    // YaGson mapper = new YaGsonBuilder().setPrettyPrinting().create(); // // <1>
+
+    String objJson = mapper.toJson(obj, Person.class); // // <2>
+     // objJson = {"name":"John","family":"Doe"}
+
+    Person deserisalizedObj = mapper.fromJson(objJson, Person.class); // // <3>
+    // deserisalizedObj = Person{name='John', family='Doe'}
+
+}
+----
+<1> At first, create a `YaGson` mapper instance, either with default settings using `"new YaGson()"`, or through
+`YaGsonBuilder`
+<2> Serialize to JSON with `toJson()` method, providing the known de-serialization class `Person.class`
+<3> De-serialize back to Java object with `fromJson()` method, using the same de-serialziation type as was used in (2)
+
+WARNING: The serialization type used in `toJson`, *MUST BE* equal or less specific than
+the de-serialization type used in `fromJson`. If the de-serialization type is not known at the time of
+the serialization, just use `Object.class`.
+
+For example:
+[source,java]
+----
+    // ...
+    String objJson = mapper.toJson(obj, Object.class);
+    // objJson = {"@type":"samples.Person","@val":{"name":"John","family":"Doe"}} // // <1>
+
+    Person deserisalizedObj = mapper.fromJson(objJson, Person.class);
+    // deserisalizedObj = Person{name='John', family='Doe'}
+
+    // or, with the same result:
+    Person deserisalizedObj2 = (Person) mapper.fromJson(objJson, Object.class);
+----
+<1> Note the `@type/@val` wrapper around the previous JSON representation of the `Person` instance. `YaGson` adds such
+wrappers when the actual runtime type information is more specific than the provided serialization types.
+
+[TIP]
+=====
+In case of generic types, it is recommended to provide the fully parameterized serialization/deserialization types
+ using Gson's ``TypeToken``'s, like
+[source,java]
+    Type type = new TypeToken<HashMap<Long, String>>(){}.getType();
+
+=====
+
+Finally, let us check how a simple self-referencing array is serialized.
+[source,java]
+----
+@Test
+public void testYagson_SelfReferencingArray() {
+    Object[] obj = new Object[3];
+    obj[0] = "foo";
+    obj[1] = obj;
+    obj[2] = "bar";
+
+    YaGson mapper = new YaGson();
+    String objJson = mapper.toJson(obj, Object[].class);
+     // objJson = ["foo","@root","bar"]
+
+    Object[] deserisalizedObj = mapper.fromJson(objJson, Object[].class);
+    // deserisalizedObj = [foo, [...], bar]
+}
+----
+
+NOTE: The JSON representation of the second array's element is `@root`, which means the reference to the serialized
+object itself. There may be more complicated references, describing a _path_ from the root to a referenced object, like
+`@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in the
+current object.
+
+== New in version `0.1`
+
+New features:
+
+* (almost) arbitrary objects serialization, with no need for custom adapters, annotations or any changes of the classes;
+* preserving exact types during mapping;
+* preserving ``Collection``s/``Map``s behavior, including custom ``Comparator``s;
+* serializing self-referenced objects, including collections, maps and arrays;
+* serializing inner, local and anonymous classes;
+* support for mixed-type collections, maps and arrays;
+* support for non-unique field names, when a field is "overridden" in sub-classes;
+
+=== Known issues in `v0.1`:
+* **no Java 8 support yet**;
+* incorrect serialization of some ``Iterator``s
+
+== License
+
+Licensed under the Apache License, Version 2.0
+
+See link::License[the License file]
+
+== More
+
+For more information and samples, see link:UserGuide.adoc[User's Guide] and
+link:https://github.com/amogilev/yagson/wiki/Q&A[Q&A]
+
+== Contact Us
+
+To report a bug or suggest improvements, please open link:https://github.com/amogilev/yagson/issues[a GitHub issue].
+
+To get in touch with the YaGson author, please write to yagson@gilecode.com

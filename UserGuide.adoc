@@ -1,0 +1,54 @@
+= YaGson User Guide
+
+:toc:
+
+== Overview
+
+YaGson ia a universal types-preserving Java serialization library that can convert 
+link:UserGuide.adoc#Limitations[(almost)] 
+arbitrary Java Objects into JSON and
+back, with a transparent support of any kind of circular references.
+
+Comparing to the other JSON serializers, like
+https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], it implies almost no restrictions
+to the serialized classes, and requires neither changes to the serialized classes (likes adding Jackson's annotations)
+nor custom Gson's adapters for out-of-the-box support of the complicated cases like:
+
+* parent-child references, self-references, and any other kind of circular references
+* mixed-type arrays, collections and objects
+* inner, local classes and anonymous ones classes.
+
+Thanks to such universality, YaGson works best for the REST interfaces between Java server and client machines,
+e.g. for Java-based *microservices*.
+
+YaGson is heavily based on Gson, so its name is an abbreviation for "**y**et **a**nother *Gson*"
+
+== Requirements
+
+== Mapping principles
+
+=== Limitations
+
+=== Java primitives
+
+=== General Java Objects
+
+=== Collections
+
+=== Maps
+
+=== Special Objects
+
+=== References
+
+=== Type information
+
+== Using YaGson
+
+=== Download
+
+=== Creating YaGson instance
+
+=== Reference policies
+
+=== Disabling type information

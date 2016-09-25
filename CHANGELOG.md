@@ -1,20 +1,19 @@
 Change Log
 ==========
 
-## Version 2.4.0
+## Version 0.1
 
-_2015-10-04_
+_2016-09-25_
 
- * **Drop `IOException` from `TypeAdapter.toJson()`.** This is a binary-compatible change, but may
-   cause compiler errors where `IOExceptions` are being caught but no longer thrown. The correct fix
-   for this problem is to remove the unnecessary `catch` clause.
- * New: `Gson.newJsonWriter` method returns configured `JsonWriter` instances.
- * New: `@SerializedName` now works with [AutoValue’s][autovalue] abstract property methods.
- * New: `@SerializedName` permits alternate names when deserializing.
- * New: `JsonWriter#jsonValue` writes raw JSON values.
- * New: APIs to add primitives directly to `JsonArray` instances.
- * New: ISO 8601 date type adapter. Find this in _extras_.
- * Fix: `FieldNamingPolicy` now works properly when running on a device with a Turkish locale.
+New features:
+* (almost) arbitrary objects serialization, with no need for custom adapters, annotations or any changes of the classes;
+* preserving exact types during mapping;
+* preserving Collections/Maps behavior, including custom Comparators;
+* serializing self-referenced objects, including collections, maps and arrays;
+* serializing inner, local and anonymous classes;
+* support for mixed-type collections, maps and arrays;
+* support for non-unique field names, when a field is "overridden" in sub-classes;
 
-  [autovalue]: https://github.com/google/auto/tree/master/value
-
+Known issues:
+* **no Java 8 support yet**;
+* incorrect serialization of some Iterators
