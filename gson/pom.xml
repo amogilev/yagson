@@ -6,14 +6,8 @@
   <version>0.1-SNAPSHOT</version>
   <inceptionYear>2015</inceptionYear>
   <name>YaGson</name>
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>9</version>
-    <relativePath />
-  </parent>
   <url>https://github.com/amogilev/yagson</url>
-  <description>YaGson library</description>
+  <description>YaGson Java-JSON-Java binding library</description>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -24,14 +18,19 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <scm>
+    <connection>scm:git:https://github.com/amogilev/yagson.git</connection>
+    <developerConnection>scm:git:https://github.com/amogilev/yagson.git</developerConnection>
+    <url>https://github.com/amogilev/yagson</url>
+  </scm>  
   <distributionManagement>
     <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
+      <id>ossrh</id>
       <name>Sonatype Nexus Snapshots</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </snapshotRepository>
     <repository>
-      <id>sonatype-nexus-staging</id>
+      <id>ossrh</id>
       <name>Nexus Release Repository</name>
       <url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
@@ -180,29 +179,6 @@
            <show>protected</show>
          </configuration>
        </plugin>
-       <plugin>
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-eclipse-plugin</artifactId>
-         <version>2.10</version>
-         <configuration>
-           <downloadSources>true</downloadSources>
-           <downloadJavadocs>true</downloadJavadocs>
-           <workspace>
-             ../eclipse-ws/
-           </workspace>
-           <workspaceCodeStylesURL>
-             file:///${basedir}/../lib/gson-formatting-styles.xml
-           </workspaceCodeStylesURL>
-         </configuration>
-       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <!-- version>2.5</version -->
-        <configuration>
-          <arguments>-DenableCiProfile=true</arguments>
-        </configuration>
-      </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.5.5</version>
@@ -235,22 +211,24 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>false</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <developers>
     <developer>
-      <name>Inderjeet Singh</name>
-    </developer>
-    <developer>
-      <name>Joel Leitch</name>
-      <organization>Google Inc.</organization>
-    </developer>
-    <developer>
-      <name>Jesse Wilson</name>
-      <organization>Square Inc.</organization>
-    </developer>
-    <developer>
       <name>Andrey Mogilev</name>
+      <email>yagson@gilecode.com</email>
+      <url>http://gilecode.com</url>
     </developer>
   </developers>
 </project>
