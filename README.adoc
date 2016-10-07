@@ -2,24 +2,26 @@
 
 == Overview
 
-YaGson ia a universal types-preserving Java serialization library that can convert 
-link:UserGuide.adoc#Limitations[(almost)] 
+YaGson is a universal types-preserving Java serialization library that can convert 
+link:UserGuide.adoc#limitations[(almost)] 
 arbitrary Java Objects into JSON and
 back, with a transparent support of any kind of circular references.
 
-Comparing to the other JSON serializers, like
-https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], it implies almost no restrictions
-to the serialized classes, and requires neither changes to the serialized classes (likes adding Jackson's annotations)
-nor custom Gson's adapters for out-of-the-box support of the complicated cases like:
+It is based on https://github.com/google/gson[Gson], so inherits all its benefits and adds new valuable features.
+The name _YaGson_ is actually an abbreviation for "**y**et **a**nother *Gson*".
+
+Comparing to other JSON serializers, like
+https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], YaGson implies almost
+no restrictions to the serialized classes, and requires neither changes to the serialized classes
+(likes adding Jackson's annotations) nor custom Gson's adapters for the out-of-the-box support of complicated cases
+like:
 
 * parent-child references, self-references, and any other kind of circular references
 * mixed-type arrays, collections and objects
-* inner, local classes and anonymous ones classes.
+* inner, local and anonymous classes.
 
 Thanks to such universality, YaGson works best for the REST interfaces between Java server and client machines,
 e.g. for Java-based *microservices*.
-
-YaGson is heavily based on Gson, so its name is an abbreviation for "**y**et **a**nother *Gson*"
 
 == Sample usage
 
@@ -31,11 +33,13 @@ At first, create a mapper instance, using either default (1) or custom (2) setti
 [source,java]
 ----
   YaGson mapper = new YaGson(); // // <1>
-  YaGson altMapper = new YaGsonBuilder().setPrettyPrinting().create(); // // <2>
+  YaGson altMapper = new YaGsonBuilder()
+     .setPrettyPrinting()
+     // ... set other  custom Settings
+     .create(); // // <2>
 ----
-{empty} +
 
-Then, the mapper instance may be used to serialize Java primitives, Objects and arrays to JSON and de-serialize them
+Then, the mapper instance may be used to serialize Java primitives, objects and arrays to JSON and de-serialize them
 back.
 
 [source,java]
@@ -49,9 +53,10 @@ back.
   Person deserisalizedObj = mapper.fromJson(objJson, Person.class); // // <4>
   // deserisalizedObj = Person{name='John', family='Doe'}
 ----
-[start=3, options="compact"]
-3. Serialize to JSON with `toJson()` method, providing the known de-serialization class `Person.class`
-4. De-serialize back to Java object with `fromJson()` method, using the same de-serialization type as was used in (3)
+
+(3) Serialize to JSON with `toJson()` method, providing the known de-serialization type `Person.class`
+
+(4) De-serialize back to Java object with `fromJson()` method, using the same de-serialization type as was used in (3)
 
 WARNING: The serialization type used in `toJson`, *MUST BE* equal or less specific than
 the de-serialization type used in `fromJson`. If the de-serialization type is not known at the time of
@@ -71,14 +76,14 @@ For example:
   // or, with the same result:
   Person deserisalizedObj2 = (Person) mapper.fromJson(objJson, Object.class);
 ----
-[start=5, options="compact"]
-5. Notice the `@type/@val` wrapper around the previous JSON representation of the `Person` instance. `YaGson` adds such
+
+(5) Notice the `@type/@val` wrapper around the first JSON representation of the `Person` instance. `YaGson` adds such
 wrappers when the actual runtime type information is more specific than the provided serialization types.
 
 [TIP]
 =====
 In case of generic types, it is recommended to provide the fully parameterized serialization/deserialization types
- using Gson's ``TypeToken``'s, like
+ using Gson's ``TypeToken``s, like
 [source,java]
     Type myMapType = new TypeToken<HashMap<Long, String>>(){}.getType();
     String myMapJson = mapper.toJson(myMap, myMapType);
@@ -86,8 +91,7 @@ In case of generic types, it is recommended to provide the fully parameterized s
 =====
 
 {empty} +
-{empty} +
-Finally, let us check how a simple self-referencing array is serialized.
+Finally, let's see how a simple self-referencing array is serialized.
 [source,java]
 ----
   Object[] obj = new Object[3];
@@ -102,22 +106,25 @@ Finally, let us check how a simple self-referencing array is serialized.
   // deserisalizedObj = [foo, [...], bar]
 ----
 {empty} +
+
 NOTE: The JSON representation of the second array's element is `@root`, which means the reference to the serialized
 object itself. There may be more complicated references, describing a _path_ from the root to a referenced object, like
-`@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in the
-current object.
+`@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in its
+parent object.
 
 == New in version `0.1`
 
 New features:
 
-* (almost) arbitrary objects serialization, with no need for custom adapters, annotations or any changes of the classes;
+* mapping of (almost) arbitrary objects, with no need for custom adapters, annotations or any changes of
+the classes;
 * preserving exact types during mapping;
 * preserving ``Collection``s/``Map``s behavior, including custom ``Comparator``s;
 * serializing self-referenced objects, including collections, maps and arrays;
 * serializing inner, local and anonymous classes;
 * support for mixed-type collections, maps and arrays;
-* support for non-unique field names, when a field is "overridden" in sub-classes;
+* support for multiple fields with the same name in one object (e.g. when "duplicate" fields are declared in
+super-classes);
 
 === Known issues in `v0.1`:
 * **no Java 8 support yet**;
@@ -133,7 +140,7 @@ See link::License[the License file]
 
 For more information and samples, see link:UserGuide.adoc[User's Guide] and
 link:https://github.com/amogilev/yagson/wiki/Q&A[Q&A]. Also, some samples runnable as JUnit tests are available at
-https://github.com/amogilev/yagson-samples.
+link:https://github.com/amogilev/yagson-samples[yagson-samples] GitHub project.
 
 == Contact Us
 

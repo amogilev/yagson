@@ -1,43 +1,46 @@
 = YaGson User Guide
-
 :toc:
 
 == Overview
 
-YaGson ia a universal types-preserving Java serialization library that can convert 
-link:UserGuide.adoc#Limitations[(almost)] 
+YaGson is a universal types-preserving Java serialization library that can convert 
+link:UserGuide.adoc#limitations[(almost)] 
 arbitrary Java Objects into JSON and
 back, with a transparent support of any kind of circular references.
 
-Comparing to the other JSON serializers, like
-https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], it implies almost no restrictions
-to the serialized classes, and requires neither changes to the serialized classes (likes adding Jackson's annotations)
-nor custom Gson's adapters for out-of-the-box support of the complicated cases like:
+It is based on https://github.com/google/gson[Gson], so inherits all its benefits and adds new valuable features.
+The name _YaGson_ is actually an abbreviation for "**y**et **a**nother *Gson*".
+
+Comparing to other JSON serializers, like
+https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], YaGson implies almost
+no restrictions to the serialized classes, and requires neither changes to the serialized classes
+(likes adding Jackson's annotations) nor custom Gson's adapters for the out-of-the-box support of complicated cases
+like:
 
 * parent-child references, self-references, and any other kind of circular references
 * mixed-type arrays, collections and objects
-* inner, local classes and anonymous ones classes.
+* inner, local and anonymous classes.
 
 Thanks to such universality, YaGson works best for the REST interfaces between Java server and client machines,
-e.g. for Java-based *micro-services*.
-
-YaGson is heavily based on Gson, so its name is an abbreviation for "**y**et **a**nother *Gson*"
+e.g. for Java-based *microservices*.
 
 == Requirements and limitations
 
-YaGson works on Java SE 6 or later, with a temporal exclusion of Java 8 (lambdas are not supported yet).
+YaGson works on Java SE 6 or later, with a temporal exclusion of Java 8 (lambdas and method references are not
+supported yet).
 
-No third-party dependencies exist, so any other mapping library (including original Gson) may safely be added to
+No third-party dependencies are required. Any other mapping library (including original Gson) may safely be added to
 classpath.
 
+[[limitations]]
 === Limitations
 
 Although YaGson has much less limitations than other popular JSON mappers, there is still a number of restrictions
 which cannot be avoided:
 
-* all classes used during serialization *MUST* be available during the de-serialization. Moreover, the same versions of
-classes is recommended. Although YaGson can work around slight changes of the classes, there is no
-guarantees for a correct work. For example, if a name of the class (e.g. anonymous one) is changes, there are no ways to
+* all classes used during serialization *MUST* be available during the de-serialization. Moreover, having the same
+versions of the classes is recommended. Although YaGson can work around slight changes of the classes, there is no
+guarantees for a correct work. For example, if a name of the class (e.g. anonymous one) is changed, there are no ways to
 handle such change correctly. In particular, this limitation means that:
 
 ** the same JRE version is recommended for use on the serialization and de-serialization sides;
@@ -46,7 +49,7 @@ handle such change correctly. In particular, this limitation means that:
 * YaGson resolves classes by names using a simple `Class.forName()`, so all serialized classes *MUST* be available
 in the current defining class loader;
 
-* no ``ClassLoader``s may be serialized
+* no ``ClassLoader``s are de-serialized;
 
 * no external non-Java information, like system file handles or sockets, are serialized. So, entities like
 `SocketInputStream` or `FileReader` cannot be correctly de-serialized;
@@ -55,23 +58,23 @@ in the current defining class loader;
 very bad coding style!), it may fail to function correctly;
 
 * the default `hashCode()` and `equals()` methods, as defined in `java.lang.Object`, may differ for two identically
-constructed code. So, the code which relies on the objects identity, or the hash codes equality, may fail.
-(Of course, there is almost no chances to expect such checks for the classes with non-overridden `hashCode/equals`)
+constructed instances. So, any code which relies on the objects identity, or the hash codes equality, may fail.
+(In other words, just never use such checks for the classes with non-overridden `hashCode/equals`!)
 
-* if `YaGson` mapper with non-default settings was used during serialization (i.e. one created using `YaGsonBuilder`),
- then the similar mapper settings shall be used during de-serialization;
+* if a `YaGson` mapper with the non-default settings was used during serialization (i.e. one created using
+`YaGsonBuilder`), then the similar mapper settings shall be used during the de-serialization;
 
 * thread-related objects, like `Thread` or `ThreadGroup`, are correctly de-serialized only if the thread with the same
-name and path (in thread groups hierarchy) if found.
+name and path (in thread groups hierarchy) is found.
 
 == Using YaGson
 
 === Download
 
-In Maven projects, add the following dependency
+In Maven projects, just add the following dependency
 [source,xml]
 ----
-TODO: will be available after the Maven release! Not performed yet!
+TODO: will be available after the Maven release, which is not performed yet!
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson</artifactId>
@@ -79,7 +82,7 @@ TODO: will be available after the Maven release! Not performed yet!
     <scope>compile</scope>
   </dependency>
 ----
-{empty} +
+
 Otherwise, download the latest link:https://github.com/amogilev/yagson/releases[release at GitHub] and add
 `yagson-__version__.jar` to the application classpath.
 
@@ -95,16 +98,15 @@ non-default settings may be specified if the mapper is created using `YaGsonBuil
       .setPrettyPrinting()
       .create(); // a mapper with custom settings
 ----
-{empty} +
 
 See the original link:https://github.com/google/gson/blob/master/UserGuide.md[Gson's documentation] or the source code
-for the list of the available original settings. The additional YaGson-related settings are described in the sections
+for the list of the available original settings. Some additional YaGson-related settings are described in the sections
 below.
 
 === General mapping principles
 
 All Java objects, arrays and values of primitive types are mapped to JSON entities: _JSON Objects_ (`{...}`),
-_JSON Arrays_ (`[...]`) and `JSON literals`. Which Java type is mapped to which JSON entity depends on many factors,
+_JSON Arrays_ (`[...]`) and _JSON literals_. Which Java type is mapped to which JSON entity depends on many factors,
 including
 
 * the current settings of a `YaGson` mapper instance;
@@ -113,29 +115,36 @@ including
 * whether the current serialized object has already been visited (e.g. in case of cyclic graphs);
 * whether the serialized value is `null`.
 
-Although neither a Java identity or `Object.equals()` kinds of equality cannot be guaranteed between an arbitrary
-serialized object and its de-serialized copy, the default `YaGson` mapper still provides some natural kind of equality,
-which is, in simple words, the equality of the types, content and behavior. The exact definition of such _m-equality_ is
-somewhat complicated, so feel free to skip it:
+Although neither a Java identity or `Object.equals()` kinds of equality between an arbitrary
+serialized object and its de-serialized copy can be guaranteed, the default `YaGson` mapper still provides some natural
+kind of equality, which is, in simple words, the equality of the types, content and behavior.
+The exact definition of such _m-equality_ is
+somewhat complicated, so feel free to <<skip-def-label, skip>> it:
 
+[NOTE]
+====
 The serialized object and its de-serialized copy are _m-equal_ (`s=~m~d`) if and only if
 
- * `null` values are mapped to `null`
- * for any serialized object, the type/class of the de-serialized copy is exactly the same as of the original;
- * for primitive types, `s==d`
- * for ``String``s, `s.equals(d)`
- * for ``Collection``s and arrays, the sizes of `s` and `d` are equal, and for each element of the original
- collection `e~s~`, there is a corresponding _m-equal_ element `e~d~` in the de-serialized copy, where `e~s~=~m~e~d~`
- * if the collection is _ordered_ (like `List`, `SortedSet`, `Queue`, array etc.), the same order is preserved;
- * for ``Map``s, the sizes of `s` and `d` are equal, and for each key/value pair of the original map, there is a
- corresponding _m-equal_ key/value pair, where `e~s~.key=~m~e~d~.key` and `e~s~.value=~m~e~d~.value`;
- * for ordered ``Map``s, like ``SortedMap``s or `LinkedHashMap`, the order of entries is preserved;
- * for a general `Object` (not including collections, maps and special classes like `Thread`, `ClassLoader`,
- `WeakReference` etc.), all non-static fields (including the transient fields!), are _m-equal_ to the corresponding
- fields in the deserialized copy
- * (for the most of the special classes, the behaviour and the content is preserved where possible, but no guarantees
- are given).
+* `null` values are mapped to `null`
+* `ClassLoader`s are also mapped to `null`
+* for any serialized object not mapped to `null`, the type/class of the de-serialized copy is exactly the same as of
+the original
+* for primitive types, `s==d`
+* for ``String``s, `s.equals(d)`
+* for ``Collection``s and arrays, the sizes of `s` and `d` are equal, and for each element of the original
+collection `e~s~`, there is a corresponding _m-equal_ element `e~d~` in the de-serialized copy, where `e~s~=~m~e~d~`
+* if the collection is _ordered_ (like `List`, `SortedSet`, `Queue`, array etc.), the same order is preserved
+* for ``Map``s, the sizes of `s` and `d` are equal, and for each key/value pair of the original map, there is a
+corresponding _m-equal_ key/value pair, where `e~s~.key=~m~e~d~.key` and `e~s~.value=~m~e~d~.value`
+* for ordered ``Map``s, like ``SortedMap``s or `LinkedHashMap`, the order of entries is preserved
+* for a general `Object` (not including collections, maps and special classes like `Thread`, `ClassLoader`,
+`WeakReference` etc.), all non-static fields (including the transient fields!), are _m-equal_ to the corresponding
+fields in the deserialized copy
+* (for the most of the special classes, the behaviour and the content is preserved where possible, but no guarantees
+are given).
+====
 
+[[skip-def-label]]
 For example, consider the most common case, which is a serialization of a custom non-collection class:
 [source,java]
 ----
@@ -148,9 +157,8 @@ For example, consider the most common case, which is a serialization of a custom
   Person deserisalizedObj = mapper.fromJson(objJson, Person.class);
   // deserisalizedObj = Person{name='John', family='Doe'}
 ----
-{empty} +
 
-As you see, such objects are mapped to JSON Object, on a field-by-field basis, and back.
+As you can see, such objects are mapped to JSON Objects on a field-by-field basis, and back.
 If the class provides a well-written `equals()` which compares these fields, such `s.equals(d)` would return `true`.
 Otherwise, only the types and per-field equality is provided.
 
@@ -159,29 +167,27 @@ Otherwise, only the types and per-field equality is provided.
 As shown in the previous example, a user shall pass the type information (`Person.class` in that case) both
 as the _serialization type_ (to method `toJson()`), and as the _de-serialization type_ (to method `fromJson()`).
 
-For non-generic types, just use the class of the object to serialize. For generic tyoes, it is recommended to provide
-the fully parameterized serialization/deserialization types using Gson's ``TypeToken``'s, like
+For the non-generic types, just use the class of the object to serialize. For the generic types, it is recommended
+to provide the fully parameterized serialization/deserialization types using Gson's ``TypeToken``s, like
 [source,java]
     Type myMapType = new TypeToken<HashMap<Long, String>>(){}.getType();
     String myMapJson = mapper.toJson(myMap, myMapType);
-
-{empty} +
 
 WARNING: The serialization type used in `toJson`, *MUST BE* equal or less specific than
 the de-serialization type used in `fromJson`. If the de-serialization type is not known at the time of
 the serialization, just use `Object.class`.
 
-{empty} +
 There is a number of cases when the type information provided by the serialization type is not sufficient, e.g.
 
 * when the de-serialization type is not known, and so `Object.class` is used as the serialization type;
 * when the actual type of an object to serialize is not exact, i.e. the object is _polymorphic_, like `PersonEx`
 extending `Person`, with the known type to be just `Person`;
-* a mixed-type collection, array or map is serialized, like `ArrayList<Number>`;
-* a type of a field in the serialized class, r of an element in the serialized array, collection or map is not exact,
+* when a mixed-type collection, array or map is serialized, like `ArrayList<Number>` with a mix of ``Integer``s and
+``Long``s;
+* when a type of a field in the serialized class, or of an element in the serialized array, collection or map is not exact,
 like in `class ObjectHolder { Object obj; }`
 
-In all such cases, `YaGson` automatically emits `@type/@val` wrapper around the JSON representation of an entity with
+In all such cases, YaGson automatically emits `@type/@val` wrapper around the JSON representation of an entity with
 inexact or missing serialization type, e.g.
 [source,java]
 ----
@@ -190,8 +196,8 @@ inexact or missing serialization type, e.g.
 ----
 
 {empty} +
-Although the emitting of type information may be disabled (e.g. if you only need to handle circular references), it is
-strongly not recommended.
+Although the emitting of type information may be disabled (e.g. if you only use YaGson to handle circular references),
+it is strongly not recommended.
 For instance, if the first and the second occurrences of a self-referencing collection will
 have different formal types (e.g. `Collection<Object>` and `ArrayList<Object>`), the de-serialization would fail if no
 type information is emitted.
@@ -210,12 +216,12 @@ Usually, a serialized object contains references to other objects, which shall b
 array's or collection's elements, map's entries and object's fields. These objects, in turn, may contains references
 too. Thus, actually a whole _graph_ of objects is being serialized.
 
-If that graph ic cyclic, e.g. one of the child
-elements contains a reference to the root or a parent element, the most of other JSON serializers will throw
+If that graph is cyclic, e.g. one of the child
+elements contains a reference to the root or the parent element, then the most of other JSON serializers will throw
 `java.lang.StackOverflowError` on attempts to serialize such graph.
 
-Quite the contrary, `YaGson` automatically detects such cyclic references and serializes them as special string
-literals in either the `"@root__[.path_from_root_object]__"` or `"@.__sibling_field__"` format.
+Quite the contrary, YaGson automatically detects such cyclic references and serializes them as special string
+literals in either the `"@root__[.path_from_root_object]__"` or `"@.__sibling_element__"` format.
 
 For example
 
@@ -235,10 +241,9 @@ For example
   ObjectMapper jacksonMapper = new com.fasterxml.jackson.databind.ObjectMapper();
   jacksonMapper.writeValueAsString(obj); // throws StackOverflowError!
 ----
-{empty} +
 
 
-Moreover, `YaGson` can detect not only the cyclic references, but also other duplicate objects in teh serialization
+Moreover, YaGson can detect not only the cyclic references, but also other duplicate objects in the serialization
 graph, with an intentional exclusion of "simple" types like `String`, primitive types, ``Number``s etc.
 
 For example
@@ -259,7 +264,7 @@ For example
 Notice that the second array's element, which is a duplicate of the first element, was serialized as the `*"@.0"*`
 reference string literal.
 
-The detection of such duplication is enabled by default, as many classes from the standard Java library contain
+The detection of such duplication is enabled by default, as many standard Java library classes contain
 references to "duplicate" objects and rely on theirs identity.
 (For example, see `java.util.Collections#SynchronizedSortedMap`.)
 
@@ -273,10 +278,6 @@ In order to alter the level of the detection, use non-default `ReferencesPolicy`
 
 The following references policies are currently available:
 
-
-Note that all these policies, except the default `DUPLICATE_OBJECTS`, are not recommended, and may result in incorrect
-mapping of your data.
-
 :===
 ReferencesPolicy: Description
 
@@ -289,19 +290,304 @@ ReferencesPolicy: Description
 `DUPLICATE_OBJECTS`:*Default*. Detects all duplicate objects, except of Numbers and Strings
 :===
 
+Note that all these policies, except of the default `DUPLICATE_OBJECTS`, are not recommended, and may result
+in the incorrect mapping of your data.
+
 === Mapping Java primitives and Strings
 
-Java primitive types, their `Number` and `Boolean` auto-boxing wrappers, and ``String``s are mapped to the
-corresponding JSON literals, for example ...
+The values of Java primitive types, of their `Number` and `Boolean` auto-boxing wrappers, and of ``String``s, are all
+mapped to the corresponding JSON literals, for example
+[source,java]
+----
+  mapper.toJson(2, int.class); // 2
+  mapper.toJson(Integer.valueOf(2), Integer.class); // 2
+  mapper.toJson(2, long.class); // 2
+  mapper.toJson(2, Long.class); // 2
+  mapper.toJson(2, double.class); // 2.0
+  mapper.toJson(true, boolean.class); // true
+  mapper.toJson("foo", String.class); // "foo"
+----
 
+Thanks to the Java auto-boxing, the primitive types and theirs wrapper classes, like `int` and `java.lang.Integer`, are
+fully inter-operable in the standard Java operations. Similarly, they are fully inter-operable in YaGson, for example:
+[source,java]
+----
+  mapper.toJson(42, int.class); // 42
+  mapper.toJson(42, Integer.class); // 42
+  int resultInt1 = mapper.fromJson("42", int.class);
+  int resultInt2 = mapper.fromJson("42", Integer.class);
+  Integer resultInteger = mapper.fromJson("42", int.class);
+  Integer resultInteger2 = mapper.fromJson("42", Integer.class);
+----
+
+Also, some sort of the _auto-conversion_ is supported. Despite the fact that Java literal `2` is of type `int`, you
+still can use it with the serialization type `long.class`. Similar conversion is allowed between other primitive
+numeric types too.
+
+[source,java]
+----
+  mapper.toJson(2, int.class); // 2
+  mapper.toJson(2L, int.class); // 2
+  mapper.toJson(2, long.class); // 2
+  mapper.toJson(2L, long.class); // 2
+  mapper.toJson(2L, double.class); // 2.0
+  mapper.toJson(2.1, long.class); // 2
+----
+
+WARNING: As you can see in the last line of the previous sample, such auto-conversion can actually change the value due
+to the rounding applied.
+
+As was stated above, no duplication checks are performed for ``String``s and values of primitive types, so your numbers
+are never represented as _reference strings_ by YaGson. However, the use of `@type\@val` wrappers is still possible
+in some cases:
+[source,java]
+----
+  mapper.toJson(2, Object.class); // {"@type":"java.lang.Integer","@val":2}
+  mapper.toJson(2L, Object.class); // 2
+  mapper.toJson(2.0F, Object.class); // {"@type":"java.lang.Float","@val":2.0}
+  mapper.toJson(2.0, Object.class); // 2.0
+  mapper.toJson(true, Object.class); // true
+  mapper.toJson("foo", Object.class); // "foo"
+----
+
+Note that `long`, `double`, `boolean` and `String` Java types are considered to be the _default de-serialization types_
+for the corresponding types of JSON literals, so the type wrappers are never used for them.
+For other Java types mapped to the same types of JSON literals, like `int`, the type wrappers are used when the
+de-serialization type is not known or is not exact.
+
+[[mapping-objects]]
 === Mapping general Java Objects
+
+The general Java objects are usually mapped to JSON objects on a field-by-field basis. Depending on the current
+policies and the context, an object may also be mapped to a _reference string_, or has an extra `@type\@val` wrapper,
+see the above sections for details.
+
+When mapped to a JSON Object, each non-`static` non-`null` field of
+the serialized Java object (declared either in the object's class or one of its superclasses) is, in turn, serialized,
+using the formal type of the field as its serialization type.
+
+As multiple fields of one object may have the similar names if declared in different classes (e.g. the object's
+class and one of its superclasses), YaGson is able to detect such ambiguity and mangle the field names with
+`^__num__` suffix, where _num_ is *1* for the first object's superclass, *2* for its super-superclass etc.
+For example, 2 fields named `fname` may be mapped to `fname` (the field declared in the object's class) and `fname^2`
+(the field declared in object's super-superclass):
+[source,java]
+----
+class BaseStringHolder {
+    String str = "baseStr";
+}
+class OverrideStringHolder extends BaseStringHolder {
+    String str = "overrideStr";
+}
+
+...
+  mapper.toJson(new OverrideStringHolder(), OverrideStringHolder.class);
+  // {"str":"overrideStr","str^1":"baseStr"}
+----
+
+If the object's class is a non-static inner, local or anonymous class, then the links to the enclosed classes are usually
+stored by Java in _synthetic_ fields named like `this$0`. YaGson serializes these synthetic fields too, thus
+providing the support of such classes.
+
+[source,java]
+----
+class Outer  {
+    class Inner {
+        String str = "foo";
+    }
+
+    Inner inner;
+}
+
+...
+  Outer obj = new Outer();
+  obj.inner = obj.new Inner();
+
+  mapper.toJson(obj, Outer.class);
+  // {"inner":{"str":"foo","this$0":"@root"}}
+
+  mapper.toJson(obj.inner, Outer.Inner.class);
+  // {"str":"foo","this$0":{"inner":"@root"}}
+----
+
+Finally, it shall be noted that the transient fields are also serialized. Although they are commonly thought of as
+"not for serialization", this is true only for the standard binary Java serialization, usually with a special in-class
+code which re-calculates the values of these transients fields. If such code is missing or incorrect, even the standard
+binary Java serialization would fail to preserve the correct behavior of these classes after the de-serialization.
+Thus, a truly universal serializer which is designed to work with the arbitrary classes, *MUST* serialize the transient
+fields.
 
 === Mapping arrays
 
+Similarly to other JSON serializers, YaGson basically maps Java arrays directly to JSON Arrays on an
+element-by-element basis. But, depending on the current policies and the context, a Java array may also be mapped to a
+_reference string_, or has an extra `@type\@val` wrapper, for example:
+
+[source,java]
+----
+  Object[] obj = new Object[3];
+  obj[0] = "foo";
+  obj[1] = obj;
+  obj[2] = "bar";
+
+  mapper.toJson(obj, Object[].class);
+  // ["foo","@root","bar"]
+
+  mapper.toJson(obj, Object.class);
+  // {"@type":"[Ljava.lang.Object;","@val":["foo","@root","bar"]}
+----
+
+[[mapping-collections]]
 === Mapping Collections
+
+Most of other Java-to-JSON serializers, map all Java ``Collection``s (including ``List``s, ``Set``s etc.) to JSON
+Arrays, all collection's elements one by one, in order of the collection iteration: `[_element1_, _element2_, ...]`.
+This looks great, but there are some major drawbacks with such approach:
+
+* valuable behavior-related information, like ``Set``'s `Comparator`, is lost;
+* some collections, e.g. singleton or unmodifiable collections, cannot be de-serialized to their original classes, but
+only to some _default_ collection implementations, like ``ArrayList`` or ``TreeSet``, and only if the de-serialization
+types allow such replacements.
+
+An alternative approach for YaGson would be to map all collections to JSON Objects field by field, just like
+described in <<mapping-objects>>. But, such representation is hardly readable for some collections; for instance, even
+an empty `HashSet` would be represented by a monstrous complicated long string instead of just `[]` as
+it is used to be.
+
+So, in order to keep the JSON representation as simple as possible, YaGson uses a combined approach:
+
+* if the collection is a _simple_ one like `ArrayList`, `HashSet` etc., then it is mapped to JSON Array, like by other
+JSON serializers;
+
+[source,java]
+----
+  Collection<String> c = new TreeSet<>(asList("foo", "bar"));
+
+  mapper.toJson(c, TreeSet.class);
+  // ["bar","foo"]
+----
+{empty} +
+
+* if there is a non-default _comparator_ or _backing Map_ used in the collection, then that comparator or map are
+ added as _extra elements_ with a special syntax:
+
+[source,java]
+----
+class LengthFirstStringComparator implements Comparator<String> {
+    public int compare(String s1, String s2) {
+        int cmp = s1.length() - s2.length();
+        if (cmp == 0) {
+            cmp = s1.compareTo(s2);
+        }
+        return cmp;
+    }
+}
+
+...
+  c = new TreeSet<>(new ShortestFirstStringComparator());
+  c.add("11");
+  c.add("2");
+
+  mapper.toJson(c, TreeSet.class);
+  // ["@.m:",{"@.comparator":{"@type":"samples.ShortestFirstStringComparator","@val":{}}},"2","11"]
+----
+{empty} +
+In this sample, a `TreeSet` object has a non-default `TreeMap` backing map in its field `m`. So, the first two elements
+in the resulting JSON Array are the pair of the _extra field declaration_ (`"@.m:"`) and its JSON representation. Note
+that the backing map is serialized here as if it were empty. This is sufficient, as we only need its comparator
+declaration, not its entries.
+
+* if the collection _delegates_ to another collection or map, or it is a special collection like
+`singletonList`, then it is represented as JSON Object with all its fields serialized:
+
+[source,java]
+----
+  mapper.toJson(Collections.singletonList("foo"), List.class);
+  // {"@type":"java.util.Collections$SingletonList","@val":{"element":"foo"}}
+
+  c = Collections.unmodifiableSet(new TreeSet<>(asList("foo", "bar")));
+  mapper.toJson(c, Set.class);
+  // {"@type":"java.util.Collections$UnmodifiableSet","@val":{"c":{"@type":"java.util.TreeSet","@val":["bar","foo"]}}}
+----
+{empty} +
+In this sample, JSON representations without `@type/@val` wrappers are `{"element":"foo"}` and `{"c":...}`,
+correspondingly.
+
+* finally, as with other objects, a collection may also be mapped to a _reference string_, or has an extra
+`@type\@val` wrapper if required by the serialization context.
 
 === Mapping Maps
 
+Similarly to the case of ``Collection``s described <<mapping-collections, above>>, YaGson uses a combined approach to
+represent Java ``Map``s in JSON:
+
+* if the map is a _simple_ one like `HashMap` and all its keys are _simple_ too (i.e. the keys representable as
+JSON strings or numeric or boolean literals, but not Objects or Arrays), then it is represented as a JSON Object like
+`{_key1_:__value1__, _key2_:__value2__, ...}`;
+
+* if the map is a _simple_ one like `HashMap`, but at least one of the keys is serialized as JSON Object or Array,
+then it is represented as a JSON Array of key-value pairs like `[[_key1_,_value1_], [_key2_,_value2_], ...]`;
+
+* additionally to the cases above, if there is a non-default _comparator_, then that comparator is added as an
+_extra entry_ with a special syntax like `{_key1_:__value1__, ..., "@.comparator": _comparator_}` or
+`[[_key1_,_value1_], ..., {"@.comparator": _comparator_}]`, depending on whether simple or complex keys are used.
+
+* if the map _delegates_ to another map, or it is a special one like
+  `singletonMap`, then it is represented as JSON Object with all its fields serialized;
+
+* finally, as with other objects, a map may also be mapped to a _reference string_, or has an extra
+`@type\@val` wrapper if required by the serialization context.
+
+Few examples of such mappings may be found below:
+
+[source,java]
+----
+  mapper.toJson(new HashMap<String, String>(), HashMap.class);
+  // {}
+
+  Map<String, String> sm = new TreeMap<>(new ShortestFirstStringComparator());
+  sm.put("11", "foo");
+  sm.put("2", "bar");
+  mapper.toJson(sm, TreeMap.class);
+  // {"2":"bar","11":"foo","@.comparator":{"@type":"samples.ShortestFirstStringComparator","@val":{}}}
+
+  mapper.toJson(Collections.singletonMap("1", "foo"), Map.class);
+  // {"@type":"java.util.Collections$SingletonMap","@val":{"k":"1","v":"foo"}}
+
+  mapper.toJson(Collections.unmodifiableMap(new TreeMap<>()), Map.class);
+  // {"@type":"java.util.Collections$UnmodifiableMap","@val":{"m":{"@type":"java.util.TreeMap","@val":{}}}}
+
+  Map<Person, String> pm = new TreeMap<>();
+  pm.put(new Person("John", "Doe"), "M");
+  pm.put(new Person("Jane", "Doe"), "F");
+  mapper.toJson(pm, new TypeToken<TreeMap<Person,String>>(){}.getType());
+  // [[{"name":"Jane","family":"Doe"},"F"],[{"name":"John","family":"Doe"},"M"]]
+----
+
 === Mapping special Objects
 
+Some Java classes have a special support in YaGson, either for the simplicity of their JSON representation,
+or because the <<mapping-objects,general objects mapping approach>> does not work good for them. For example:
+
+* ``Thread``s and ``ThreadGroup``s are mapped to Strings which represent the full paths from the root ``ThreadGroup``
+to the serialized thread or group, e.g. ``"system.MyWorkerThread-1"``
+
+* for a ``ThreadLocal``, the saved data includes all fields of the actual ``ThreadLocal``'s class (so the
+`initialValue()` behavior is preserved), and, additionally, the _local_ value assigned to the current ``Thread``,
+if any;
+
+* ``ClassLoader``s are the very special objects in Java, which cannot be correctly serialized. So, they are always
+mapped to ``null``s;
+
+* ``Class`` objects are mapped to the full class name, like `"java.lang.String"`;
+
+* `URL`, `URI`, `UUID`, `StringBuilder`, `StringBuffer`, `Locale`, `InetAddress`, `Date`, `Time`, `Timestamp`,
+`SqlDate` objects are all mapped to JSON Strings;
+
+* all `Reference` classes, like `WeakReference`, `SoftReference` and `PhantomReference`, are serialized _without_ their
+current value, as if it was already GC'ed
+
+
 == Using YaGson with REST and micro-services
+
+TBD
