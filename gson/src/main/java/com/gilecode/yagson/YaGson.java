@@ -210,6 +210,13 @@ public class YaGson extends Gson {
             return;
         }
 
+        if (src instanceof Number && TypeUtils.isNumberType(deserializationType) &&
+                TypeUtils.typesDiffer(deserializationType, src.getClass())) {
+            // a special case, where a user may rely on auto-cast of primitive number types
+            // perform such cast here
+            src = TypeUtils.convertNumber((Number)src, deserializationType);
+        }
+
         boolean isRootTypeRequired = TypeUtils.isTypeInfoRequired(src.getClass(), deserializationType, false);
 
         // use the exact source class for serialization, but try to keep the type parameters if available in

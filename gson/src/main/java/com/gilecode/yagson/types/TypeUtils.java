@@ -51,7 +51,7 @@ public class TypeUtils {
         primitiveWrappers.put(double.class.getName(), Double.class);
     }
 
-    private static boolean typesDiffer(Type type, Class<?> actualClass) {
+    public static boolean typesDiffer(Type type, Class<?> actualClass) {
         if (type instanceof GenericArrayType && actualClass.isArray()) {
             return typesDiffer(((GenericArrayType)type).getGenericComponentType(), actualClass.getComponentType());
         } else {
@@ -737,5 +737,48 @@ public class TypeUtils {
         }
     }
 
+    /**
+     * Returns whether the specified type is not null, and is a class of a primitive number type or one of
+     * the wrapper Number classes.
+     */
+    public static boolean isNumberType(Type type) {
+        if (type instanceof Class<?>) {
+            Class<?> c = (Class<?>) type;
+            if (primitiveWrappers.containsKey(c.getName())) {
+                return !c.equals(boolean.class);
+            } else if (primitiveWrappers.containsValue(c)) {
+                return !c.equals(Boolean.class);
+            }
+        }
+        return false;
+    }
 
+    /**
+     * Converts a number to another number type. Throws {@link ClassCastException} if such conversion fails, or
+     * 'anotherNumberType' is not actually a number type.
+     */
+    public static Number convertNumber(Number src, Type anotherNumberType) {
+        if (anotherNumberType instanceof Class<?>) {
+            Class<?> cl = (Class<?>) anotherNumberType;
+            if (primitiveWrappers.containsKey(cl.getName())) {
+                cl = primitiveWrappers.get(cl.getName());
+            }
+            Class<? extends Number> anotherNumberClass = cl.asSubclass(Number.class);
+            if (anotherNumberClass == Float.class) {
+                return src.floatValue();
+            } else if (anotherNumberClass == Double.class) {
+                return src.doubleValue();
+            } else if (anotherNumberClass == Byte.class) {
+                return src.byteValue();
+            } else if (anotherNumberClass == Short.class) {
+                return src.shortValue();
+            } else if (anotherNumberClass == Integer.class) {
+                return src.intValue();
+            } else if (anotherNumberClass == Long.class) {
+                return src.longValue();
+            }
+        }
+
+        throw new ClassCastException("Failed to convert " + src.getClass() + " to " + anotherNumberType);
+    }
 }

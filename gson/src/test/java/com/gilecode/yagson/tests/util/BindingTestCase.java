@@ -55,6 +55,8 @@ public abstract class BindingTestCase extends TestCase {
             .setTypeInfoPolicy(TypeInfoPolicy.DISABLED)
             .create();
 
+    protected static YaGson defaultMapper = new YaGson();
+
     protected static final Comparator<String> MY_STRING_CMP = new Comparator<String>() {
         public int compare(String s1, String s2) {
             int cmp = s1.length() - s2.length();
