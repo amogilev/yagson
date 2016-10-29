@@ -2,33 +2,32 @@
 
 == Overview
 
-YaGson is a universal types-preserving Java serialization library that can convert 
+YaGson is a universal type-preserving Java serialization library that can convert
 link:UserGuide.adoc#limitations[(almost)] 
 arbitrary Java Objects into JSON and
-back, with a transparent support of any kind of circular references.
+back, with transparent support for circular references of any kind.
 
-It is based on https://github.com/google/gson[Gson], so inherits all its benefits and adds new valuable features.
+YaGson is based on Google's https://github.com/google/gson[Gson], so it inherits all Gson benefits and adds new valuable features.
 The name _YaGson_ is actually an abbreviation for "**y**et **a**nother *Gson*".
 
-Comparing to other JSON serializers, like
-https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], YaGson implies almost
-no restrictions to the serialized classes, and requires neither changes to the serialized classes
-(likes adding Jackson's annotations) nor custom Gson's adapters for the out-of-the-box support of complicated cases
+Compared to other JSON serializers, such as
+https://github.com/google/gson[Gson] or https://github.com/FasterXML/jackson[Jackson], YaGson imposes almost
+no restrictions on the serialized classes, and requires neither changes to those classes
+(like adding annotations for Jackson) nor custom Gson adapters for out-of-the-box support of complicated cases
 like:
 
-* parent-child references, self-references, and any other kind of circular references
-* mixed-type arrays, collections and objects
-* inner, local and anonymous classes.
+* child to parent references, self-references, and circular references of any other kind
+* mixed-type arrays, collections, and objects
+* inner, local, and anonymous classes.
 
-Thanks to such universality, YaGson works best for the REST interfaces between Java server and client machines,
-e.g. for Java-based *microservices*.
+Thanks to the above versatility, YaGson is a solid choice for implementing REST interfaces between Java server and
+client machines, e.g. for Java-based *microservices*.
 
 == Sample usage
 
-The basic usage of YaGson is quite simple and is very similar to the usage of Gson, but one shall
-use classes `YaGson` or `YaGsonBuilder` instead of `Gson`/`GsonBuilder`.
+The basic usage of YaGson is quite simple and is very similar to that of Gson. You just use classes `YaGson` or `YaGsonBuilder` instead of `Gson`/`GsonBuilder`.
 
-At first, create a mapper instance, using either default (1) or custom (2) settings.
+First, create a mapper instance, using either default (1) or custom (2) settings:
 
 [source,java]
 ----
@@ -39,8 +38,8 @@ At first, create a mapper instance, using either default (1) or custom (2) setti
      .create(); // // <2>
 ----
 
-Then, the mapper instance may be used to serialize Java primitives, objects and arrays to JSON and de-serialize them
-back.
+Now you can use the mapper instance to serialize Java primitives, objects, and arrays to JSON, and de-serialize them
+back:
 
 [source,java]
 ----
@@ -54,13 +53,14 @@ back.
   // deserisalizedObj = Person{name='John', family='Doe'}
 ----
 
-(3) Serialize to JSON with `toJson()` method, providing the known de-serialization type `Person.class`
+(3) Serialize to JSON with the `toJson()` method, providing the known de-serialization type `Person.class`
 
-(4) De-serialize back to Java object with `fromJson()` method, using the same de-serialization type as was used in (3)
+(4) De-serialize a JSON string back to a Java object with the `fromJson()` method, using the same de-serialization type
+as the one used in (3)
 
-WARNING: The serialization type used in `toJson`, *MUST BE* equal or less specific than
+WARNING: The serialization type used in `toJson`, *MUST BE* equal to or less specific than
 the de-serialization type used in `fromJson`. If the de-serialization type is not known at the time of
-the serialization, just use `Object.class`.
+serialization, just use `Object.class`.
 
 {empty} +
 For example:
@@ -78,11 +78,11 @@ For example:
 ----
 
 (5) Notice the `@type/@val` wrapper around the first JSON representation of the `Person` instance. `YaGson` adds such
-wrappers when the actual runtime type information is more specific than the provided serialization types.
+wrappers when the actual type at run time is more specific than the provided serialization type.
 
 [TIP]
 =====
-In case of generic types, it is recommended to provide the fully parameterized serialization/deserialization types
+When working with generic types, it is recommended to provide fully parameterized serialization/deserialization types
  using Gson's ``TypeToken``s, like
 [source,java]
     Type myMapType = new TypeToken<HashMap<Long, String>>(){}.getType();
@@ -107,22 +107,22 @@ Finally, let's see how a simple self-referencing array is serialized.
 ----
 {empty} +
 
-NOTE: The JSON representation of the second array's element is `@root`, which means the reference to the serialized
-object itself. There may be more complicated references, describing a _path_ from the root to a referenced object, like
-`@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in its
+NOTE: The JSON representation of the second element of the array is `@root`, meaning a reference to the serialized
+object itself. There may be more complicated references, describing a _path_ from the root to a referenced object, e.g.
+`@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in the
 parent object.
 
 == New in version `0.1`
 
 New features:
 
-* mapping of (almost) arbitrary objects, with no need for custom adapters, annotations or any changes of
-the classes;
-* preserving exact types during mapping;
-* preserving ``Collection``s/``Map``s behavior, including custom ``Comparator``s;
-* serializing self-referenced objects, including collections, maps and arrays;
-* serializing inner, local and anonymous classes;
-* support for mixed-type collections, maps and arrays;
+* mapping of (almost) arbitrary objects, with no need for custom adapters, annotations, or any other changes of
+the serialized classes;
+* preservation of exact types during mapping;
+* preservation of ``Collection``s/``Map``s behavior, including custom ``Comparator``s;
+* serialization of self-referencing objects, including collections, maps, and arrays;
+* serialization of inner, local, and anonymous classes;
+* support for mixed-type collections, maps, and arrays;
 * support for multiple fields with the same name in one object (e.g. when "duplicate" fields are declared in
 super-classes);
 
@@ -138,8 +138,8 @@ See link::License[the License file]
 
 == More
 
-For more information and samples, see link:UserGuide.adoc[User's Guide] and
-link:https://github.com/amogilev/yagson/wiki/Q&A[Q&A]. Also, some samples runnable as JUnit tests are available at
+For more information and samples, see the link:UserGuide.adoc[User's Guide] and
+link:https://github.com/amogilev/yagson/wiki/Q&A[Q&A]. Also, some samples runnable as JUnit tests are available in the
 link:https://github.com/amogilev/yagson-samples[yagson-samples] GitHub project.
 
 == Contact Us
