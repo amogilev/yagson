@@ -3,7 +3,7 @@
   <groupId>com.gilecode.yagson</groupId>
   <artifactId>yagson</artifactId>
   <packaging>jar</packaging>
-  <version>0.1</version>
+  <version>0.2-SNAPSHOT</version>
   <inceptionYear>2015</inceptionYear>
   <name>YaGson</name>
   <url>https://github.com/amogilev/yagson</url>
