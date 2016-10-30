@@ -74,7 +74,6 @@ name and path (in thread groups hierarchy) is found.
 In Maven projects, just add the following dependency:
 [source,xml]
 ----
-TODO: will be available after the Maven release, which is not performed yet!
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson</artifactId>
