@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.gilecode.yagson.ReadContext;
 
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -39,6 +40,10 @@ public abstract class TypeAdvisableComplexTypeAdapter<T> extends TypeAdapter<T> 
     } else if (nextToken == JsonToken.STRING) {
       // for complex type adapters, each string is a reference, no isReferenceString() match required
       String reference = in.nextString();
+      if (!reference.startsWith("@")) {
+        throw new JsonSyntaxException("Expected JSON Array, Object or YaGson reference, but got string literal: '" +
+                reference + "'");
+      }
       T referenced = ctx.refsContext().getReferencedObject(reference);
       return referenced;
     }
