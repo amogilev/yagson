@@ -589,4 +589,117 @@ serialized _without_ their current values, as if they were already GC'ed
 
 == Using YaGson with REST and Micro-services
 
-TBD
+Nowadays, one of the popular approaches to Java client-server communication is using RESTful web services that sends
+and accepts Java entities using their JSON representation.
+
+If there is an option to customize the JSON serializer used on both client and server sides, YaGson is a smart choice,
+as it supports much wider range of Java entities than other popular JSON serializers.
+
+The section below describes how to integrate `YaGson` with RESTful web services based on
+ link:http://docs.spring.io/spring/docs/current/spring-framework-reference/html/mvc.html[Spring MVC] (version 4.3 or
+ later is required).
+
+=== Integration with Spring MVC
+
+When Spring MVC is used as the web framework, RESTful web services are usually
+link:https://spring.io/guides/gs/rest-service/[implemented using ``@Controller``s], and
+link:https://spring.io/guides/gs/consuming-rest/[consumed using ``@RestTemplate``s].
+
+In both cases, the serializer to use is determined by a configured set of ``HttpMessageConverter``s.
+Currently, the only provided default JSON converters are for `Gson` and `Jackson/Jackson2`, so you need to
+add and configure link:https://github.com/amogilev/yagson-spring4-converters[`YaGsonHttpMessageConverter`] manually.
+
+At first, in Maven projects, add the following dependency:
+[source,xml]
+----
+  <dependency>
+    <groupId>com.gilecode.yagson</groupId>
+    <artifactId>yagson-spring4-converters</artifactId>
+    <version>0.1</version>
+  </dependency>
+----
+
+Then, on the server side, create and add `YaGsonHttpMessageConverter` bean to the list of available converters:
+[source,java]
+----
+@Configuration
+public class RestConfig extends WebMvcConfigurationSupport {
+
+    @Bean
+    public YaGsonHttpMessageConverter yagsonMessageConverter() {
+        // if no parameters passed, the created converter works only with the 'application/yagson' media type
+        return new YaGsonHttpMessageConverter();
+    }
+
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        super.addDefaultHttpMessageConverters(converters);
+        converters.add(yagsonMessageConverter());
+    }
+}
+----
+
+This way, all incoming entities will be de-serialized by YaGson if the HTTP request header `Content-Type` has the value
+`application/yagson`. Similarly, outgoing entities will be serialized by YaGson if the HTTP request header `Accept` has
+the value `application/yagson`.
+
+[source,java]
+----
+@RestController
+@RequestMapping("/yagson")
+public class PersonYaGsonController {
+
+    @Autowired
+    private PersonDAO personDao;
+
+    @RequestMapping(method = RequestMethod.POST, value = "/person")
+    public void handleAddPerson(@RequestBody Person p) {
+        personDao.addPerson(p);
+    }
+
+    @RequestMapping("/persons")
+    public Set<Person> handleGetPersons() {
+        return personDao.getPersons();
+    }
+}
+----
+
+NOTE: Although it is possible to totally replace all default converters with the YaGson-based converter (which
+shall be created as `new YaGsonHttpMessageConverter(true)` in this case), such configuration is not recommended, as
+it will affect all Spring MVC controllers in your application.
+
+On the client side, pass the `YaGsonHttpMessageConverter` instance to the `RestTemplate` constructor to use `YaGson` for
+the serialization. It will ensure that the correct media type `application/yagson` is set to the HTTP headers
+`Content-Type` and `Accept` where applicable. Then, use ``RestTemplate``'s `exchange(...)` method for all requests:
+[source,java]
+----
+  RestTemplate restTemplate = new RestTemplate(Collections.singletonList(new YaGsonHttpMessageConverter()));
+
+  RequestEntity<Person> postRequestEntity = new RequestEntity<>(
+        new PersonEx("Mr.", "Sample", "Person2"),
+        HttpMethod.POST,
+        URI.create("http://localhost:8080/yagson/person"),
+        Person.class // NOTE: the type accepted on the server side is Person, not PersonEx!
+        );
+  restTemplate.exchange(postRequestEntity, Void.class);
+
+  RequestEntity getRequestEntity = new RequestEntity<>(
+       null, // no request body
+       HttpMethod.GET,
+       URI.create("http://localhost:8080/yagson/persons"));
+  ResponseEntity<Set<Person>> result = restTemplate.exchange(
+      getRequestEntity,
+      new ParameterizedTypeReference<Set<Person>>() {});
+
+  Set<Person> persons = result.getBody();
+   ...
+----
+
+WARNING: As of Spring 4.3, there is no way to pass the expected de-serialization type to any ``RestTemplate``'s method
+other than `exchange(...)`. So, the use of methods like `put(...)`, `postForEntity(...)`, `getForEntity(...)` etc. is
+not recommended.
+
+The runnable sample illustrating the use of YaGson in Spring MVC server and client applications
+is available at link:https://github.com/amogilev/yagson-spring-rest-sample[yagson-spring-rest-sample]. At first, run
+`ServerApp`, then `ClientApp`, and see the results.
