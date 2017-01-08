@@ -335,7 +335,7 @@ public final class TypeAdapters {
   public static final TypeAdapterFactory ATOMIC_INTEGER_ARRAY_FACTORY =
       newFactory(AtomicIntegerArray.class, TypeAdapters.ATOMIC_INTEGER_ARRAY);
 
-  public static final TypeAdapter<Number> LONG = new SimpleTypeAdapter<Number>() {
+  public static final SimpleTypeAdapter<Number> LONG = new SimpleTypeAdapter<Number>() {
     @Override
     public Number read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {
@@ -950,12 +950,12 @@ public final class TypeAdapters {
           return null;
         }
         return (TypeAdapter<T2>) new TypeAdapter<T1>() {
-          @Override public void write(JsonWriter out, T1 value) throws IOException {
-            typeAdapter.write(out, value);
+          @Override public void write(JsonWriter out, T1 value, WriteContext ctx) throws IOException {
+            typeAdapter.write(out, value, ctx);
           }
 
-          @Override public T1 read(JsonReader in) throws IOException {
-            T1 result = typeAdapter.read(in);
+          @Override public T1 read(JsonReader in, ReadContext ctx) throws IOException {
+            T1 result = typeAdapter.read(in, ctx);
             if (result != null && !requestedType.isInstance(result)) {
               throw new JsonSyntaxException("Expected a " + requestedType.getName()
                   + " but was " + result.getClass().getName());

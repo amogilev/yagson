@@ -315,7 +315,7 @@ public final class JsonTreeReader extends JsonReader {
     return " at path " + getPath();
   }
 
-  public void push(JsonPrimitive element) {
-    stack.add(element);
+  public void pushElement(JsonPrimitive element) {
+    push(element);
   }
 }

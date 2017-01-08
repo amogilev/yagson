@@ -97,12 +97,12 @@ import static com.gilecode.yagson.refs.References.REF_ROOT;
  */
 public class Gson {
   protected static final boolean DEFAULT_JSON_NON_EXECUTABLE = false;
-  static final boolean DEFAULT_LENIENT = false;
-  static final boolean DEFAULT_PRETTY_PRINT = false;
-  static final boolean DEFAULT_ESCAPE_HTML = true;
-  static final boolean DEFAULT_SERIALIZE_NULLS = false;
-  static final boolean DEFAULT_COMPLEX_MAP_KEYS = false;
-  static final boolean DEFAULT_SPECIALIZE_FLOAT_VALUES = false;
+  protected static final boolean DEFAULT_LENIENT = false;
+  protected static final boolean DEFAULT_PRETTY_PRINT = false;
+  protected static final boolean DEFAULT_ESCAPE_HTML = true;
+  protected static final boolean DEFAULT_SERIALIZE_NULLS = false;
+  protected static final boolean DEFAULT_COMPLEX_MAP_KEYS = false;
+  protected static final boolean DEFAULT_SPECIALIZE_FLOAT_VALUES = false;
 
   private static final TypeToken<?> NULL_KEY_SURROGATE = new TypeToken<Object>() {};
   private static final String JSON_NON_EXECUTABLE_PREFIX = ")]}'\n";
@@ -202,7 +202,7 @@ public class Gson {
       LongSerializationPolicy longSerializationPolicy,
       List<TypeAdapterFactory> typeAdapterFactories,
       ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
-    this.constructorConstructor = new ConstructorConstructor(instanceCreators);
+    this.constructorConstructor = new ConstructorConstructor(instanceCreators, typeInfoPolicy.isEnabled());
     this.excluder = excluder;
     this.fieldNamingStrategy = fieldNamingStrategy;
     this.serializeNulls = serializeNulls;
@@ -212,6 +212,7 @@ public class Gson {
     this.lenient = lenient;
     this.referencesPolicy = referencesPolicy;
     this.typeInfoPolicy = typeInfoPolicy;
+    this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
 
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
 
@@ -231,7 +232,7 @@ public class Gson {
     factories.add(TypeAdapters.BOOLEAN_FACTORY);
     factories.add(TypeAdapters.BYTE_FACTORY);
     factories.add(TypeAdapters.SHORT_FACTORY);
-    TypeAdapter<Number> longAdapter = longAdapter(longSerializationPolicy);
+    SimpleTypeAdapter<Number> longAdapter = longAdapter(longSerializationPolicy);
     factories.add(TypeAdapters.newFactory(long.class, Long.class, longAdapter));
     factories.add(TypeAdapters.newFactory(double.class, Double.class,
             doubleAdapter(serializeSpecialFloatingPointValues)));
@@ -262,12 +263,11 @@ public class Gson {
     factories.add(TypeAdapters.TIMESTAMP_FACTORY);
     factories.add(ArrayTypeAdapter.FACTORY);
     factories.add(TypeAdapters.CLASS_FACTORY);
-    factories.add(new ThreadTypesAdapterFactory());
+    factories.add(new ThreadTypesAdapterFactory(jsonAdapterFactory, constructorConstructor));
 
     // type adapters for composite and user-defined types
     factories.add(new CollectionTypeAdapterFactory(constructorConstructor));
     factories.add(new MapTypeAdapterFactory(constructorConstructor, complexMapKeySerialization));
-    this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
     factories.add(jsonAdapterFactory);
     factories.add(TypeAdapters.ENUM_FACTORY);
     factories.add(reflectiveTypeAdapterFactory = new ReflectiveTypeAdapterFactory(
@@ -352,7 +352,7 @@ public class Gson {
     }
   }
 
-  private static TypeAdapter<Number> longAdapter(LongSerializationPolicy longSerializationPolicy) {
+  private static SimpleTypeAdapter<Number> longAdapter(LongSerializationPolicy longSerializationPolicy) {
     if (longSerializationPolicy == LongSerializationPolicy.DEFAULT) {
       return TypeAdapters.LONG;
     }
@@ -374,7 +374,7 @@ public class Gson {
     };
   }
 
-  private static TypeAdapter<AtomicLong> atomicLongAdapter(final TypeAdapter<Number> longAdapter) {
+  private static TypeAdapter<AtomicLong> atomicLongAdapter(final SimpleTypeAdapter<Number> longAdapter) {
     return new SimpleTypeAdapter<AtomicLong>() {
       @Override public void write(JsonWriter out, AtomicLong value) throws IOException {
         longAdapter.write(out, value.get());
@@ -386,7 +386,7 @@ public class Gson {
     }.nullSafe();
   }
 
-  private static TypeAdapter<AtomicLongArray> atomicLongArrayAdapter(final TypeAdapter<Number> longAdapter) {
+  private static TypeAdapter<AtomicLongArray> atomicLongArrayAdapter(final SimpleTypeAdapter<Number> longAdapter) {
     return new SimpleTypeAdapter<AtomicLongArray>() {
       @Override public void write(JsonWriter out, AtomicLongArray value) throws IOException {
         out.beginArray();

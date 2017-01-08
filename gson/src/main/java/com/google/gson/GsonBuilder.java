@@ -93,7 +93,7 @@ public class GsonBuilder {
   private int dateStyle = DateFormat.DEFAULT;
   private int timeStyle = DateFormat.DEFAULT;
   protected boolean complexMapKeySerialization = DEFAULT_COMPLEX_MAP_KEYS;
-  protected boolean serializeSpecialFloatingPointValues = DEFAULT_SPECIALIZE_FLOAT_VALUES
+  protected boolean serializeSpecialFloatingPointValues = DEFAULT_SPECIALIZE_FLOAT_VALUES;
   protected boolean escapeHtmlChars = DEFAULT_ESCAPE_HTML;
   protected boolean prettyPrinting = DEFAULT_PRETTY_PRINT;
   protected boolean generateNonExecutableJson = DEFAULT_JSON_NON_EXECUTABLE;

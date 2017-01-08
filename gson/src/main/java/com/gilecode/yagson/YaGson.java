@@ -91,7 +91,7 @@ public class YaGson extends Gson {
                 TypeInfoPolicy.defaultPolicy().isEnabled(),
                 DEFAULT_JSON_NON_EXECUTABLE,
                 !TypeInfoPolicy.defaultPolicy().isEnabled(), // disable htmlSafe if types are printed
-                false, false, LongSerializationPolicy.DEFAULT,
+                DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES, LongSerializationPolicy.DEFAULT,
                 Collections.<TypeAdapterFactory>emptyList(),
                 References.defaultPolicy(), TypeInfoPolicy.defaultPolicy());
     }
@@ -99,11 +99,11 @@ public class YaGson extends Gson {
     protected YaGson(Excluder excluder, FieldNamingStrategy fieldNamingPolicy,
           Map<Type, InstanceCreator<?>> instanceCreators, boolean serializeNulls,
           boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
-          boolean prettyPrinting, boolean serializeSpecialFloatingPointValues,
+          boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
           LongSerializationPolicy longSerializationPolicy, List<TypeAdapterFactory> typeAdapterFactories,
           ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
         super(excluder, fieldNamingPolicy, instanceCreators, serializeNulls, complexMapKeySerialization,
-                generateNonExecutableGson, htmlSafe, prettyPrinting, serializeSpecialFloatingPointValues,
+                generateNonExecutableGson, htmlSafe, prettyPrinting, lenient, serializeSpecialFloatingPointValues,
                 longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy);
     }
 

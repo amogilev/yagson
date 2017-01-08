@@ -22,14 +22,25 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <includePackageNames>com.gilecode.yagson:com.google.gson</includePackageNames>
-          <excludePackageNames>com.google.gson.internal:com.google.gson.internal.bind</excludePackageNames>
-          <links>
-            <link>http://docs.oracle.com/javase/6/docs/api/</link>
-          </links>
-        </configuration>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.3</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <relocations>
+                <relocation>
+                  <pattern>com.google.gson</pattern>
+                  <shadedPattern>com.gilecode.yagson.com.google.gson</shadedPattern>
+                </relocation>
+              </relocations>
+              <createSourcesJar>true</createSourcesJar>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>biz.aQute.bnd</groupId>

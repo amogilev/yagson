@@ -16,6 +16,7 @@
 
 package com.google.gson.stream;
 
+import com.gilecode.yagson.ReadContext;
 import com.google.gson.JsonElement;
 import com.google.gson.internal.Streams;
 import com.google.gson.internal.bind.JsonTreeReader;
@@ -246,7 +247,7 @@ public class JsonReaderPathTest {
     },
     OBJECT_READER {
       @Override public JsonReader create(String data) {
-        JsonElement element = Streams.parse(new JsonReader(new StringReader(data)));
+        JsonElement element = Streams.parse(new JsonReader(new StringReader(data)), ReadContext.nullContext());
         return new JsonTreeReader(element);
       }
     };

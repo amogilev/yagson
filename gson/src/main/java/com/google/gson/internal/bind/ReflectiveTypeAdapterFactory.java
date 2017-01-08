@@ -134,13 +134,15 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
   }
 
   public static class DefaultBoundField extends BoundField {
-    final TypeAdapter<?> typeAdapter;
+    TypeAdapter<?> typeAdapter;
     private final Gson context;
     private final TypeToken<?> fieldType;
     private final boolean isPrimitive;
     private boolean jsonAdapterPresent;
 
-      public DefaultBoundField(String name, Field field, boolean serialize, boolean deserialize, Gson context, TypeToken<?> fieldType) {
+    public DefaultBoundField(String name, Field field, boolean serialize, boolean deserialize, Gson context,
+                             TypeToken<?> fieldType, JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory,
+                             ConstructorConstructor constructorConstructor) {
       super(name, field, serialize, deserialize);
       this.context = context;
       this.fieldType = fieldType;
@@ -157,7 +159,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       if (typeAdapter != null) {
         jsonAdapterPresent = true;
       } else {
-        typeAdapter = gson.getAdapter(fieldType);
+        typeAdapter = context.getAdapter(fieldType);
       }
     }
 
@@ -260,17 +262,6 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     }
   }
 
-  private static TypeAdapter<?> getFieldAdapter(Gson gson, Field field, TypeToken<?> fieldType) {
-    if (field != null) {
-      JsonAdapter annotation = field.getAnnotation(JsonAdapter.class);
-      if (annotation != null) {
-        TypeAdapter<?> adapter = getTypeAdapter(gson.getConstructorConstructor(), gson, fieldType, annotation);
-        if (adapter != null) return adapter;
-      }
-    }
-    return gson.getAdapter(fieldType);
-  }
-
   private Map<String, BoundField> getBoundFields(Gson context, TypeToken<?> type, Class<?> raw) {
     Map<String, BoundField> result = new LinkedHashMap<String, BoundField>();
     if (raw.isInterface()) {
@@ -300,7 +291,8 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
                       + " declares multiple JSON fields named " + fieldNames.get(i));
             }
           }
-          BoundField boundField = new DefaultBoundField(name, field, serialize, deserialize, context, TypeToken.get(fieldType));
+          BoundField boundField = new DefaultBoundField(name, field, serialize, deserialize, context,
+                  TypeToken.get(fieldType), jsonAdapterFactory, constructorConstructor);
           result.put(name, boundField);
         }
       }

@@ -20,6 +20,8 @@ import com.gilecode.yagson.refs.PlaceholderUse;
 import com.gilecode.yagson.refs.ReferencePlaceholder;
 import com.google.gson.*;
 import com.google.gson.internal.$Gson$Types;
+import com.google.gson.internal.ConstructorConstructor;
+import com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory;
 import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -61,8 +63,13 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
     private final Method threadLocalGetMapMethod;
     private final Method threadLocalMapGetEntryMethod;
     private final Field threadLocalEntryValueField;
+    private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
+    private final ConstructorConstructor constructorConstructor;
 
-    public ThreadTypesAdapterFactory() {
+    public ThreadTypesAdapterFactory(JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory,
+                                     ConstructorConstructor constructorConstructor) {
+        this.jsonAdapterFactory = jsonAdapterFactory;
+        this.constructorConstructor = constructorConstructor;
         try {
             threadLocalGetMapMethod = ThreadLocal.class.getDeclaredMethod("getMap", Thread.class);
             threadLocalGetMapMethod.setAccessible(true);
@@ -97,7 +104,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
                     typeToken.getRawType(), ThreadLocal.class));
 
             ReflectiveTypeAdapterFactory.BoundField valueField = new ReflectiveTypeAdapterFactory.DefaultBoundField(
-                    "@.value", null, true, true, gson, fieldType) {
+                    "@.value", null, true, true, gson, fieldType, jsonAdapterFactory, constructorConstructor) {
                 @Override
                 protected boolean writeField(Object value, WriteContext ctx) throws IOException, IllegalAccessException {
                     if (value == null) {

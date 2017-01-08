@@ -1632,7 +1632,7 @@ public class JsonReader implements Closeable {
       @Override
       public void returnStringToBuffer(JsonReader reader, String lastReadString) throws IOException {
         if (reader instanceof JsonTreeReader) {
-          ((JsonTreeReader)reader).push(new JsonPrimitive(lastReadString));
+          ((JsonTreeReader)reader).pushElement(new JsonPrimitive(lastReadString));
           return;
         }
 
@@ -1647,7 +1647,7 @@ public class JsonReader implements Closeable {
       @Override
       public void returnLongToBuffer(JsonReader reader, long l) {
         if (reader instanceof JsonTreeReader) {
-          ((JsonTreeReader)reader).push(new JsonPrimitive(l));
+          ((JsonTreeReader)reader).pushElement(new JsonPrimitive(l));
           return;
         }
 

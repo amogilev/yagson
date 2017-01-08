@@ -51,7 +51,7 @@ public class YaGsonBuilder extends GsonBuilder {
     public YaGson create() {
         return new YaGson(excluder, fieldNamingPolicy, instanceCreators,
                 serializeNulls, complexMapKeySerialization,
-                generateNonExecutableJson, escapeHtmlChars, prettyPrinting,
+                generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
                 serializeSpecialFloatingPointValues, longSerializationPolicy,
                 createTypeAdapterFactories(),
                 referencesPolicy, typeInfoPolicy);
