@@ -17,8 +17,6 @@
 
 package com.google.gson.internal.bind;
 
-import static com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory.getTypeAdapter;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -54,13 +52,16 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
   private final FieldNamingStrategy fieldNamingPolicy;
   private final Excluder excluder;
   private final Map<String, PostReadProcessor> readPostProcessorsByClassName;
+  private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
 
   public ReflectiveTypeAdapterFactory(ConstructorConstructor constructorConstructor,
-                                      FieldNamingStrategy fieldNamingPolicy, Excluder excluder,
-                                      List<PostReadProcessor> processors) {
+      FieldNamingStrategy fieldNamingPolicy, Excluder excluder,
+      JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory,
+      List<PostReadProcessor> processors) {
     this.constructorConstructor = constructorConstructor;
     this.fieldNamingPolicy = fieldNamingPolicy;
     this.excluder = excluder;
+    this.jsonAdapterFactory = jsonAdapterFactory;
     readPostProcessorsByClassName = buildReflectiveAdapterPostReadProcessorsMap(processors);
   }
 
@@ -84,25 +85,27 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
 
   /** first element holds the default name */
   private List<String> getFieldNames(Field f) {
-    return getFieldName(fieldNamingPolicy, f);
-  }
-  
-  /** first element holds the default name */
-  static List<String> getFieldName(FieldNamingStrategy fieldNamingPolicy, Field f) {
-    SerializedName serializedName = f.getAnnotation(SerializedName.class);
-    List<String> fieldNames = new LinkedList<String>();
-    if (serializedName == null) {
-      fieldNames.add(fieldNamingPolicy.translateName(f));
-    } else {
-      fieldNames.add(serializedName.value());
-      for (String alternate : serializedName.alternate()) {
-        fieldNames.add(alternate);
-      }
+    SerializedName annotation = f.getAnnotation(SerializedName.class);
+    if (annotation == null) {
+      String name = fieldNamingPolicy.translateName(f);
+      return Collections.singletonList(name);
+    }
+
+    String serializedName = annotation.value();
+    String[] alternates = annotation.alternate();
+    if (alternates.length == 0) {
+      return Collections.singletonList(serializedName);
+    }
+
+    List<String> fieldNames = new ArrayList<String>(alternates.length + 1);
+    fieldNames.add(serializedName);
+    for (String alternate : alternates) {
+      fieldNames.add(alternate);
     }
     return fieldNames;
   }
 
-  public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
+  @Override public <T> TypeAdapter<T> create(Gson gson, final TypeToken<T> type) {
     Class<? super T> raw = type.getRawType();
 
     if (!Object.class.isAssignableFrom(raw)) {
@@ -135,14 +138,27 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     private final Gson context;
     private final TypeToken<?> fieldType;
     private final boolean isPrimitive;
+    private boolean jsonAdapterPresent;
 
-    public DefaultBoundField(String name, Field field, boolean serialize, boolean deserialize, Gson context, TypeToken<?> fieldType) {
+      public DefaultBoundField(String name, Field field, boolean serialize, boolean deserialize, Gson context, TypeToken<?> fieldType) {
       super(name, field, serialize, deserialize);
       this.context = context;
       this.fieldType = fieldType;
       // special casing primitives here saves ~5% on Android...
       this.isPrimitive = Primitives.isPrimitive(fieldType.getRawType());
-      typeAdapter = getFieldAdapter(context, field, fieldType);
+
+      if (field != null) {
+        JsonAdapter annotation = field.getAnnotation(JsonAdapter.class);
+        if (annotation != null) {
+          typeAdapter = jsonAdapterFactory.getTypeAdapter(
+                  constructorConstructor, context, fieldType, annotation);
+        }
+      }
+      if (typeAdapter != null) {
+        jsonAdapterPresent = true;
+      } else {
+        typeAdapter = gson.getAdapter(fieldType);
+      }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"}) // the type adapter and field type always agree
@@ -163,7 +179,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
 
       // the resolved (unwrapped) type adapter for the value, without type info emitting.
       // This one is used to check whether the reference is available, and so if the type emitting is needed at all
-      TypeAdapter fieldTypeAdapter = new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter,
+      TypeAdapter fieldTypeAdapter = jsonAdapterPresent ? typeAdapter : new TypeAdapterRuntimeTypeWrapper(context, this.typeAdapter,
               fieldType.getType(), TypeUtils.TYPE_INFO_SKIP).resolve(fieldValue);
 
       /* type info will be emitted if:
@@ -324,7 +340,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
     private final Type objType;
     private final PostReadProcessor postReadProcessor;
 
-    private Adapter(Gson gson, Type objType, ObjectConstructor<T> constructor, Map<String, BoundField> boundFields,
+    Adapter(Gson gson, Type objType, ObjectConstructor<T> constructor, Map<String, BoundField> boundFields,
                     PostReadProcessor postReadProcessor) {
       this.gson = gson;
       this.objType = objType;
@@ -398,7 +414,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
           }
         }
       } catch (IllegalAccessException e) {
-        throw new AssertionError();
+        throw new AssertionError(e);
       }
       out.endObject();
     }

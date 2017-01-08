@@ -120,7 +120,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class MapTypeAdapterFactory implements TypeAdapterFactory {
   private final ConstructorConstructor constructorConstructor;
-  private final boolean complexMapKeySerialization;
+  final boolean complexMapKeySerialization;
 
   public MapTypeAdapterFactory(ConstructorConstructor constructorConstructor,
       boolean complexMapKeySerialization) {
@@ -128,7 +128,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
     this.complexMapKeySerialization = complexMapKeySerialization;
   }
 
-  public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+  @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
     Type type = typeToken.getType();
 
     Class<? super T> rawType = typeToken.getRawType();

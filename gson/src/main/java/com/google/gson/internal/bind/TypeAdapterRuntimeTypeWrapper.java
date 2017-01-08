@@ -16,6 +16,10 @@
  */
 package com.google.gson.internal.bind;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.AdapterUtils;
@@ -28,9 +32,6 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
-import java.lang.reflect.Type;
 
 public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
   private final Gson gson;
@@ -87,7 +88,7 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
       return chosen;
     }
   }
-  
+
   @SuppressWarnings("rawtypes")
   private TypeAdapter chooseTypeAdapter(T value) {
     // Order of preference for choosing type adapters
@@ -114,7 +115,7 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     }
     return chosen;
   }
-  
+
   /**
    * Finds a compatible runtime type if it is more specific
    */

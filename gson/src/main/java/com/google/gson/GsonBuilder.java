@@ -17,6 +17,7 @@
 
 package com.google.gson;
 
+import com.google.gson.stream.JsonReader;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -32,8 +33,17 @@ import com.gilecode.yagson.types.TypeInfoPolicy;
 
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Excluder;
+import com.google.gson.internal.bind.TreeTypeAdapter;
 import com.google.gson.internal.bind.TypeAdapters;
 import com.google.gson.reflect.TypeToken;
+
+import static com.google.gson.Gson.DEFAULT_COMPLEX_MAP_KEYS;
+import static com.google.gson.Gson.DEFAULT_ESCAPE_HTML;
+import static com.google.gson.Gson.DEFAULT_JSON_NON_EXECUTABLE;
+import static com.google.gson.Gson.DEFAULT_LENIENT;
+import static com.google.gson.Gson.DEFAULT_PRETTY_PRINT;
+import static com.google.gson.Gson.DEFAULT_SERIALIZE_NULLS;
+import static com.google.gson.Gson.DEFAULT_SPECIALIZE_FLOAT_VALUES;
 
 /**
  * <p>Use this builder to construct a {@link Gson} instance when you need to set configuration
@@ -78,15 +88,16 @@ public class GsonBuilder {
   private final List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
   /** tree-style hierarchy factories. These come after factories for backwards compatibility. */
   private final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<TypeAdapterFactory>();
-  protected boolean serializeNulls;
+  protected boolean serializeNulls = DEFAULT_SERIALIZE_NULLS;
   private String datePattern;
   private int dateStyle = DateFormat.DEFAULT;
   private int timeStyle = DateFormat.DEFAULT;
-  protected boolean complexMapKeySerialization;
-  protected boolean serializeSpecialFloatingPointValues;
-  protected boolean escapeHtmlChars = true;
-  protected boolean prettyPrinting;
-  protected boolean generateNonExecutableJson;
+  protected boolean complexMapKeySerialization = DEFAULT_COMPLEX_MAP_KEYS;
+  protected boolean serializeSpecialFloatingPointValues = DEFAULT_SPECIALIZE_FLOAT_VALUES
+  protected boolean escapeHtmlChars = DEFAULT_ESCAPE_HTML;
+  protected boolean prettyPrinting = DEFAULT_PRETTY_PRINT;
+  protected boolean generateNonExecutableJson = DEFAULT_JSON_NON_EXECUTABLE;
+  protected boolean lenient = DEFAULT_LENIENT;
   protected ReferencesPolicy referencesPolicy = ReferencesPolicy.DISABLED;
   protected TypeInfoPolicy typeInfoPolicy = TypeInfoPolicy.DISABLED;
 
@@ -299,7 +310,7 @@ public class GsonBuilder {
    * Configures Gson to apply a set of exclusion strategies during both serialization and
    * deserialization. Each of the {@code strategies} will be applied as a disjunction rule.
    * This means that if one of the {@code strategies} suggests that a field (or class) should be
-   * skipped then that field (or object) is skipped during serializaiton/deserialization.
+   * skipped then that field (or object) is skipped during serialization/deserialization.
    *
    * @param strategies the set of strategy object to apply during object (de)serialization.
    * @return a reference to this {@code GsonBuilder} object to fulfill the "Builder" pattern
@@ -354,6 +365,19 @@ public class GsonBuilder {
    */
   public GsonBuilder setPrettyPrinting() {
     prettyPrinting = true;
+    return this;
+  }
+
+  /**
+   * By default, Gson is strict and only accepts JSON as specified by
+   * <a href="http://www.ietf.org/rfc/rfc4627.txt">RFC 4627</a>. This option makes the parser
+   * liberal in what it accepts.
+   *
+   * @return a reference to this {@code GsonBuilder} object to fulfill the "Builder" pattern
+   * @see JsonReader#setLenient(boolean)
+   */
+  public GsonBuilder setLenient() {
+    lenient = true;
     return this;
   }
 
@@ -534,12 +558,12 @@ public class GsonBuilder {
     this.serializeSpecialFloatingPointValues = true;
     return this;
   }
-  
+
   /**
    * Sets the references policy to be used by Gson - whether to use references only
    * for detected circular dependencies, for all duplicate objects (except of simple types),
    * or never.
-   * 
+   *
    * @since YaGson
    */
   public GsonBuilder setReferencesPolicy(ReferencesPolicy referencesPolicy) {
@@ -547,11 +571,11 @@ public class GsonBuilder {
     this.excluder = excluder.forReferencesPolicy(referencesPolicy);
     return this;
   }
-  
+
   /**
    * Sets whether to emit the information about the exact runtime types in cases when the declared
    * types are less specific, and how exactly.
-   * 
+   *
    * @since YaGson
    */
   public GsonBuilder setTypeInfoPolicy(TypeInfoPolicy typeInfoPolicy) {
@@ -568,7 +592,7 @@ public class GsonBuilder {
   public Gson create() {
     return new Gson(excluder, fieldNamingPolicy, instanceCreators,
         serializeNulls, complexMapKeySerialization,
-        generateNonExecutableJson, escapeHtmlChars, prettyPrinting,
+        generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
         serializeSpecialFloatingPointValues, longSerializationPolicy,
         createTypeAdapterFactories(),
         referencesPolicy, typeInfoPolicy);

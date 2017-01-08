@@ -43,7 +43,7 @@ import java.util.List;
 public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings("unchecked")
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+    @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
       if (type.getRawType() == Object.class) {
         return (TypeAdapter<T>) new ObjectTypeAdapter(gson);
       }
@@ -53,7 +53,7 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
 
   private final Gson gson;
 
-  private ObjectTypeAdapter(Gson gson) {
+  ObjectTypeAdapter(Gson gson) {
     this.gson = gson;
   }
 

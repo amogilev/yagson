@@ -22,6 +22,7 @@ import com.google.gson.JsonSyntaxException;
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
+import com.google.gson.internal.bind.util.ISO8601Utils;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -30,10 +31,9 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.text.ParsePosition;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Adapter for Date. Although this class appears stateless, it is not.
@@ -44,7 +44,7 @@ import java.util.TimeZone;
 public final class DateTypeAdapter extends SimpleTypeAdapter<Date> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+    @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
       return typeToken.getRawType() == Date.class ? (TypeAdapter<T>) new DateTypeAdapter() : null;
     }
   };
@@ -53,13 +53,6 @@ public final class DateTypeAdapter extends SimpleTypeAdapter<Date> {
       = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.US);
   private final DateFormat localFormat
       = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT);
-  private final DateFormat iso8601Format = buildIso8601Format();
-
-  private static DateFormat buildIso8601Format() {
-    DateFormat iso8601Format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-    iso8601Format.setTimeZone(TimeZone.getTimeZone("UTC"));
-    return iso8601Format;
-  }
 
   @Override public Date read(JsonReader in) throws IOException {
     if (in.peek() == JsonToken.NULL) {
@@ -79,7 +72,7 @@ public final class DateTypeAdapter extends SimpleTypeAdapter<Date> {
     } catch (ParseException ignored) {
     }
     try {
-      return iso8601Format.parse(json);
+    	return ISO8601Utils.parse(json, new ParsePosition(0));
     } catch (ParseException e) {
       throw new JsonSyntaxException(json, e);
     }
@@ -93,4 +86,6 @@ public final class DateTypeAdapter extends SimpleTypeAdapter<Date> {
     String dateFormatAsString = enUsFormat.format(value);
     out.value(dateFormatAsString);
   }
+  
+  
 }

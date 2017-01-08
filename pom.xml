@@ -1,34 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.gilecode.yagson</groupId>
-  <artifactId>yagson-parent</artifactId>
-  <packaging>pom</packaging>
-  <version>0.2-SNAPSHOT</version>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  <inceptionYear>2015</inceptionYear>
-  <name>YaGson Parent</name>
+
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
     <version>9</version>
     <relativePath />
   </parent>
-  <url>https://github.com/amogilev/yagson</url>
+
+  <groupId>com.gilecode.yagson</groupId>
+  <artifactId>yagson-parent</artifactId>
+  <version>0.2-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>YaGson Parent</name>
   <description>YaGson Java-JSON-Java binding library</description>
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+  <url>https://github.com/amogilev/yagson</url>
+
+  <modules>
+    <module>gson</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>1.6</java.version>
+  </properties>
+
   <scm>
     <connection>scm:git:https://github.com/amogilev/yagson.git</connection>
     <developerConnection>scm:git:https://github.com/amogilev/yagson.git</developerConnection>
     <url>https://github.com/amogilev/yagson</url>
-  </scm>  
+  </scm>
+
+  <licenses>
+    <license>
+      <name>Apache 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -41,17 +53,18 @@
       <url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.2</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-  <modules>
-    <module>gson</module>
-  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.12</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <profiles>
     <!-- Activate PGP signing only when performing a release -->
     <profile>
@@ -107,87 +120,19 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
         <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.6</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <archive>
-            <addMavenDescriptor>false</addMavenDescriptor>
-            <manifestEntries>
-              <Bundle-RequiredExecutionEnvironment>JavaSE-1.6, JavaSE-1.7, JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-              <Export-Package><![CDATA[com.gilecode.yagson;version=${project.version}, com.gilecode.yagson.adapters;version=${project.version}, com.gilecode.yagson.refs;version=${project.version}, com.gilecode.yagson.refs.impl;version=${project.version}, com.gilecode.yagson.strategy;version=${project.version}, com.gilecode.yagson.types;version=${project.version}]]></Export-Package>
-              <Bundle-Version>${project.version}</Bundle-Version>
-              <Bundle-ContactAddress>https://github.com/amogilev/yagson</Bundle-ContactAddress>
-              <Bundle-Name>${project.name}</Bundle-Name>
-              <Bundle-Description>${project.description}</Bundle-Description>
-              <Bundle-ClassPath>.</Bundle-ClassPath>
-              <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
-              <Bundle-SymbolicName>com.gilecode.yagson</Bundle-SymbolicName>
-            </manifestEntries>
-          </archive>
-        </configuration>
       </plugin>
       <plugin>
-       <!-- TODO(inder): add manifest entry for maven group, artifact, and classifier ids -->
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-source-plugin</artifactId>
-         <version>2.4</version>
-         <executions>
-           <execution>
-             <id>attach-sources</id>
-             <phase>package</phase>
-             <goals>
-               <goal>jar</goal>
-             </goals>
-           </execution>
-         </executions>
-         <configuration>
-           <archive>
-             <manifestEntries>
-               <Eclipse-SourceBundle>com.gilecode.yagson;version="${project.version}"</Eclipse-SourceBundle>
-               <Bundle-SymbolicName>com.gilecode.yagson.source</Bundle-SymbolicName>
-               <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
-               <Bundle-Version>${project.version}</Bundle-Version>
-             </manifestEntries>
-           </archive>
-         </configuration>
-       </plugin>
-       <plugin>
-         <!-- TODO(inder): add manifest entry for maven group, artifact, and classifier ids -->
          <groupId>org.apache.maven.plugins</groupId>
          <artifactId>maven-javadoc-plugin</artifactId>
          <version>2.10.3</version>
-         <executions>
-           <execution>
-             <id>attach-javadocs</id>
-             <goals>
-               <goal>jar</goal>
-             </goals>
-           </execution>
-         </executions>
-         <configuration>
-           <includePackageNames>com.gilecode.yagson:com.google.gson</includePackageNames>
-           <excludePackageNames>com.google.gson.internal:com.google.gson.internal.bind</excludePackageNames>
-            <links>
-             <link>http://docs.oracle.com/javase/1.6.0/docs/api/</link>
-           </links>
-           <version>true</version>
-           <show>protected</show>
-         </configuration>
-       </plugin>
+      </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>2.5.5</version>
