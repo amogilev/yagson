@@ -18,13 +18,13 @@ package com.gilecode.yagson.adapters;
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.refs.PathElementProducer;
-import com.gilecode.yagson.types.FieldInfo;
-import com.gilecode.yagson.types.ObjectProvider;
-import com.gilecode.yagson.types.TypeUtils;
+import com.gilecode.yagson.types.*;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.internal.Excluder;
+import com.google.gson.internal.Streams;
 import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper;
 import com.google.gson.reflect.TypeToken;
@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 
@@ -138,9 +139,13 @@ public class AdapterUtils {
         adapter.write(out, obj, ctx);
     }
 
-    public static void writeReflectiveFields(Object instance, Map<String, FieldInfo> reflectiveFields,
-                                  JsonWriter out,  WriteContext ctx, PathElementProducer refPathProducer,
-                                  boolean wrapInObject) throws IOException {
+    /**
+     * Writes those of reflective fields which actual values does not contain non-serialized lambdas and differs from
+     * the default values.
+     */
+    public static void writeNonDefaultReflectiveFieldsWithNoNSLambdas(Object instance, Map<String, FieldInfo> reflectiveFields,
+                                                                      JsonWriter out, WriteContext ctx, PathElementProducer refPathProducer,
+                                                                      boolean wrapInObject) throws IOException {
         boolean hasExtraFieldsWritten = false;
         for (FieldInfo f : reflectiveFields.values()) {
             Object fieldValue;
@@ -151,12 +156,29 @@ public class AdapterUtils {
             }
             // skip default values
             if (fieldValue != f.getDefaultValue() && (fieldValue == null || !fieldValue.equals(f.getDefaultValue()))) {
-                if (wrapInObject && !hasExtraFieldsWritten) {
-                    out.beginObject();
+                // do actual write only if does not contain non-serializable lambdas
+                WriteContext origCtx = ctx;
+                ctx = ctx.makeChildContext();
+                ctx.setNsLambdaPolicy(NSLambdaPolicy.ERROR);
+                JsonElement element = null;
+                try {
+                    element = ctx.doToJsonTree(fieldValue, f.getFieldAdapter(), refPathProducer.produce());
+                } catch (NonSerializableLambdaException e) {
+                    if (origCtx.getNsLambdaPolicy() == NSLambdaPolicy.ERROR) {
+                        throw e;
+                    } // else just discard the changes
                 }
-                out.name(REF_FIELD_PREFIX + f.getField().getName());
-                ctx.doWrite(fieldValue, f.getFieldAdapter(), refPathProducer.produce(), out);
-                hasExtraFieldsWritten = true;
+
+                if (element != null) {
+                    if (wrapInObject && !hasExtraFieldsWritten) {
+                        out.beginObject();
+                    }
+                    out.name(REF_FIELD_PREFIX + f.getField().getName());
+
+                    Streams.write(element, out);
+                    origCtx.mergeWithChildContext(ctx);
+                    hasExtraFieldsWritten = true;
+                }
             }
         }
         if (wrapInObject && hasExtraFieldsWritten) {
@@ -213,4 +235,5 @@ public class AdapterUtils {
         }
       }
     }
+
 }

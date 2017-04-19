@@ -425,7 +425,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
               buildReflectiveFieldsInfo(map.getClass(), new ConstructingObjectProvider(
                       constructorConstructor.get(TypeToken.get(map.getClass()))));
       final AtomicInteger mapEntryIdx = new AtomicInteger(startIdx);
-      AdapterUtils.writeReflectiveFields(map, localReflectiveFields, out, ctx, new PathElementProducer() {
+      AdapterUtils.writeNonDefaultReflectiveFieldsWithNoNSLambdas(map, localReflectiveFields, out, ctx, new PathElementProducer() {
         public String produce() {
           int i = mapEntryIdx.getAndIncrement();
           return "" + i + "-val";

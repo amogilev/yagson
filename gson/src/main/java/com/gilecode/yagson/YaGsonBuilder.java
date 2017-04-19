@@ -17,6 +17,7 @@ package com.gilecode.yagson;
 
 import com.gilecode.yagson.refs.References;
 import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
 import com.google.gson.*;
 
@@ -54,7 +55,7 @@ public class YaGsonBuilder extends GsonBuilder {
                 generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
                 serializeSpecialFloatingPointValues, longSerializationPolicy,
                 createTypeAdapterFactories(),
-                referencesPolicy, typeInfoPolicy);
+                referencesPolicy, typeInfoPolicy, nsLambdaPolicy);
     }
 
     /**
@@ -71,6 +72,14 @@ public class YaGsonBuilder extends GsonBuilder {
     @Override
     public YaGsonBuilder setTypeInfoPolicy(TypeInfoPolicy typeInfoPolicy) {
         return (YaGsonBuilder) super.setTypeInfoPolicy(typeInfoPolicy);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public YaGsonBuilder setNsLambdaPolicy(NSLambdaPolicy nsLambdaPolicy) {
+        return (YaGsonBuilder) super.setNsLambdaPolicy(nsLambdaPolicy);
     }
 
     /**

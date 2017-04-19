@@ -79,4 +79,14 @@ class ReferencesNoneModeContext implements ReferencesReadContext, ReferencesWrit
     public ReferencesPolicy getPolicy() {
         return ReferencesPolicy.DISABLED;
     }
+
+    @Override
+    public ReferencesWriteContext makeChildContext() {
+        return this;
+    }
+
+    @Override
+    public void mergeWithChildContext(ReferencesWriteContext rctx) {
+        // do nothing
+    }
 }

@@ -28,8 +28,10 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static java.util.Arrays.asList;
 
@@ -221,6 +223,8 @@ public class TypeUtils {
                 // EnumMap may potentially be extended
                 return typesDiffer(deserializationType, actualClass);
             }
+        } else if (isLambdaClass(actualClass)) {
+            return false;
         } else if (isDefaultDeserializationClass(actualClass, deserializationType, isMapKey)) {
             return false;
         } else if (deserializationType == null) {
@@ -338,9 +342,9 @@ public class TypeUtils {
         }
 
         // do not print type wrapper if the value is known to be skipped
-
         boolean isValueSkipped = AdapterUtils.isSkipSerializeTypeAdapter(adapter);
-        if (!isValueSkipped) {
+        boolean isTypeSkipped = isValueSkipped || TypeUtils.isLambdaClass(actualClass);
+        if (!isTypeSkipped) {
             out.beginObject();
             out.name("@type");
             out.value(actualClass.getName() + parameterTypes);
@@ -348,7 +352,7 @@ public class TypeUtils {
         }
 
         adapter.write(out, value, ctx);
-        if (!isValueSkipped) {
+        if (!isTypeSkipped) {
             out.endObject();
         }
     }
@@ -780,5 +784,21 @@ public class TypeUtils {
         }
 
         throw new ClassCastException("Failed to convert " + src.getClass() + " to " + anotherNumberType);
+    }
+
+    private static final Pattern lambdaClassNamePattern = Pattern.compile("^.+\\$\\$Lambda\\$\\d+/\\d+$");
+
+    /**
+     * Test whether the given class is a synthetic class representing lambdas or method references.
+     */
+    public static boolean isLambdaClass(Class<?> c) {
+        return c.isSynthetic() && lambdaClassNamePattern.matcher(c.getName()).matches();
+    }
+
+    /**
+     * Test whether the given class is a synthetic class representing lambdas or method references.
+     */
+    public static boolean isNonSerializableLambdaClass(Class<?> c) {
+        return isLambdaClass(c) && !Serializable.class.isAssignableFrom(c);
     }
 }

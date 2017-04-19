@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.DelegatingTypeAdapter;
+import com.gilecode.yagson.adapters.LambdaAdapterFactory;
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.gilecode.yagson.adapters.ThreadTypesAdapterFactory;
 import com.gilecode.yagson.refs.ReferencesPolicy;
@@ -149,6 +150,7 @@ public class Gson {
 
   private final ReferencesPolicy referencesPolicy;
   private final TypeInfoPolicy typeInfoPolicy;
+  private final NSLambdaPolicy nsLambdaPolicy;
   private final ReflectiveTypeAdapterFactory reflectiveTypeAdapterFactory;
 
   /**
@@ -192,7 +194,7 @@ public class Gson {
         DEFAULT_COMPLEX_MAP_KEYS, DEFAULT_JSON_NON_EXECUTABLE, DEFAULT_ESCAPE_HTML,
         DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES,
         LongSerializationPolicy.DEFAULT, Collections.<TypeAdapterFactory>emptyList(),
-        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED);
+        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED, NSLambdaPolicy.TO_NULL);
   }
 
   protected Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingStrategy,
@@ -201,7 +203,7 @@ public class Gson {
       boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
       LongSerializationPolicy longSerializationPolicy,
       List<TypeAdapterFactory> typeAdapterFactories,
-      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
+      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy) {
     this.constructorConstructor = new ConstructorConstructor(instanceCreators, typeInfoPolicy.isEnabled());
     this.excluder = excluder;
     this.fieldNamingStrategy = fieldNamingStrategy;
@@ -212,6 +214,7 @@ public class Gson {
     this.lenient = lenient;
     this.referencesPolicy = referencesPolicy;
     this.typeInfoPolicy = typeInfoPolicy;
+    this.nsLambdaPolicy = nsLambdaPolicy;
     this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
 
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
@@ -264,6 +267,7 @@ public class Gson {
     factories.add(ArrayTypeAdapter.FACTORY);
     factories.add(TypeAdapters.CLASS_FACTORY);
     factories.add(new ThreadTypesAdapterFactory(jsonAdapterFactory, constructorConstructor));
+    factories.add(new LambdaAdapterFactory());
 
     // type adapters for composite and user-defined types
     factories.add(new CollectionTypeAdapterFactory(constructorConstructor));
@@ -1018,6 +1022,10 @@ public class Gson {
 
   public ReferencesPolicy getReferencesPolicy() {
     return referencesPolicy;
+  }
+
+  public NSLambdaPolicy getNsLambdaPolicy() {
+    return nsLambdaPolicy;
   }
 
   public ConstructorConstructor getConstructorConstructor() {

@@ -25,12 +25,10 @@ import com.gilecode.yagson.refs.*;
 import com.gilecode.yagson.types.*;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
-import com.google.gson.internal.$Gson$Types;
-import com.google.gson.internal.ConstructorConstructor;
-import com.google.gson.internal.JsonReaderInternalAccess;
-import com.google.gson.internal.ObjectConstructor;
+import com.google.gson.internal.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -367,11 +365,24 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return idx;
       }
 
-      out.value(REF_FIELD_PREFIX + backingMapField.getName() + ":");
+      // do actual write only if does not contain non-serializable lambdas
+      WriteContext origCtx = ctx;
+      ctx = ctx.makeChildContext();
       ctx.setSkipNextMapEntries(true);
-      ctx.doWrite(actualBackingMap, backingMapInfo.getFieldAdapter(), Integer.toString(idx + 1), out);
-      ctx.setSkipNextMapEntries(false);
+      ctx.setNsLambdaPolicy(NSLambdaPolicy.ERROR);
 
+      JsonElement element;
+      try {
+        element = ctx.doToJsonTree(actualBackingMap, backingMapInfo.getFieldAdapter(), Integer.toString(idx + 1));
+      } catch (NonSerializableLambdaException e) {
+        if (origCtx.getNsLambdaPolicy() == NSLambdaPolicy.ERROR) {
+          throw e;
+        } // else just discard the changes
+        return idx; // nothing is written
+      }
+      out.value(REF_FIELD_PREFIX + backingMapField.getName() + ":");
+      Streams.write(element, out);
+      origCtx.mergeWithChildContext(ctx);
       return idx + 2; // next element index, after written name and value elements
     }
 
@@ -399,9 +410,22 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         } else {
           // skip default values
           if (fieldValue != f.getDefaultValue() && (fieldValue == null || !fieldValue.equals(f.getDefaultValue()))) {
-            out.value(REF_FIELD_PREFIX + f.getField().getName() + ":");
-            ctx.doWrite(fieldValue, f.getFieldAdapter(), Integer.toString(idx + 1), out);
-            idx += 2; // spans two elements
+
+            // do actual write only if does not contain non-serializable lambdas
+            WriteContext origCtx = ctx;
+            ctx = ctx.makeChildContext();
+            ctx.setNsLambdaPolicy(NSLambdaPolicy.ERROR);
+            try {
+              JsonElement element = ctx.doToJsonTree(fieldValue, f.getFieldAdapter(), Integer.toString(idx + 1));
+              out.value(REF_FIELD_PREFIX + f.getField().getName() + ":");
+              Streams.write(element, out);
+              origCtx.mergeWithChildContext(ctx);
+              idx += 2; // spans two elements
+            } catch (NonSerializableLambdaException e) {
+              if (origCtx.getNsLambdaPolicy() == NSLambdaPolicy.ERROR) {
+                throw e;
+              } // else just discard the changes
+            }
           }
         }
       }
