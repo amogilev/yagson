@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.DelegatingTypeAdapter;
+import com.gilecode.yagson.adapters.LambdaAdapterFactory;
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.gilecode.yagson.adapters.ThreadTypesAdapterFactory;
 import com.gilecode.yagson.refs.ReferencesPolicy;
@@ -264,6 +265,7 @@ public class Gson {
     factories.add(ArrayTypeAdapter.FACTORY);
     factories.add(TypeAdapters.CLASS_FACTORY);
     factories.add(new ThreadTypesAdapterFactory(jsonAdapterFactory, constructorConstructor));
+    factories.add(new LambdaAdapterFactory());
 
     // type adapters for composite and user-defined types
     factories.add(new CollectionTypeAdapterFactory(constructorConstructor));

@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 
@@ -213,4 +214,5 @@ public class AdapterUtils {
         }
       }
     }
+
 }

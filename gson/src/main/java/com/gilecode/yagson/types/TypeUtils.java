@@ -30,6 +30,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static java.util.Arrays.asList;
 
@@ -221,6 +222,8 @@ public class TypeUtils {
                 // EnumMap may potentially be extended
                 return typesDiffer(deserializationType, actualClass);
             }
+        } else if (isLambdaClass(actualClass)) {
+            return false;
         } else if (isDefaultDeserializationClass(actualClass, deserializationType, isMapKey)) {
             return false;
         } else if (deserializationType == null) {
@@ -780,5 +783,15 @@ public class TypeUtils {
         }
 
         throw new ClassCastException("Failed to convert " + src.getClass() + " to " + anotherNumberType);
+    }
+
+    private static final Pattern lambdaClassNamePattern = Pattern.compile("^.+\\$\\$Lambda\\$\\d+/\\d+$");
+
+    /**
+     * Test whether the given class is a synthetic class representing lambdas or method references.
+     */
+    // FIXME review usages - somewhere only non-serializable lambdas are supposed
+    public static boolean isLambdaClass(Class<?> c) {
+        return c.isSynthetic() && lambdaClassNamePattern.matcher(c.getName()).matches();
     }
 }
