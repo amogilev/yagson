@@ -1,12 +1,13 @@
 package com.gilecode.yagson.tests;
 
-import com.gilecode.yagson.YaGson;
 import com.gilecode.yagson.tests.data.ClassWithObject;
 import com.gilecode.yagson.tests.util.BindingTestCase;
 import com.gilecode.yagson.tests.util.EqualityCheckMode;
 import com.gilecode.yagson.types.TypeUtils;
-import com.google.gson.Gson;
 
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.*;
 
 /**
@@ -34,20 +35,22 @@ public class TestLambdas extends BindingTestCase {
         assertFalse(TypeUtils.isLambdaClass(this.getClass()));
     }
 
-    private void doTestNSLambda(Object nsLambda) {
-        test(nsLambda, "null", EqualityCheckMode.EXPECT_NULL);
-    }
-
-
     public void testNonSerializableLambda() {
         Supplier s1 = (Supplier) () -> "foo";
-        doTestNSLambda(s1);
+        test(s1, "null", EqualityCheckMode.EXPECT_NULL);
 
         Supplier[] arr = {s1};
         test(arr, jsonStr("[null]"), EqualityCheckMode.NONE);
 
         ClassWithObject obj = new ClassWithObject(s1);
         test(obj, jsonStr("{}"), EqualityCheckMode.NONE);
+    }
+
+    public void testNSLambdaInComparator() {
+        Comparator<String> cmp1 = (s1, s2) -> s1.length() - s2.length();
+        Comparator<String> cmp2 = Comparator.nullsFirst(cmp1);
+        Set<String> set = new TreeSet<>(cmp2);
+        test(set, "[]", EqualityCheckMode.NONE);
     }
 
 /*
