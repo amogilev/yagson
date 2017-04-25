@@ -88,4 +88,14 @@ public class WriteContext {
     public Gson getGson() {
         return gson;
     }
+
+    public WriteContext makeChildContext() {
+        WriteContext child = new WriteContext(gson, rctx.makeChildContext());
+        child.skipNextMapEntries = skipNextMapEntries;
+        return child;
+    }
+
+    public void mergeWithChildContext(WriteContext childContext) {
+        rctx.mergeWithChildContext(childContext.rctx);
+    }
 }

@@ -39,6 +39,10 @@ class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesModeConte
             super(root);
         }
 
+        RefsWriteContext(RefsWriteContext parentContext) {
+            super(parentContext);
+        }
+
         @Override
         public ReferencesPolicy getPolicy() {
             return policy;
@@ -50,6 +54,11 @@ class ReferencesCircularOnlyModeContext extends ReferencesAllDuplicatesModeConte
             if (value != null) {
                 references.remove(value);
             }
+        }
+
+        @Override
+        public ReferencesWriteContext makeChildContext() {
+            return new RefsWriteContext(this);
         }
     }
 

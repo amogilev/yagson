@@ -42,6 +42,7 @@ class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesMo
 
         private Deque<Map<Object, String>> siblingReferencesStack;
         private Deque<Map<Object,String>> disposedRefsMapsCache;
+        private final RefsWriteContext parentContext;
 
         @Override
         protected void init() {
@@ -52,6 +53,12 @@ class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesMo
 
         RefsWriteContext(Object root) {
             super(root);
+            this.parentContext = null;
+        }
+
+        public RefsWriteContext(RefsWriteContext parentContext) {
+            super(parentContext);
+            this.parentContext = parentContext;
         }
 
         @Override
@@ -70,7 +77,7 @@ class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesMo
                 // NOTE: only 'fields' are allowed, as this context require assistance of the reflective adapter to
                 // resolve the sibling references during read (in the current implementation). No other adapters
                 // currently support resolving FieldReferencePlaceholders
-                Map<Object, String> siblingReferences = siblingReferencesStack.getLast();
+                Map<Object, String> siblingReferences = getCurrentSiblings();
                 String ref = siblingReferences.get(value);
                 if (ref != null) {
                     return References.REF_FIELD_PREFIX + ref;
@@ -83,12 +90,18 @@ class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesMo
         protected void startObject(Object value, String pathElement) {
             boolean isField = pathElement.length() > 0 && Character.isJavaIdentifierStart(pathElement.charAt(0));
             if (isField) {
-                Map<Object, String> siblingReferences = siblingReferencesStack.getLast();
+                Map<Object, String> siblingReferences = getCurrentSiblings();
                 siblingReferences.put(value, pathElement);
             }
             super.startObject(value, pathElement);
             siblingReferencesStack.add(getEmptyRefsMap());
        }
+
+        private Map<Object, String> getCurrentSiblings() {
+            return siblingReferencesStack.isEmpty() && parentContext != null ?
+                                parentContext.siblingReferencesStack.getLast() :
+                                siblingReferencesStack.getLast();
+        }
 
         @Override
         protected void endObject(Object value) {
@@ -109,6 +122,24 @@ class ReferencesCircularAndSiblingsModeContext extends ReferencesAllDuplicatesMo
                 return new IdentityHashMap<Object, String>();
             } else {
                 return disposedRefsMapsCache.removeLast();
+            }
+        }
+
+        @Override
+        public ReferencesWriteContext makeChildContext() {
+            return new RefsWriteContext(this);
+        }
+
+        @Override
+        public void mergeWithChildContext(ReferencesWriteContext childContext) {
+            super.mergeWithChildContext(childContext);
+
+            if (!(childContext instanceof RefsWriteContext)) {
+                throw new IllegalStateException("Expected child context");
+            }
+            RefsWriteContext childRWC = (RefsWriteContext) childContext;
+            if (!childRWC.siblingReferencesStack.isEmpty()) {
+                throw new IllegalStateException("Unexpected state of child context for merge!");
             }
         }
     }

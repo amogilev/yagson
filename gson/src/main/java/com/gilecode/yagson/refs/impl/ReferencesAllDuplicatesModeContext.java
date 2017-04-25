@@ -73,12 +73,18 @@ class ReferencesAllDuplicatesModeContext {
     class RefsWriteContext implements ReferencesWriteContext {
         protected IdentityHashMap<Object, String> references = new IdentityHashMap<Object, String>();
         protected Deque<Object> currentObjects = new ArrayDeque<Object>(); // used only for self-checks
+        protected final RefsWriteContext parentContext;
 
         public RefsWriteContext(Object root) {
+            this.parentContext = null;
             init();
             if (root != null) {
                 startObject(root, REF_ROOT);
             }
+        }
+
+        protected RefsWriteContext(RefsWriteContext parentContext) {
+            this.parentContext = parentContext;
         }
 
         // inits subclasses (before constructor completion)
@@ -133,6 +139,8 @@ class ReferencesAllDuplicatesModeContext {
                     String siblingRef = References.REF_FIELD_PREFIX + ref.substring(curRef.length() + 1);
                     return siblingRef;
                 }
+            } else if (parentContext != null) {
+                return parentContext.getReferenceFor(value, valueTypeAdapter, pathElement);
             }
             return ref;
         }
@@ -176,6 +184,24 @@ class ReferencesAllDuplicatesModeContext {
 
         public ReferencesPolicy getPolicy() {
             return policy;
+        }
+
+        @Override
+        public ReferencesWriteContext makeChildContext() {
+            return new RefsWriteContext(this);
+        }
+
+        @Override
+        public void mergeWithChildContext(ReferencesWriteContext childContext) {
+            RefsWriteContext childRWC = null;
+            if (!(childContext instanceof RefsWriteContext) ||
+                    (childRWC = (RefsWriteContext)childContext).parentContext != this) {
+                throw new IllegalStateException("Expected child context");
+            }
+            references.putAll(childRWC.references);
+            if (!childRWC.currentObjects.isEmpty()) {
+                throw new IllegalStateException("Unexpected state of child context for merge!");
+            }
         }
     }
 

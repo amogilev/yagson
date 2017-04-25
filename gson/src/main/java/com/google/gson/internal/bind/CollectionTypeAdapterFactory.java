@@ -22,15 +22,14 @@ import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.AdapterUtils;
 import com.gilecode.yagson.adapters.TypeAdvisableComplexTypeAdapter;
 import com.gilecode.yagson.refs.*;
+import com.gilecode.yagson.stream.ConditionalWriteSessionHandle;
 import com.gilecode.yagson.types.*;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
-import com.google.gson.internal.$Gson$Types;
-import com.google.gson.internal.ConstructorConstructor;
-import com.google.gson.internal.JsonReaderInternalAccess;
-import com.google.gson.internal.ObjectConstructor;
+import com.google.gson.internal.*;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -367,10 +366,18 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return idx;
       }
 
-      out.value(REF_FIELD_PREFIX + backingMapField.getName() + ":");
+      WriteContext origCtx = ctx;
+      ctx = ctx.makeChildContext();
       ctx.setSkipNextMapEntries(true);
-      ctx.doWrite(actualBackingMap, backingMapInfo.getFieldAdapter(), Integer.toString(idx + 1), out);
-      ctx.setSkipNextMapEntries(false);
+      JsonElement element = ctx.doToJsonTree(actualBackingMap, backingMapInfo.getFieldAdapter(), Integer.toString(idx + 1));
+
+      // FIXME:
+      boolean foundNSLambda = false;
+      if (!foundNSLambda) {
+        out.value(REF_FIELD_PREFIX + backingMapField.getName() + ":");
+        Streams.write(element, out);
+        origCtx.mergeWithChildContext(ctx);
+      }
 
       return idx + 2; // next element index, after written name and value elements
     }
@@ -399,6 +406,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         } else {
           // skip default values
           if (fieldValue != f.getDefaultValue() && (fieldValue == null || !fieldValue.equals(f.getDefaultValue()))) {
+            // FIXME only write an extra field if it does not contain ns-lambdas
             out.value(REF_FIELD_PREFIX + f.getField().getName() + ":");
             ctx.doWrite(fieldValue, f.getFieldAdapter(), Integer.toString(idx + 1), out);
             idx += 2; // spans two elements

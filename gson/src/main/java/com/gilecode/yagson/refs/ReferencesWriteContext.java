@@ -52,4 +52,15 @@ public interface ReferencesWriteContext {
     <T> String getReferenceFor(T value, TypeAdapter<T> valueTypeAdapter, String pathElement);
 
     ReferencesPolicy getPolicy();
+
+    /**
+     * Creates a child context, which inherits all references from the parent context, but collects new references
+     * to itself. The collected references may be later merged into the parent context or just discarded.
+     */
+    ReferencesWriteContext makeChildContext();
+
+    /**
+     * Merge all references collected by the given child context to this (parent) context.
+     */
+    void mergeWithChildContext(ReferencesWriteContext rctx);
 }
