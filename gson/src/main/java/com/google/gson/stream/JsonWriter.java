@@ -16,10 +16,9 @@
 
 package com.google.gson.stream;
 
-import java.io.Closeable;
-import java.io.Flushable;
-import java.io.IOException;
-import java.io.Writer;
+import com.gilecode.yagson.stream.ConditionalWriteSessionHandle;
+
+import java.io.*;
 
 import static com.google.gson.stream.JsonScope.DANGLING_NAME;
 import static com.google.gson.stream.JsonScope.EMPTY_ARRAY;
@@ -162,7 +161,7 @@ public class JsonWriter implements Closeable, Flushable {
   }
 
   /** The output data, containing at most one top-level array or object. */
-  private final Writer out;
+  private Writer out;
 
   private int[] stack = new int[32];
   private int stackSize = 0;
@@ -655,5 +654,33 @@ public class JsonWriter implements Closeable, Flushable {
     default:
       throw new IllegalStateException("Nesting problem.");
     }
+  }
+
+  //
+  // YaGson modifications
+  //
+
+  /**
+   * Switches the writer to a new "child" session when all JSON writes are deferred until some later time,
+   * at which all the changes may be either accepted or cancelled.
+   */
+  public ConditionalWriteSessionHandle startConditionalWriteSession() {
+    StringWriter newOut = new StringWriter();
+    ConditionalWriteSessionHandle handle = new ConditionalWriteSessionHandle(out, newOut);
+    out = newOut;
+    return handle;
+  }
+
+  /**
+   * Finishes a previously initiated session, and accepts or cancels all JSON writes performed during that session.
+   * @param handle the session handle
+   * @param acceptSession whether all writes are to be accepted
+   */
+  public void finishConditionalWriteSession(ConditionalWriteSessionHandle handle,
+                                            boolean acceptSession) throws IOException {
+    if (acceptSession) {
+      handle.parentOut.write(out.toString());
+    }
+    out = handle.parentOut;
   }
 }
