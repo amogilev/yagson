@@ -18,6 +18,7 @@ package com.gilecode.yagson;
 import com.gilecode.yagson.refs.References;
 import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.refs.ReferencesWriteContext;
+import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.TypeAdapter;
@@ -48,9 +49,12 @@ public class WriteContext {
      */
     private boolean skipNextMapEntries;
 
+    private NSLambdaPolicy nsLambdaPolicy;
+
     private WriteContext(Gson gson, ReferencesWriteContext rctx) {
         this.gson = gson;
         this.rctx = rctx;
+        this.nsLambdaPolicy = gson.getNsLambdaPolicy();
     }
 
     public static WriteContext create(Gson gson, Object root) {
@@ -67,6 +71,10 @@ public class WriteContext {
 
     public boolean isSkipNextMapEntries() {
         return skipNextMapEntries;
+    }
+
+    public NSLambdaPolicy getNsLambdaPolicy() {
+        return nsLambdaPolicy;
     }
 
     public void setSkipNextMapEntries(boolean skipNextMapEntries) {
@@ -92,6 +100,7 @@ public class WriteContext {
     public WriteContext makeChildContext() {
         WriteContext child = new WriteContext(gson, rctx.makeChildContext());
         child.skipNextMapEntries = skipNextMapEntries;
+        child.nsLambdaPolicy = nsLambdaPolicy;
         return child;
     }
 

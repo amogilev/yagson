@@ -17,6 +17,7 @@ package com.gilecode.yagson;
 
 import com.gilecode.yagson.refs.References;
 import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.*;
@@ -93,7 +94,7 @@ public class YaGson extends Gson {
                 !TypeInfoPolicy.defaultPolicy().isEnabled(), // disable htmlSafe if types are printed
                 DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES, LongSerializationPolicy.DEFAULT,
                 Collections.<TypeAdapterFactory>emptyList(),
-                References.defaultPolicy(), TypeInfoPolicy.defaultPolicy());
+                References.defaultPolicy(), TypeInfoPolicy.defaultPolicy(), NSLambdaPolicy.TO_NULL);
     }
 
     protected YaGson(Excluder excluder, FieldNamingStrategy fieldNamingPolicy,
@@ -101,10 +102,10 @@ public class YaGson extends Gson {
           boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
           boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
           LongSerializationPolicy longSerializationPolicy, List<TypeAdapterFactory> typeAdapterFactories,
-          ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
+          ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy) {
         super(excluder, fieldNamingPolicy, instanceCreators, serializeNulls, complexMapKeySerialization,
                 generateNonExecutableGson, htmlSafe, prettyPrinting, lenient, serializeSpecialFloatingPointValues,
-                longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy);
+                longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy, nsLambdaPolicy);
     }
 
     /**

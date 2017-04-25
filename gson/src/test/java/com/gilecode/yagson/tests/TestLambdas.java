@@ -1,9 +1,14 @@
 package com.gilecode.yagson.tests;
 
+import com.gilecode.yagson.YaGson;
+import com.gilecode.yagson.YaGsonBuilder;
 import com.gilecode.yagson.tests.data.ClassWithObject;
 import com.gilecode.yagson.tests.util.BindingTestCase;
 import com.gilecode.yagson.tests.util.EqualityCheckMode;
+import com.gilecode.yagson.types.NSLambdaPolicy;
+import com.gilecode.yagson.types.NonSerializableLambdaException;
 import com.gilecode.yagson.types.TypeUtils;
+import com.google.gson.Gson;
 
 import java.util.Comparator;
 import java.util.Set;
@@ -35,7 +40,7 @@ public class TestLambdas extends BindingTestCase {
         assertFalse(TypeUtils.isLambdaClass(this.getClass()));
     }
 
-    public void testNonSerializableLambda() {
+    public void testNonSerializableLambdaSkipMode() {
         Supplier s1 = (Supplier) () -> "foo";
         test(s1, "null", EqualityCheckMode.EXPECT_NULL);
 
@@ -44,6 +49,33 @@ public class TestLambdas extends BindingTestCase {
 
         ClassWithObject obj = new ClassWithObject(s1);
         test(obj, jsonStr("{}"), EqualityCheckMode.NONE);
+    }
+
+    public void testNonSerializableLambdaErrorMode() {
+        Gson gson = new YaGsonBuilder().setNsLambdaPolicy(NSLambdaPolicy.ERROR).create();
+        Supplier s1 = (Supplier) () -> "foo";
+        try {
+            test(gson, s1);
+            fail("NonSerializableLambdaException expected!");
+        } catch (NonSerializableLambdaException e) {
+            // expected;
+        }
+
+        Supplier[] arr = {s1};
+        try {
+            test(gson, arr);
+            fail("NonSerializableLambdaException expected!");
+        } catch (NonSerializableLambdaException e) {
+            // expected;
+        }
+
+        ClassWithObject obj = new ClassWithObject(s1);
+        try {
+            test(gson, obj);
+            fail("NonSerializableLambdaException expected!");
+        } catch (NonSerializableLambdaException e) {
+            // expected;
+        }
     }
 
     public void testNSLambdaInComparator() {

@@ -1,5 +1,7 @@
 package com.gilecode.yagson.adapters;
 
+import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.types.NonSerializableLambdaException;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -19,16 +21,27 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
         if (TypeUtils.isLambdaClass(type.getRawType())) {
             @SuppressWarnings({"unchecked", "rawtypes"})
-            TypeAdapter<T> result = (TypeAdapter)new NullLambdaAdapter();
+            TypeAdapter<T> result = (TypeAdapter)new NSLambdaAdapter();
             return result;
         }
         return null;
     }
 
-    private class NullLambdaAdapter<T> extends SimpleTypeAdapter<T> {
+    private class NSLambdaAdapter<T> extends SimpleTypeAdapter<T> {
         @Override
         public void write(JsonWriter out, T value) throws IOException {
-            out.nullValue();
+            throw new IllegalStateException("Shouldn't be called");
+        }
+
+        @Override
+        public void write(JsonWriter out, T value, WriteContext ctx) throws IOException {
+            switch (ctx.getNsLambdaPolicy()) {
+                case TO_NULL:
+                    out.nullValue();
+                    break;
+                case ERROR:
+                    throw new NonSerializableLambdaException();
+            }
         }
 
         @Override

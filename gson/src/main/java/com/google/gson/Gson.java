@@ -150,6 +150,7 @@ public class Gson {
 
   private final ReferencesPolicy referencesPolicy;
   private final TypeInfoPolicy typeInfoPolicy;
+  private final NSLambdaPolicy nsLambdaPolicy;
   private final ReflectiveTypeAdapterFactory reflectiveTypeAdapterFactory;
 
   /**
@@ -193,7 +194,7 @@ public class Gson {
         DEFAULT_COMPLEX_MAP_KEYS, DEFAULT_JSON_NON_EXECUTABLE, DEFAULT_ESCAPE_HTML,
         DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES,
         LongSerializationPolicy.DEFAULT, Collections.<TypeAdapterFactory>emptyList(),
-        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED);
+        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED, NSLambdaPolicy.TO_NULL);
   }
 
   protected Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingStrategy,
@@ -202,7 +203,7 @@ public class Gson {
       boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
       LongSerializationPolicy longSerializationPolicy,
       List<TypeAdapterFactory> typeAdapterFactories,
-      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy) {
+      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy) {
     this.constructorConstructor = new ConstructorConstructor(instanceCreators, typeInfoPolicy.isEnabled());
     this.excluder = excluder;
     this.fieldNamingStrategy = fieldNamingStrategy;
@@ -213,6 +214,7 @@ public class Gson {
     this.lenient = lenient;
     this.referencesPolicy = referencesPolicy;
     this.typeInfoPolicy = typeInfoPolicy;
+    this.nsLambdaPolicy = nsLambdaPolicy;
     this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
 
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
@@ -1020,6 +1022,10 @@ public class Gson {
 
   public ReferencesPolicy getReferencesPolicy() {
     return referencesPolicy;
+  }
+
+  public NSLambdaPolicy getNsLambdaPolicy() {
+    return nsLambdaPolicy;
   }
 
   public ConstructorConstructor getConstructorConstructor() {

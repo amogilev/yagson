@@ -17,6 +17,7 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.google.gson.stream.JsonReader;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
@@ -100,6 +101,7 @@ public class GsonBuilder {
   protected boolean lenient = DEFAULT_LENIENT;
   protected ReferencesPolicy referencesPolicy = ReferencesPolicy.DISABLED;
   protected TypeInfoPolicy typeInfoPolicy = TypeInfoPolicy.DISABLED;
+  protected NSLambdaPolicy nsLambdaPolicy = NSLambdaPolicy.TO_NULL;
 
   /**
    * Creates a GsonBuilder instance that can be used to build Gson with various configuration
@@ -584,6 +586,16 @@ public class GsonBuilder {
   }
 
   /**
+   * Sets the method of handling non-serializable lambdas - whether to skip the, throw exception etc.
+   *
+   * @since YaGson
+   */
+  public GsonBuilder setNsLambdaPolicy(NSLambdaPolicy nsLambdaPolicy) {
+    this.nsLambdaPolicy = nsLambdaPolicy;
+    return this;
+  }
+
+  /**
    * Creates a {@link Gson} instance based on the current configuration. This method is free of
    * side-effects to this {@code GsonBuilder} instance and hence can be called multiple times.
    *
@@ -595,7 +607,7 @@ public class GsonBuilder {
         generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
         serializeSpecialFloatingPointValues, longSerializationPolicy,
         createTypeAdapterFactories(),
-        referencesPolicy, typeInfoPolicy);
+        referencesPolicy, typeInfoPolicy, nsLambdaPolicy);
   }
 
   protected List<TypeAdapterFactory> createTypeAdapterFactories() {

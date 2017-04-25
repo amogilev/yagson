@@ -17,6 +17,7 @@
 package com.google.gson;
 
 import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
 import com.google.gson.internal.Excluder;
 import java.lang.reflect.Field;
@@ -46,7 +47,7 @@ public final class GsonTest extends TestCase {
     Gson gson = new Gson(CUSTOM_EXCLUDER, CUSTOM_FIELD_NAMING_STRATEGY,
         new HashMap<Type, InstanceCreator<?>>(), true, false, true, false,
         true, true, false, LongSerializationPolicy.DEFAULT,
-        new ArrayList<TypeAdapterFactory>(), ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED);
+        new ArrayList<TypeAdapterFactory>(), ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED, NSLambdaPolicy.TO_NULL);
 
     assertEquals(CUSTOM_EXCLUDER, gson.excluder());
     assertEquals(CUSTOM_FIELD_NAMING_STRATEGY, gson.fieldNamingStrategy());
