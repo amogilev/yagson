@@ -56,4 +56,16 @@ public class TestSerializableLambdas extends BindingTestCase {
         assertEquals("foo2", s1.get());
         assertEquals("foo1", s2.get());
     }
+
+    public void testSerializableLambda3() throws Exception {
+        Supplier<ArrayList> s1 = (Supplier & Serializable) ArrayList::new;
+        Supplier<ArrayList> s2 = test(s1, null, EqualityCheckMode.NONE);
+
+        ArrayList list1 = s2.get();
+        ArrayList list2 = s2.get();
+
+        assertFalse(list1 == list2);
+        assertNotNull(list1);
+        assertNotNull(list2);
+    }
 }
