@@ -1,6 +1,5 @@
 package com.gilecode.yagson.tests;
 
-import com.gilecode.yagson.YaGson;
 import com.gilecode.yagson.YaGsonBuilder;
 import com.gilecode.yagson.tests.data.ClassWithObject;
 import com.gilecode.yagson.tests.util.BindingTestCase;
@@ -10,16 +9,19 @@ import com.gilecode.yagson.types.NonSerializableLambdaException;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 
+import java.io.Serializable;
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.*;
 
 /**
- * Test for serializable and non-serializable lambdas.
+ * Test for non-serializable lambdas.
  * Only available for Java 8 and higher  - shall be commented out otherwise.
  *
  * @author Andrey Mogilev
  */
-public class TestLambdas extends BindingTestCase {
+public class TestNonSerializableLambdas extends BindingTestCase {
 
     public void testLambdaDetection() {
         Supplier s1 = (Supplier) () -> "foo";
