@@ -112,6 +112,19 @@ object itself. There may be more complicated references, describing a _path_ fro
 `@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in the
 parent object.
 
+== New in version `0.2`
+
+New features:
+
+* Java 8 support, including:
+** full serialization and de-serialization of serializable lambdas;
+** skipping non-serializable lambdas;
+
+Updates:
+
+* google-gson codebase is updated to release 2.8.0
+
+
 == New in version `0.1`
 
 New features:
@@ -125,10 +138,6 @@ the serialized classes;
 * support for mixed-type collections, maps, and arrays;
 * support for multiple fields with the same name in one object (e.g. when "duplicate" fields are declared in
 super-classes);
-
-=== Known issues in `v0.1`:
-* **no Java 8 support yet**;
-* incorrect serialization of some ``Iterator``s
 
 == License
 

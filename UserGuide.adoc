@@ -26,8 +26,7 @@ client machines, e.g. for Java-based *microservices*.
 
 == Requirements and limitations
 
-YaGson works on Java SE 6 or later, with temporal exclusion of Java 8 (lambdas and method references are not
-supported yet).
+YaGson works on Java SE 6 or later, including Java 8.
 
 No third-party dependencies are required. Any other mapping library (including original Gson) may be safely added to
 the classpath.
@@ -77,7 +76,7 @@ In Maven projects, just add the following dependency:
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
     <scope>compile</scope>
   </dependency>
 ----
@@ -153,8 +152,8 @@ For example, consider the most common case, which is a serialization of a custom
   String objJson = mapper.toJson(obj, Person.class);
   // objJson = {"name":"John","family":"Doe"}
 
-  Person deserisalizedObj = mapper.fromJson(objJson, Person.class);
-  // deserisalizedObj = Person{name='John', family='Doe'}
+  Person deserializedObj = mapper.fromJson(objJson, Person.class);
+  // deserializedObj = Person{name='John', family='Doe'}
 ----
 
 As you can see, such objects are mapped to JSON Objects and back on a field-by-field basis.
@@ -586,6 +585,49 @@ mapped to ``null``s;
 * Instances of all `Reference` classes, like `WeakReference`, `SoftReference` and `PhantomReference`, are
 serialized _without_ their current values, as if they were already GC'ed
 
+=== Mapping Java 8 Lambda Expresssions
+
+Usually, there is no need to serialize Lambda Expressions, as they do not represent any data.
+However, it is quite possible that an object being serialized contains some lamdas, e.g. a serialized `Map` object
+may contain custom `Comparator` implemented with the use of Lambda Expressions. That's why support of Lambda Expressions
+is still required.
+
+By default, neither Lambda Expressions or Method References are `Serializable` in Java 8.
+Even for simplest references like `ClassName::methodName`, there is no information available at run time which would
+allow to map the resulting Lambda Expression Object to the actual method.
+
+Such Lambda Expressions are _non-Serializable_ and are skipped by `YaGson`; in other words, they are mapped to
+``null``s.
+
+[source,java]
+----
+  // all lambda expressions below are non-serializable
+
+  Runnable nsl1 = () -> System.out.println("Hello!");
+  Supplier nsl2 = () -> "foo";
+  Predicate<Integer> nsl3 = i -> i > 0;
+
+  mapper.toJson(nsl1);
+  // "null"
+  mapper.toJson(System.out::println);
+  // "null"
+----
+
+In order to make a Lambda Expression or a Method Reference `Serializable`, one need to cast it to an intersection of
+a functional interface type and the `Serializable` type, e.g.
+[source,java]
+----
+  // all lambda expressions below are serializable
+  Runnable sl1 = (Runnable & Serializable)() -> System.out.println("Hello!");
+  Supplier sl2 = (Supplier & Serializable) () -> "foo";
+  Predicate<Integer> sl3 = (Predicate<Integer> & Serializable) (i) -> i > 0;
+
+  String json = mapper.toJson(sl1);
+  Runnable result = mapper.fromJson(json, Runnable.class);
+----
+
+Such serializable lambdas are correctly serialized as an instance of `java.lang.invoke.SerializedLambda` class and
+de-serialized back to a Lambda Expression object of the specified functional interface type.
 
 == Using YaGson with REST and Micro-services
 
@@ -615,7 +657,7 @@ At first, in Maven projects, add the following dependency:
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson-spring4-converters</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
   </dependency>
 ----
 

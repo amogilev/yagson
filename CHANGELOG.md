@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+## Version 0.2
+
+_2017-04-27_
+
+New features:
+* Java 8 support;
+* full serialization and de-serialization of serializable lambdas;
+* skipping non-serializable lambdas;
+
+Updates:
+
+* google-gson codebase is updated to release 2.8.0
+
+
+
 ## Version 0.1
 
 _2016-09-25_
@@ -14,6 +29,5 @@ New features:
 * support for mixed-type collections, maps and arrays;
 * support for non-unique field names, when a field is "overridden" in sub-classes;
 
-Known issues:
-* **no Java 8 support yet**;
+## Known issues:
 * incorrect serialization of some Iterators
