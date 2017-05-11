@@ -45,6 +45,7 @@ import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.LazilyParsedNumber;
@@ -104,7 +105,7 @@ public final class TypeAdapters {
       } else {
         String str = in.nextString();
         try {
-          return Class.forName(str);
+          return TypeUtils.classForName(str);
         } catch (ClassNotFoundException e) {
           throw new JsonSyntaxException("Missing class", e);
         }

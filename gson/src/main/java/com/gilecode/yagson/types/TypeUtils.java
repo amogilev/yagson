@@ -143,10 +143,23 @@ public class TypeUtils {
             return unknownType;
         }
         try {
-            return Class.forName(name);
+            return classForName(name);
         } catch (ClassNotFoundException e) {
             throw new JsonSyntaxException("Missing class specified in @type info", e);
         }
+    }
+
+    /**
+     * Returns class by name using the context class loader if present.
+     * @throws ClassNotFoundException if class is missing
+     */
+    public static Class<?> classForName(String name) throws ClassNotFoundException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl == null) {
+			return Class.forName(name);
+		} else {
+			return Class.forName(name, true, cl);
+		}
     }
 
     /**
@@ -154,7 +167,7 @@ public class TypeUtils {
      */
     public static Class<?> safeClassForName(String name) {
         try {
-            return Class.forName(name);
+            return classForName(name);
         } catch (ClassNotFoundException e) {
             return null;
         }
