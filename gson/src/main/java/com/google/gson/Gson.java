@@ -33,10 +33,7 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.adapters.DelegatingTypeAdapter;
-import com.gilecode.yagson.adapters.LambdaAdapterFactory;
-import com.gilecode.yagson.adapters.SimpleTypeAdapter;
-import com.gilecode.yagson.adapters.ThreadTypesAdapterFactory;
+import com.gilecode.yagson.adapters.*;
 import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.types.*;
 import com.google.gson.internal.ConstructorConstructor;
@@ -151,6 +148,7 @@ public class Gson {
   private final ReferencesPolicy referencesPolicy;
   private final TypeInfoPolicy typeInfoPolicy;
   private final NSLambdaPolicy nsLambdaPolicy;
+  private final List<ClassLoader> preferredClassLoaders;
   private final ReflectiveTypeAdapterFactory reflectiveTypeAdapterFactory;
 
   /**
@@ -194,7 +192,8 @@ public class Gson {
         DEFAULT_COMPLEX_MAP_KEYS, DEFAULT_JSON_NON_EXECUTABLE, DEFAULT_ESCAPE_HTML,
         DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES,
         LongSerializationPolicy.DEFAULT, Collections.<TypeAdapterFactory>emptyList(),
-        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED, NSLambdaPolicy.TO_NULL);
+        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED, NSLambdaPolicy.TO_NULL,
+        Collections.<ClassLoader>emptyList());
   }
 
   protected Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingStrategy,
@@ -203,7 +202,8 @@ public class Gson {
       boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
       LongSerializationPolicy longSerializationPolicy,
       List<TypeAdapterFactory> typeAdapterFactories,
-      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy) {
+      ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy,
+      List<ClassLoader> preferredClassLoaders) {
     this.constructorConstructor = new ConstructorConstructor(instanceCreators, typeInfoPolicy.isEnabled());
     this.excluder = excluder;
     this.fieldNamingStrategy = fieldNamingStrategy;
@@ -215,6 +215,7 @@ public class Gson {
     this.referencesPolicy = referencesPolicy;
     this.typeInfoPolicy = typeInfoPolicy;
     this.nsLambdaPolicy = nsLambdaPolicy;
+    this.preferredClassLoaders = preferredClassLoaders;
     this.jsonAdapterFactory = new JsonAdapterAnnotationTypeAdapterFactory(constructorConstructor);
 
     List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
@@ -265,7 +266,7 @@ public class Gson {
     factories.add(SqlDateTypeAdapter.FACTORY);
     factories.add(TypeAdapters.TIMESTAMP_FACTORY);
     factories.add(ArrayTypeAdapter.FACTORY);
-    factories.add(TypeAdapters.CLASS_FACTORY);
+    factories.add(ClassTypeAdapter.FACTORY);
     factories.add(new ThreadTypesAdapterFactory(jsonAdapterFactory, constructorConstructor));
     factories.add(new LambdaAdapterFactory());
 
@@ -1026,6 +1027,10 @@ public class Gson {
 
   public NSLambdaPolicy getNsLambdaPolicy() {
     return nsLambdaPolicy;
+  }
+
+  public List<ClassLoader> getPreferredClassLoaders() {
+    return preferredClassLoaders;
   }
 
   public ConstructorConstructor getConstructorConstructor() {

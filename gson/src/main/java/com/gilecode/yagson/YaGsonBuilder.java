@@ -55,7 +55,7 @@ public class YaGsonBuilder extends GsonBuilder {
                 generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
                 serializeSpecialFloatingPointValues, longSerializationPolicy,
                 createTypeAdapterFactories(),
-                referencesPolicy, typeInfoPolicy, nsLambdaPolicy);
+                referencesPolicy, typeInfoPolicy, nsLambdaPolicy, preferredClassLoaders);
     }
 
     /**
@@ -256,5 +256,13 @@ public class YaGsonBuilder extends GsonBuilder {
     @Override
     public YaGsonBuilder serializeSpecialFloatingPointValues() {
         return (YaGsonBuilder) super.serializeSpecialFloatingPointValues();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public YaGsonBuilder setPreferredClassLoaders(ClassLoader... preferredClassLoaders) {
+        return (YaGsonBuilder) super.setPreferredClassLoaders(preferredClassLoaders);
     }
 }

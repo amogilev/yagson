@@ -68,14 +68,14 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
       .withExclusionStrategy(
               new ExcludeFieldsInClassesByNames(Arrays.<Class<?>>asList(
                         Iterator.class,
-                        safeClassForName("java.util.SubList"),
-                        safeClassForName("java.util.HashMap$HashIterator"),
-                        safeClassForName("java.util.LinkedHashMap$LinkedHashIterator")
+                        safeClassForName(null, "java.util.SubList"),
+                        safeClassForName(null, "java.util.HashMap$HashIterator"),
+                        safeClassForName(null, "java.util.LinkedHashMap$LinkedHashIterator")
                       ),
                       "expectedModCount"),
               true, true)
       .withExclusionStrategy(
-              new ExcludeFieldsInClassesByNames(safeClassForName(
+              new ExcludeFieldsInClassesByNames(safeClassForName(null,
                       "java.util.concurrent.CopyOnWriteArrayList$COWSubList"), "expectedArray"),
               true, true)
       .withExclusionStrategy(

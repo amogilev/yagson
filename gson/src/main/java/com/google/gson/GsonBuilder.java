@@ -22,12 +22,7 @@ import com.google.gson.stream.JsonReader;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
@@ -102,6 +97,7 @@ public class GsonBuilder {
   protected ReferencesPolicy referencesPolicy = ReferencesPolicy.DISABLED;
   protected TypeInfoPolicy typeInfoPolicy = TypeInfoPolicy.DISABLED;
   protected NSLambdaPolicy nsLambdaPolicy = NSLambdaPolicy.TO_NULL;
+  protected List<ClassLoader> preferredClassLoaders;
 
   /**
    * Creates a GsonBuilder instance that can be used to build Gson with various configuration
@@ -596,6 +592,20 @@ public class GsonBuilder {
   }
 
   /**
+   * Sets the preferred class loaders to use for loading classes during de-serialization.
+   * The class loaders will be tried in the order of arguments. If all failed, the thread context class
+   * loader will be used. If failed too, the {@link Class#forName(String)} with no ClassLoader will be
+   * used as the last attempt.
+   *
+   * @since YaGson
+   */
+  public GsonBuilder setPreferredClassLoaders(ClassLoader...preferredClassLoaders) {
+    this.preferredClassLoaders = Arrays.asList(preferredClassLoaders);
+    return this;
+  }
+
+
+  /**
    * Creates a {@link Gson} instance based on the current configuration. This method is free of
    * side-effects to this {@code GsonBuilder} instance and hence can be called multiple times.
    *
@@ -607,7 +617,7 @@ public class GsonBuilder {
         generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
         serializeSpecialFloatingPointValues, longSerializationPolicy,
         createTypeAdapterFactories(),
-        referencesPolicy, typeInfoPolicy, nsLambdaPolicy);
+        referencesPolicy, typeInfoPolicy, nsLambdaPolicy, preferredClassLoaders);
   }
 
   protected List<TypeAdapterFactory> createTypeAdapterFactories() {

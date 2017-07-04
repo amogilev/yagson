@@ -80,19 +80,19 @@ public class TypeUtils {
 
     public static <T> T readTypeAdvisedValue(Gson context, JsonReader in, Type formalType,
                                              ReadContext ctx) throws IOException {
-        Type advisedType = readTypeAdvice(in);
+        Type advisedType = readTypeAdvice(context, in);
         Type type = TypeUtils.mergeTypes(advisedType, formalType);
         return readTypeAdvisedValueAfterType(context, in, ctx, type);
     }
 
     public static <T> T readTypeAdvisedValueAfterTypeField(Gson gson, JsonReader in, Type formalType,
                                                            ReadContext ctx) throws IOException {
-        Type advisedType = readTypeAdviceAfterTypeField(in);
+        Type advisedType = readTypeAdviceAfterTypeField(gson, in);
         Type type = TypeUtils.mergeTypes(advisedType, formalType);
         return readTypeAdvisedValueAfterType(gson, in, ctx, type);
     }
 
-    private static Type readTypeAdvice(JsonReader in) throws IOException {
+    private static Type readTypeAdvice(Gson gson, JsonReader in) throws IOException {
         in.beginObject();
         if (!in.hasNext()) {
             throw new JsonSyntaxException("BEGIN_OBJECT is not expected at path " + in.getPath());
@@ -101,12 +101,12 @@ public class TypeUtils {
         if (!name.equals("@type")) {
             throw new JsonSyntaxException("@type is expected at path " + in.getPath());
         }
-        return readTypeAdviceAfterTypeField(in);
+        return readTypeAdviceAfterTypeField(gson, in);
     }
 
     private static final WildcardType unknownType = $Gson$Types.subtypeOf(Object.class);
 
-    private static Type readTypeAdviceAfterTypeField(JsonReader in) throws IOException {
+    private static Type readTypeAdviceAfterTypeField(Gson gson, JsonReader in) throws IOException {
         // Check whether next tokens are type advise, fail if not
         String advisedTypeStr = in.nextString();
         String advisedClassStr = advisedTypeStr;
@@ -123,7 +123,7 @@ public class TypeUtils {
             Type[] parameterTypes = new Type[parameters.length];
             boolean hasParameterTypes = false;
             for (int j = 0; j < parameters.length; j++) {
-                Type type = toType(parameters[j].trim());
+                Type type = toType(gson, parameters[j].trim());
                 parameterTypes[j] = type;
                 if (type != unknownType) {
                     hasParameterTypes = true;
@@ -131,19 +131,19 @@ public class TypeUtils {
             }
 
             if (hasParameterTypes) {
-                Class advisedClass = (Class) toType(advisedClassStr);
+                Class advisedClass = (Class) toType(gson, advisedClassStr);
                 return $Gson$Types.newParameterizedTypeWithOwner(advisedClass.getEnclosingClass(), advisedClass, parameterTypes);
             }
         }
-        return toType(advisedClassStr);
+        return toType(gson, advisedClassStr);
     }
 
-    private static Type toType(String name) {
+    private static Type toType(Gson gson, String name) {
         if (name.equals("?")) {
             return unknownType;
         }
         try {
-            return classForName(name);
+            return classForName(gson, name);
         } catch (ClassNotFoundException e) {
             throw new JsonSyntaxException("Missing class specified in @type info", e);
         }
@@ -153,21 +153,38 @@ public class TypeUtils {
      * Returns class by name using the context class loader if present.
      * @throws ClassNotFoundException if class is missing
      */
-    public static Class<?> classForName(String name) throws ClassNotFoundException {
+    public static Class<?> classForName(Gson gson, String name) throws ClassNotFoundException {
+        // try preferred class loaders first
+        if (gson != null && gson.getPreferredClassLoaders() != null) {
+            for (ClassLoader cl : gson.getPreferredClassLoaders()) {
+                try {
+                    return Class.forName(name, true, cl);
+                } catch (ClassNotFoundException e) {
+                    // ignore
+                }
+            }
+        }
+
+        // try context class loader if any
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        if (cl == null) {
-			return Class.forName(name);
-		} else {
-			return Class.forName(name, true, cl);
+        if (cl != null) {
+            try {
+                return Class.forName(name, true, cl);
+            } catch (ClassNotFoundException e) {
+                // ignore
+            }
 		}
+
+		// last attempt - Class.forName with no specified class loader
+        return Class.forName(name);
     }
 
     /**
      * Returns a class for name if it exists, and {@code null} otherwise.
      */
-    public static Class<?> safeClassForName(String name) {
+    public static Class<?> safeClassForName(Gson gson, String name) {
         try {
-            return classForName(name);
+            return classForName(gson, name);
         } catch (ClassNotFoundException e) {
             return null;
         }

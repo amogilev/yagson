@@ -62,59 +62,6 @@ public final class TypeAdapters {
     throw new UnsupportedOperationException();
   }
 
-  @SuppressWarnings("rawtypes")
-  public static final TypeAdapter<Class> CLASS = new SimpleTypeAdapter<Class>() {
-    @Override
-    public void write(JsonWriter out, Class value) throws IOException {
-      if (value == null) {
-        out.nullValue();
-      } else {
-        throw new UnsupportedOperationException("Attempted to serialize java.lang.Class: "
-            + value.getName() + ". Forgot to register a type adapter?");
-      }
-    }
-    @Override
-    public Class read(JsonReader in) throws IOException {
-      if (in.peek() == JsonToken.NULL) {
-        in.nextNull();
-        return null;
-      } else {
-        throw new UnsupportedOperationException(
-            "Attempted to deserialize a java.lang.Class. Forgot to register a type adapter?");
-      }
-    }
-  };
-
-  @SuppressWarnings("rawtypes")
-  public static final TypeAdapter<Class> CLASS_NEW = new SimpleTypeAdapter<Class>() {
-
-    @Override
-    public void write(JsonWriter out, Class value) throws IOException {
-      if (value == null) {
-        out.nullValue();
-      } else {
-        out.value(value.getName());
-      }
-    }
-
-    @Override
-    public Class read(JsonReader in) throws IOException {
-      if (in.peek() == JsonToken.NULL) {
-        in.nextNull();
-        return null;
-      } else {
-        String str = in.nextString();
-        try {
-          return TypeUtils.classForName(str);
-        } catch (ClassNotFoundException e) {
-          throw new JsonSyntaxException("Missing class", e);
-        }
-      }
-    }
-  };
-
-  public static final TypeAdapterFactory CLASS_FACTORY = newFactory(Class.class, CLASS_NEW);
-
   public static final TypeAdapter<BitSet> BIT_SET = new SimpleTypeAdapter<BitSet>() {
     @Override public BitSet read(JsonReader in) throws IOException {
       if (in.peek() == JsonToken.NULL) {

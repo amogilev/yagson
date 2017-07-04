@@ -94,7 +94,8 @@ public class YaGson extends Gson {
                 !TypeInfoPolicy.defaultPolicy().isEnabled(), // disable htmlSafe if types are printed
                 DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES, LongSerializationPolicy.DEFAULT,
                 Collections.<TypeAdapterFactory>emptyList(),
-                References.defaultPolicy(), TypeInfoPolicy.defaultPolicy(), NSLambdaPolicy.TO_NULL);
+                References.defaultPolicy(), TypeInfoPolicy.defaultPolicy(), NSLambdaPolicy.TO_NULL,
+                Collections.<ClassLoader>emptyList());
     }
 
     protected YaGson(Excluder excluder, FieldNamingStrategy fieldNamingPolicy,
@@ -102,10 +103,12 @@ public class YaGson extends Gson {
           boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
           boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
           LongSerializationPolicy longSerializationPolicy, List<TypeAdapterFactory> typeAdapterFactories,
-          ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy) {
+          ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy,
+          List<ClassLoader> preferredClassLoaders) {
         super(excluder, fieldNamingPolicy, instanceCreators, serializeNulls, complexMapKeySerialization,
                 generateNonExecutableGson, htmlSafe, prettyPrinting, lenient, serializeSpecialFloatingPointValues,
-                longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy, nsLambdaPolicy);
+                longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy, nsLambdaPolicy,
+                preferredClassLoaders);
     }
 
     /**
