@@ -172,8 +172,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
       Object fieldValue = getFieldValue(value);
 
       // special support for hashcodes - use '@.hash' reference instead of the value
-      if (isPrimitive && context.getReferencesPolicy().isEnabled() && name.equalsIgnoreCase("hashcode") &&
-              fieldType.getRawType().equals(int.class) && fieldValue != null && fieldValue.equals(value.hashCode())) {
+      if (isHashcode(value, fieldValue)) {
         writer.name(name);
         writer.value(References.REF_HASH);
         return;
@@ -199,6 +198,25 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
 
       writer.name(name);
       ctx.doWrite(fieldValue, fieldTypeAdapter, pathElement, writer);
+    }
+
+    /**
+     * Checks whether this field is used to store hash code and its value is the actual hashcode value
+     */
+    private boolean isHashcode(Object obj, Object fieldValue) {
+      if (isPrimitive && context.getReferencesPolicy().isEnabled() && name.equalsIgnoreCase("hashcode") &&
+              fieldType.getRawType().equals(int.class) && fieldValue != null && !fieldValue.equals(0)) {
+        // looks like hash code field, now check the actual value
+        int actualHashCode;
+        try {
+          actualHashCode = obj.hashCode();
+        } catch (Throwable e) {
+          // guard against failed hashCode (like NPE)
+          return false;
+        }
+        return fieldValue.equals(actualHashCode);
+      }
+      return false;
     }
 
     protected Object getFieldValue(Object value) throws IllegalAccessException {
