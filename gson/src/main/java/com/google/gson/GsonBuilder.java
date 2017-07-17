@@ -17,8 +17,6 @@
 
 package com.google.gson;
 
-import com.gilecode.yagson.types.NSLambdaPolicy;
-import com.google.gson.stream.JsonReader;
 import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -26,12 +24,14 @@ import java.util.*;
 
 import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
+import com.gilecode.yagson.types.NSLambdaPolicy;
 
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Excluder;
 import com.google.gson.internal.bind.TreeTypeAdapter;
 import com.google.gson.internal.bind.TypeAdapters;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 
 import static com.google.gson.Gson.DEFAULT_COMPLEX_MAP_KEYS;
 import static com.google.gson.Gson.DEFAULT_ESCAPE_HTML;
@@ -523,8 +523,7 @@ public class GsonBuilder {
         || typeAdapter instanceof JsonDeserializer<?>
         || typeAdapter instanceof TypeAdapter<?>);
     if (typeAdapter instanceof JsonDeserializer || typeAdapter instanceof JsonSerializer) {
-      hierarchyFactories.add(0,
-          TreeTypeAdapter.newTypeHierarchyFactory(baseType, typeAdapter));
+      hierarchyFactories.add(TreeTypeAdapter.newTypeHierarchyFactory(baseType, typeAdapter));
     }
     if (typeAdapter instanceof TypeAdapter<?>) {
       factories.add(TypeAdapters.newTypeHierarchyFactory(baseType, (TypeAdapter)typeAdapter));
@@ -625,25 +624,33 @@ public class GsonBuilder {
 
     factories.addAll(this.factories);
     Collections.reverse(factories);
+    Collections.reverse(this.hierarchyFactories);
     factories.addAll(this.hierarchyFactories);
     addTypeAdaptersForDate(datePattern, dateStyle, timeStyle, factories);
 
     return factories;
   }
 
+  @SuppressWarnings("unchecked")
   private void addTypeAdaptersForDate(String datePattern, int dateStyle, int timeStyle,
       List<TypeAdapterFactory> factories) {
     DefaultDateTypeAdapter dateTypeAdapter;
+    TypeAdapter<Timestamp> timestampTypeAdapter;
+    TypeAdapter<java.sql.Date> javaSqlDateTypeAdapter;
     if (datePattern != null && !"".equals(datePattern.trim())) {
-      dateTypeAdapter = new DefaultDateTypeAdapter(datePattern);
+      dateTypeAdapter = new DefaultDateTypeAdapter(Date.class, datePattern);
+      timestampTypeAdapter = (TypeAdapter) new DefaultDateTypeAdapter(Timestamp.class, datePattern);
+      javaSqlDateTypeAdapter = (TypeAdapter) new DefaultDateTypeAdapter(java.sql.Date.class, datePattern);
     } else if (dateStyle != DateFormat.DEFAULT && timeStyle != DateFormat.DEFAULT) {
-      dateTypeAdapter = new DefaultDateTypeAdapter(dateStyle, timeStyle);
+      dateTypeAdapter = new DefaultDateTypeAdapter(Date.class, dateStyle, timeStyle);
+      timestampTypeAdapter = (TypeAdapter) new DefaultDateTypeAdapter(Timestamp.class, dateStyle, timeStyle);
+      javaSqlDateTypeAdapter = (TypeAdapter) new DefaultDateTypeAdapter(java.sql.Date.class, dateStyle, timeStyle);
     } else {
       return;
     }
 
-    factories.add(TreeTypeAdapter.newFactory(TypeToken.get(Date.class), dateTypeAdapter));
-    factories.add(TreeTypeAdapter.newFactory(TypeToken.get(Timestamp.class), dateTypeAdapter));
-    factories.add(TreeTypeAdapter.newFactory(TypeToken.get(java.sql.Date.class), dateTypeAdapter));
+    factories.add(TypeAdapters.newFactory(Date.class, dateTypeAdapter));
+    factories.add(TypeAdapters.newFactory(Timestamp.class, timestampTypeAdapter));
+    factories.add(TypeAdapters.newFactory(java.sql.Date.class, javaSqlDateTypeAdapter));
   }
 }

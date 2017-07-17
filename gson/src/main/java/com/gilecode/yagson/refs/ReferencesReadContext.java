@@ -32,7 +32,7 @@ import com.google.gson.stream.JsonReader;
 public interface ReferencesReadContext {
 
     /**
-     * Registers an object corresponding to the path built by previous {@link #beforeObjectRead()} call.
+     * Registers an object which was just read, as corresponding to the current path.
      *
      * @param value the object created by de-serializers, optionally without fields/contents yet. If the
      *              adapter that created the object is {@link SimpleTypeAdapter}, it may pass {@code null}

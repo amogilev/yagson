@@ -64,11 +64,6 @@ public final class TypeAdapters {
 
   public static final TypeAdapter<BitSet> BIT_SET = new SimpleTypeAdapter<BitSet>() {
     @Override public BitSet read(JsonReader in) throws IOException {
-      if (in.peek() == JsonToken.NULL) {
-        in.nextNull();
-        return null;
-      }
-
       BitSet bitset = new BitSet();
       in.beginArray();
       int i = 0;
@@ -105,19 +100,14 @@ public final class TypeAdapters {
     }
 
     @Override public void write(JsonWriter out, BitSet src) throws IOException {
-      if (src == null) {
-        out.nullValue();
-        return;
-      }
-
       out.beginArray();
-      for (int i = 0; i < src.length(); i++) {
+      for (int i = 0, length = src.length(); i < length; i++) {
         int value = (src.get(i)) ? 1 : 0;
         out.value(value);
       }
       out.endArray();
     }
-  };
+  }.nullSafe();
 
   public static final TypeAdapterFactory BIT_SET_FACTORY = newFactory(BitSet.class, BIT_SET);
 
@@ -342,7 +332,8 @@ public final class TypeAdapters {
         return null;
       case NUMBER:
         return in.nextNumber();
-        // return new LazilyParsedNumber(in.nextString());
+      case STRING:
+        return new LazilyParsedNumber(in.nextString());
       default:
         throw new JsonSyntaxException("Expecting number, got: " + jsonToken);
       }

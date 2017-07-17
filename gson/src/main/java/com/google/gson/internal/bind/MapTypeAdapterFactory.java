@@ -464,9 +464,9 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       boolean hasComplexKeys = false;
       List<JsonElement> keys = new ArrayList<JsonElement>(map.size());
       List<V> values = new ArrayList<V>(map.size());
-      int i = 0;
 
       if (!skipEntries) {
+        int i = 0;
         for (Map.Entry<K, V> entry : map.entrySet()) {
           JsonElement keyElement = ctx.doToJsonTree(entry.getKey(), keyTypeAdapter, keyRef(i));
           i++;
@@ -479,7 +479,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       if (hasComplexKeys) {
         out.beginArray();
         if (!skipEntries) {
-          for (i = 0; i < keys.size(); i++) {
+          for (int i = 0, size = keys.size(); i < size; i++) {
             out.beginArray(); // entry array
             Streams.write(keys.get(i), out);
             ctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);
@@ -491,7 +491,7 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
       } else {
         out.beginObject();
         if (!skipEntries) {
-          for (i = 0; i < keys.size(); i++) {
+          for (int i = 0, size = keys.size(); i < size; i++) {
             JsonElement keyElement = keys.get(i);
             out.name(keyToString(keyElement));
             ctx.doWrite(values.get(i), valueTypeAdapter, valRef(i), out);

@@ -730,7 +730,7 @@ public class JsonReader implements Closeable {
     }
 
     // We've read a complete number. Decide if it's a PEEKED_LONG or a PEEKED_NUMBER.
-    if (last == NUMBER_CHAR_DIGIT && fitsInLong && (value != Long.MIN_VALUE || negative)) {
+    if (last == NUMBER_CHAR_DIGIT && fitsInLong && (value != Long.MIN_VALUE || negative) && (value!=0 || false==negative)) {
       peekedLong = negative ? value : -value;
       pos += i;
       return peeked = PEEKED_LONG;
@@ -1010,7 +1010,7 @@ public class JsonReader implements Closeable {
   private String nextQuotedValue(char quote) throws IOException {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
     char[] buffer = this.buffer;
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = null;
     while (true) {
       int p = pos;
       int l = limit;
@@ -1021,11 +1021,21 @@ public class JsonReader implements Closeable {
 
         if (c == quote) {
           pos = p;
-          builder.append(buffer, start, p - start - 1);
-          return builder.toString();
+          int len = p - start - 1;
+          if (builder == null) {
+            return new String(buffer, start, len);
+          } else {
+            builder.append(buffer, start, len);
+            return builder.toString();
+          }
         } else if (c == '\\') {
           pos = p;
-          builder.append(buffer, start, p - start - 1);
+          int len = p - start - 1;
+          if (builder == null) {
+            int estimatedLength = (len + 1) * 2;
+            builder = new StringBuilder(Math.max(estimatedLength, 16));
+          }
+          builder.append(buffer, start, len);
           builder.append(readEscapeCharacter());
           p = pos;
           l = limit;
@@ -1036,6 +1046,10 @@ public class JsonReader implements Closeable {
         }
       }
 
+      if (builder == null) {
+        int estimatedLength = (p - start) * 2;
+        builder = new StringBuilder(Math.max(estimatedLength, 16));
+      }
       builder.append(buffer, start, p - start);
       pos = p;
       if (!fillBuffer(1)) {
@@ -1088,7 +1102,7 @@ public class JsonReader implements Closeable {
 
       // use a StringBuilder when the value is too long. This is too long to be a number!
       if (builder == null) {
-        builder = new StringBuilder();
+        builder = new StringBuilder(Math.max(i,16));
       }
       builder.append(buffer, pos, i);
       pos += i;
@@ -1097,14 +1111,8 @@ public class JsonReader implements Closeable {
         break;
       }
     }
-
-    String result;
-    if (builder == null) {
-      result = new String(buffer, pos, i);
-    } else {
-      builder.append(buffer, pos, i);
-      result = builder.toString();
-    }
+   
+    String result = (null == builder) ? new String(buffer, pos, i) : builder.append(buffer, pos, i).toString();
     pos += i;
     return result;
   }
@@ -1449,14 +1457,15 @@ public class JsonReader implements Closeable {
    * @param toFind a string to search for. Must not contain a newline.
    */
   private boolean skipTo(String toFind) throws IOException {
+    int length = toFind.length();
     outer:
-    for (; pos + toFind.length() <= limit || fillBuffer(toFind.length()); pos++) {
+    for (; pos + length <= limit || fillBuffer(length); pos++) {
       if (buffer[pos] == '\n') {
         lineNumber++;
         lineStart = pos + 1;
         continue;
       }
-      for (int c = 0; c < toFind.length(); c++) {
+      for (int c = 0; c < length; c++) {
         if (buffer[pos + c] != toFind.charAt(c)) {
           continue outer;
         }
@@ -1470,7 +1479,7 @@ public class JsonReader implements Closeable {
     return getClass().getSimpleName() + locationString();
   }
 
-  private String locationString() {
+  String locationString() {
     int line = lineNumber + 1;
     int column = pos - lineStart + 1;
     return " at line " + line + " column " + column + " path " + getPath();

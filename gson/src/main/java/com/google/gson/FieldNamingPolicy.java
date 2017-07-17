@@ -122,7 +122,7 @@ public enum FieldNamingPolicy implements FieldNamingStrategy {
    */
   static String separateCamelCase(String name, String separator) {
     StringBuilder translation = new StringBuilder();
-    for (int i = 0; i < name.length(); i++) {
+    for (int i = 0, length = name.length(); i < length; i++) {
       char character = name.charAt(i);
       if (Character.isUpperCase(character) && translation.length() != 0) {
         translation.append(separator);
@@ -139,18 +139,15 @@ public enum FieldNamingPolicy implements FieldNamingStrategy {
     StringBuilder fieldNameBuilder = new StringBuilder();
     int index = 0;
     char firstCharacter = name.charAt(index);
+    int length = name.length();
 
-    while (index < name.length() - 1) {
+    while (index < length - 1) {
       if (Character.isLetter(firstCharacter)) {
         break;
       }
 
       fieldNameBuilder.append(firstCharacter);
       firstCharacter = name.charAt(++index);
-    }
-
-    if (index == name.length()) {
-      return fieldNameBuilder.toString();
     }
 
     if (!Character.isUpperCase(firstCharacter)) {

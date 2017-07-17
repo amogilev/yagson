@@ -299,7 +299,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         field.setAccessible(true);
         Type fieldType = $Gson$Types.resolve(type.getType(), raw, field.getGenericType());
         List<String> fieldNames = getFieldNames(field);
-        for (int i = 0; i < fieldNames.size(); ++i) {
+        for (int i = 0, size = fieldNames.size(); i < size; ++i) {
           String name = fieldNames.get(i);
           if (i != 0) serialize = false; // only serialize the default name
           if(result.containsKey(name)) {

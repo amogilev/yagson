@@ -102,7 +102,7 @@ public class Gson {
   protected static final boolean DEFAULT_COMPLEX_MAP_KEYS = false;
   protected static final boolean DEFAULT_SPECIALIZE_FLOAT_VALUES = false;
 
-  private static final TypeToken<?> NULL_KEY_SURROGATE = new TypeToken<Object>() {};
+  private static final TypeToken<?> NULL_KEY_SURROGATE = TypeToken.get(Object.class);
   private static final String JSON_NON_EXECUTABLE_PREFIX = ")]}'\n";
 
   /**
@@ -1045,7 +1045,7 @@ public class Gson {
   public String toString() {
     return new StringBuilder("{serializeNulls:")
         .append(serializeNulls)
-        .append("factories:").append(factories)
+        .append(",factories:").append(factories)
         .append(",instanceCreators:").append(constructorConstructor)
         .append("}")
         .toString();
