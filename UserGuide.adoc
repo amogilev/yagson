@@ -45,8 +45,10 @@ handle such a change correctly. In particular, this limitation means that:
 ** the same JRE version is recommended for use on serialization and de-serialization sides;
 ** dynamic proxy classes cannot be de-serialized;
 
-* YaGson resolves classes by name using either the context class loader (if present), or a simple `Class.forName()`,
-so all serialized classes *MUST* be available in either the context class loader or the current defining class loader;
+* by default, YaGson resolves classes by name using either the context class loader (if present), or a simple `Class.forName()`.
+However, it is also possible to add custom class loaders using `YaGsonBuilder.setPreferredClassLoaders()`. In that case, the
+classes are searched in the preferred class loaders first, then in the default class loaders. Anyway, all serialized classes 
+*MUST* be available in either of these class loaders or the current defining class loader.
 
 * no ``ClassLoader``s are de-serialized;
 
