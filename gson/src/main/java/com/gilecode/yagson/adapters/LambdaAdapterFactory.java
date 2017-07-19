@@ -42,10 +42,23 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
     private final Class<?> serializedLambdaClass;
     private final boolean enabled;
 
-    private TypeAdapter serializedLambdaAdapter;
-    private TypeAdapter serializableLambdaAdapter;
-    private TypeAdapter nonSerializableLambdaAdapter;
-    private TypeAdapter<Object> reflectiveSerializedLambdaAdapter;
+    private class AdaptersHolder {
+        final TypeAdapter serializedLambdaAdapter;
+        final TypeAdapter serializableLambdaAdapter;
+        final TypeAdapter nonSerializableLambdaAdapter;
+        final TypeAdapter<Object> reflectiveSerializedLambdaAdapter;
+
+        @SuppressWarnings("unchecked")
+        AdaptersHolder(Gson gson) {
+            serializedLambdaAdapter = new SerializedLambdaAdapter();
+            serializableLambdaAdapter = new SerializableLambdaAdapter();
+            nonSerializableLambdaAdapter = new NSLambdaAdapter();
+
+            TypeToken tt = TypeToken.get(serializedLambdaClass);
+            reflectiveSerializedLambdaAdapter = gson.getReflectiveTypeAdapterFactory().create(gson, tt);
+        }
+    }
+    private volatile AdaptersHolder adaptersHolder;
 
     public LambdaAdapterFactory() {
         Class cl = null;
@@ -62,31 +75,22 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
     @SuppressWarnings("unchecked")
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
         if (enabled) {
-            if (serializedLambdaAdapter == null) {
-                initAdapters(gson);
-            }
             Class<? super T> rawType = type.getRawType();
-            if (TypeUtils.isLambdaClass(rawType)) {
-                if (Serializable.class.isAssignableFrom(rawType)) {
-                    return serializableLambdaAdapter;
-                } else {
-                    return nonSerializableLambdaAdapter;
+            if (TypeUtils.isLambdaClass(rawType) || rawType == serializedLambdaClass) {
+                if (adaptersHolder == null) {
+                    // lazy init of adapters
+                    adaptersHolder = new AdaptersHolder(gson);
                 }
-            } else if (rawType == serializedLambdaClass) {
-                return serializedLambdaAdapter;
+                if (rawType == serializedLambdaClass) {
+                    return adaptersHolder.serializedLambdaAdapter;
+                } else if (Serializable.class.isAssignableFrom(rawType)) {
+                    return adaptersHolder.serializableLambdaAdapter;
+                } else {
+                    return adaptersHolder.nonSerializableLambdaAdapter;
+                }
             }
         }
         return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private synchronized void initAdapters(Gson gson) {
-        serializedLambdaAdapter = new SerializedLambdaAdapter(gson);
-        serializableLambdaAdapter = new SerializableLambdaAdapter();
-        nonSerializableLambdaAdapter = new NSLambdaAdapter();
-
-        TypeToken tt = TypeToken.get(serializedLambdaClass);
-        reflectiveSerializedLambdaAdapter = gson.getReflectiveTypeAdapterFactory().create(gson, tt);
     }
 
     private class NSLambdaAdapter<T> extends SimpleTypeAdapter<T> {
@@ -125,7 +129,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
                 throw new IllegalStateException("Failed to obtain SerializedLambda using writeReplace()");
             }
 
-            TypeUtils.writeTypeWrapperAndValue(out, serializedLambda, serializedLambdaAdapter, ctx);
+            TypeUtils.writeTypeWrapperAndValue(out, serializedLambda, adaptersHolder.serializedLambdaAdapter, ctx);
         }
 
         @Override
@@ -134,7 +138,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
             // this happens only if de-serialization type is the actual lambda class
             // however, the type info shall be present so we can use reflective adapter, which will forward to
             // serializedLambdaAdapter
-            return (T)reflectiveSerializedLambdaAdapter.read(in, ctx);
+            return (T)adaptersHolder.reflectiveSerializedLambdaAdapter.read(in, ctx);
         }
     }
 
@@ -142,7 +146,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
         private final Method readResolveMethod;
 
         @SuppressWarnings("unchecked")
-        SerializedLambdaAdapter(Gson gson) {
+        SerializedLambdaAdapter() {
             try {
                 readResolveMethod = serializedLambdaClass.getDeclaredMethod("readResolve");
                 readResolveMethod.setAccessible(true);
@@ -153,12 +157,12 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
 
         @Override
         public void write(JsonWriter out, Object serializedLambda, WriteContext ctx) throws IOException {
-            reflectiveSerializedLambdaAdapter.write(out, serializedLambda, ctx);
+            adaptersHolder.reflectiveSerializedLambdaAdapter.write(out, serializedLambda, ctx);
         }
 
         @Override
         public Object read(JsonReader in, ReadContext ctx) throws IOException {
-            Object serializedLambda = reflectiveSerializedLambdaAdapter.read(in, ctx);
+            Object serializedLambda = adaptersHolder.reflectiveSerializedLambdaAdapter.read(in, ctx);
 
             try {
                 return readResolveMethod.invoke(serializedLambda);
