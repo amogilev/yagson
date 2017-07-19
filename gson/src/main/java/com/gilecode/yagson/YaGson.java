@@ -17,6 +17,8 @@ package com.gilecode.yagson;
 
 import com.gilecode.yagson.refs.References;
 import com.gilecode.yagson.refs.ReferencesPolicy;
+import com.gilecode.yagson.stream.LimitedStringWriter;
+import com.gilecode.yagson.stream.StringOutputLimitExceededException;
 import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
 import com.gilecode.yagson.types.TypeUtils;
@@ -149,6 +151,27 @@ public class YaGson extends Gson {
     @Override
     public String toJson(Object src, Type deserializationType) {
         StringWriter writer = new StringWriter();
+        toJson(src, deserializationType, writer);
+        return writer.toString();
+    }
+
+    /**
+     * Same as {@link #toJson(Object)}, but with a limit to the number of output characters.
+     * If the limit is exceeded, a {@link StringOutputLimitExceededException} is thrown, which
+     * contains the limited String result.
+     */
+    public String toJson(Object src, long charsLimit) throws StringOutputLimitExceededException {
+        return toJson(src, Object.class, charsLimit);
+    }
+
+    /**
+     * Same as {@link #toJson(Object, Type)}, but with a limit to the number of output characters.
+     * If the limit is exceeded, a {@link StringOutputLimitExceededException} is thrown, which
+     * contains the limited String result.
+     */
+    public String toJson(Object src, Type deserializationType, long charsLimit)
+            throws StringOutputLimitExceededException {
+        LimitedStringWriter writer = new LimitedStringWriter(charsLimit);
         toJson(src, deserializationType, writer);
         return writer.toString();
     }

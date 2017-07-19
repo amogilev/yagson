@@ -22,7 +22,7 @@ package com.google.gson;
  * @author Inderjeet Singh
  * @author Joel Leitch
  */
-public final class JsonIOException extends JsonParseException {
+public class JsonIOException extends JsonParseException {
   private static final long serialVersionUID = 1L;
 
   public JsonIOException(String msg) {
