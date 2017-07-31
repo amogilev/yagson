@@ -20,20 +20,20 @@ package com.gilecode.yagson.stream;
  * the specified limit. In such case, the output is stripped to match the limit and this
  * exception is thrown to interrupt the serialization process.
  * <p/>
- * The stripped output may be obtained using the method {@link #getLimitedResult()}
+ * The stripped output may be obtained using the method {@link #getTruncatedResult()}
  *
  * @author Andrey Mogilev
  */
 public class StringOutputLimitExceededException extends OutputLimitExceededException {
 
-	private final String limitedResult;
+	private final String truncatedResult;
 
-	public StringOutputLimitExceededException(String limitedResult) {
-		this.limitedResult = limitedResult;
+	public StringOutputLimitExceededException(String truncatedResult) {
+		this.truncatedResult = truncatedResult;
 	}
 
-	public String getLimitedResult() {
-		return limitedResult;
+	public String getTruncatedResult() {
+		return truncatedResult;
 	}
 
 }

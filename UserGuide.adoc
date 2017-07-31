@@ -78,7 +78,7 @@ In Maven projects, just add the following dependency:
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
     <scope>compile</scope>
   </dependency>
 ----
@@ -659,7 +659,7 @@ At first, in Maven projects, add the following dependency:
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson-spring4-converters</artifactId>
-    <version>0.2</version>
+    <version>0.3</version>
   </dependency>
 ----
 
@@ -747,3 +747,25 @@ not recommended.
 The runnable sample illustrating the use of YaGson in Spring MVC server and client applications
 is available at link:https://github.com/amogilev/yagson-spring-rest-sample[yagson-spring-rest-sample]. At first, run
 `ServerApp`, then `ClientApp`, and see the results.
+
+=== Limiting the length of output JSON string
+
+When serializing the really complex objects, like the whole Tomcat's context, the resulting JSON string may be very
+long, like billions of characters, and consume gigabytes of RAM. In most cases, such enormous resulting strings are
+undesirable, and it would be better to rapidly obtain a truncated JSON string instead.
+
+Luckily, it is now possible with `YaGson`, see methods `toJson(Object src, Type deserializationType, long charsLimit)`
+and `toJson(Object src, long charsLimit)`. Both these methods limit the output length, and throw
+`StringOutputLimitExceededException` if the limit is exceeded. The exception instance may be used to obtain the
+truncated result, if necessary:
+
+[source,java]
+----
+  try {
+    return mapper.toJson(obj, Object.class, cLimit);
+  } catch (StringOutputLimitExceededException e) {
+    // limit exceeded
+    return e.getTruncatedResult() + "...";
+  }
+
+----

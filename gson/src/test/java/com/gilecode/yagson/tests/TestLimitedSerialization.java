@@ -15,6 +15,7 @@
  */
 package com.gilecode.yagson.tests;
 
+import com.gilecode.yagson.YaGson;
 import com.gilecode.yagson.stream.StringOutputLimitExceededException;
 import com.gilecode.yagson.tests.util.BindingTestCase;
 
@@ -31,7 +32,7 @@ public class TestLimitedSerialization extends BindingTestCase {
 			fail("StringOutputLimitExceededException is expected");
 		} catch (StringOutputLimitExceededException e) {
 			// expected
-			assertEquals("\"123456", e.getLimitedResult());
+			assertEquals("\"123456", e.getTruncatedResult());
 		}
 	}
 }

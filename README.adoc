@@ -116,7 +116,8 @@ parent object.
 
 New features:
 
-* Ability to specify class loaders to use for de-serialization, see `YaGsonBuilder.setPreferredClassLoaders()`.
+* Ability to specify class loaders to use for de-serialization, see `YaGsonBuilder.setPreferredClassLoaders()`;
+* Ability to limit the output JSON length, see `YaGson.toJson(Object src, long charsLimit)`
 
 Updates:
 
