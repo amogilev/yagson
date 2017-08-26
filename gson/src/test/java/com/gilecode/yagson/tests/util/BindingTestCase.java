@@ -287,6 +287,7 @@ public abstract class BindingTestCase extends TestCase {
 
     private <T> T doTest(Gson gson, T obj, Type deserializationType, String expectedJson,
                          EqualityCheckMode mode, String...extraLogPaths) {
+
         String logName = getTestLogName(extraLogPaths);
         if (gson == null) {
             gson = new YaGson();
@@ -346,6 +347,9 @@ public abstract class BindingTestCase extends TestCase {
         // then, test serialization of a collection with all original elements
         doTestCollectionSerializationAndFunctionality(collInstance, testElements,
                 isModifiable, false, "asCollection");
+
+        // additionally, test that serialization as Object works
+        test(collInstance, Object.class, null, EqualityCheckMode.NONE);
     }
 
     private <K,V> void doTestAsMap(Map<K,V> mapInstance) {
@@ -374,6 +378,9 @@ public abstract class BindingTestCase extends TestCase {
         // then, test serialization of a map with all original elements
         doTestMapSerializationAndFunctionality(mapInstance, testElements,
                 isModifiable, false, "asMap");
+
+        // additionally, test that serialization as Object works
+        test(mapInstance, Object.class, null, EqualityCheckMode.NONE);
     }
 
     private <E> void doTestCollectionSerializationAndFunctionality(Collection<E> c1, List<E> testElements,

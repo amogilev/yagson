@@ -231,14 +231,19 @@ public class TypeUtils {
      */
     public static boolean isTypeInfoRequired(Class<?> actualClass, Type deserializationType, boolean isMapKey) {
         boolean isEnumSet = EnumSet.class.isAssignableFrom(actualClass);
-        boolean isEnumCollection = isEnumSet || EnumMap.class.isAssignableFrom(actualClass);
-        if (isEnumCollection) {
+        boolean isEnumContainer = isEnumSet || EnumMap.class.isAssignableFrom(actualClass);
+        if (isEnumContainer) {
             // for EnumSet and EnumMap additionally check that the enum element type is specified in the deserialization type
             // also, consider RegularEnumSet and JumboEnumSet to be the default deserializaton classes for EnumSet
             if (deserializationType == null) {
                 return true;
             }
             Class<?> rawType = $Gson$Types.getRawType(deserializationType);
+
+            // pre-check condition necessary to get collection/map element type
+            if (!(isEnumSet ? Set.class : Map.class).isAssignableFrom(rawType)) {
+                return true;
+            }
 
             Type enumType = isEnumSet ? $Gson$Types.getCollectionElementType(deserializationType, rawType) :
                     $Gson$Types.getMapKeyAndValueTypes(deserializationType, rawType)[0];
