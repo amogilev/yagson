@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 0.3.1
+
+_2017-08-27_
+
+Bugfixes
+
+
 ## Version 0.3
 
 _2017-07-31_
