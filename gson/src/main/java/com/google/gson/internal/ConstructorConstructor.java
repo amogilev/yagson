@@ -17,6 +17,8 @@
 
 package com.google.gson.internal;
 
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.types.PostAllocateProcessor;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.InstanceCreator;
@@ -36,6 +38,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public final class ConstructorConstructor {
   private final Map<Type, InstanceCreator<?>> instanceCreators;
   private final boolean isTypeInfoEnabled;
+  private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
 
   public ConstructorConstructor(Map<Type, InstanceCreator<?>> instanceCreators, boolean isTypeInfoEnabled) {
     this.instanceCreators = instanceCreators;
@@ -124,7 +127,7 @@ public final class ConstructorConstructor {
       }
       final Constructor<? super T> constructor = rawType.getDeclaredConstructor();
       if (!constructor.isAccessible()) {
-        constructor.setAccessible(true);
+        accessor.makeAccessible(constructor);
       }
       return new ObjectConstructor<T>() {
         @SuppressWarnings("unchecked") // T is the same raw type as is requested

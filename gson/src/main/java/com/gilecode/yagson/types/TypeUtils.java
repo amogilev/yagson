@@ -17,6 +17,8 @@ package com.gilecode.yagson.types;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
@@ -52,6 +54,8 @@ public class TypeUtils {
         primitiveWrappers.put(float.class.getName(), Float.class);
         primitiveWrappers.put(double.class.getName(), Double.class);
     }
+
+    private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
 
     public static boolean typesDiffer(Type type, Class<?> actualClass) {
         if (type instanceof GenericArrayType && actualClass.isArray()) {
@@ -395,7 +399,7 @@ public class TypeUtils {
     static Field getDeclaredField(Class declaringClass, String fieldName) {
         try {
             Field f = declaringClass.getDeclaredField(fieldName);
-            f.setAccessible(true);
+            accessor.makeAccessible(f);
             return f;
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException("Field '" + fieldName + "' is not found in " + declaringClass, e);
@@ -410,7 +414,7 @@ public class TypeUtils {
             for (Field f : c.getDeclaredFields()) {
                 if (fieldName.equals(f.getName())) {
                     // found
-                    f.setAccessible(true);
+                    accessor.makeAccessible(f);
                     return f;
                 }
             }
@@ -505,7 +509,7 @@ public class TypeUtils {
         List<Field> found = findFields(c, true, 1, fieldClassesToFind, null);
         if (found.size() > 0) {
             Field foundField = found.get(0);
-            foundField.setAccessible(true);
+            accessor.makeAccessible(foundField);
             return foundField;
         }
 
@@ -768,7 +772,7 @@ public class TypeUtils {
         for (String fname : fieldNames) {
             try {
                 Field f = declaringClass.getDeclaredField(fname);
-                f.setAccessible(true);
+                accessor.makeAccessible(f);
                 f.set(to, f.get(from));
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to initialize field " + fname + " of " + declaringClass);

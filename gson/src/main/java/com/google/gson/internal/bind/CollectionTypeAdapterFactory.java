@@ -21,6 +21,8 @@ import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.AdapterUtils;
 import com.gilecode.yagson.adapters.TypeAdvisableComplexTypeAdapter;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.refs.*;
 import com.gilecode.yagson.types.*;
 
@@ -49,6 +51,7 @@ import static com.gilecode.yagson.types.TypeUtils.classOf;
  */
 public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
   private final ConstructorConstructor constructorConstructor;
+  private final static ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
 
   public CollectionTypeAdapterFactory(ConstructorConstructor constructorConstructor) {
     this.constructorConstructor = constructorConstructor;
@@ -207,7 +210,7 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return null;
       }
       Field f = compFields.get(0);
-      f.setAccessible(true);
+      accessor.makeAccessible(f);
       return f;
     }
 

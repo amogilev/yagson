@@ -17,6 +17,7 @@ package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
 import com.gilecode.yagson.refs.PathElementProducer;
 import com.gilecode.yagson.types.*;
 import com.google.gson.Gson;
@@ -35,7 +36,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 
@@ -108,7 +108,7 @@ public class AdapterUtils {
                 // skip duplicate names, get/set only 'latest' versions (closest to the actual class)
                 continue;
             }
-            f.setAccessible(true);
+            ReflectionAccessUtils.getReflectionAccessor().makeAccessible(f);
 
             Object defaultValue;
             try {

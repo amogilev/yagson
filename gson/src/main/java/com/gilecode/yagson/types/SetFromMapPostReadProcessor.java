@@ -15,6 +15,9 @@
  */
 package com.gilecode.yagson.types;
 
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
@@ -30,13 +33,15 @@ import java.util.Map;
  */
 public class SetFromMapPostReadProcessor implements PostReadProcessor {
 
+    private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+
     @SuppressWarnings("unchecked")
     public void apply(Object instance) {
         Class c = instance.getClass();
         try {
             // sets internal fields as if were deserialized from Java ObjectStream
             Method mReadObject = c.getDeclaredMethod("readObject", ObjectInputStream.class);
-            mReadObject.setAccessible(true);
+            accessor.makeAccessible(mReadObject);
             mReadObject.invoke(instance, new VoidObjectInputStream());
 
         } catch (Exception e) {

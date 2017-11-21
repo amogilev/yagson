@@ -17,6 +17,8 @@ package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.types.NonSerializableLambdaException;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
@@ -41,6 +43,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
     private static final String SERIALIZED_LAMBDA_CLASS_NAME = "java.lang.invoke.SerializedLambda";
     private final Class<?> serializedLambdaClass;
     private final boolean enabled;
+    private final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
 
     private class AdaptersHolder {
         final TypeAdapter serializedLambdaAdapter;
@@ -123,7 +126,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
             Object serializedLambda;
             try {
                 Method writeReplaceMethod = value.getClass().getDeclaredMethod("writeReplace");
-                writeReplaceMethod.setAccessible(true);
+                accessor.makeAccessible(writeReplaceMethod);
                 serializedLambda = writeReplaceMethod.invoke(value);
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to obtain SerializedLambda using writeReplace()");
@@ -149,7 +152,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
         SerializedLambdaAdapter() {
             try {
                 readResolveMethod = serializedLambdaClass.getDeclaredMethod("readResolve");
-                readResolveMethod.setAccessible(true);
+                accessor.makeAccessible(readResolveMethod);
             } catch (NoSuchMethodException e) {
                 throw new IllegalStateException("Failed to obtain SerializedLambda::readResolve method");
             }

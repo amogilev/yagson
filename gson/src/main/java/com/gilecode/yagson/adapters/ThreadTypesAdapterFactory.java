@@ -16,6 +16,8 @@
 package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.refs.PlaceholderUse;
 import com.gilecode.yagson.refs.ReferencePlaceholder;
 import com.google.gson.*;
@@ -71,17 +73,19 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
         this.jsonAdapterFactory = jsonAdapterFactory;
         this.constructorConstructor = constructorConstructor;
         try {
+            ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+
             threadLocalGetMapMethod = ThreadLocal.class.getDeclaredMethod("getMap", Thread.class);
-            threadLocalGetMapMethod.setAccessible(true);
+            accessor.makeAccessible(threadLocalGetMapMethod);
 
             Class<?> threadLocalMapClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap");
             Class<?> threadLocalMapEntryClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry");
 
             threadLocalMapGetEntryMethod = threadLocalMapClass.getDeclaredMethod("getEntry", ThreadLocal.class);
-            threadLocalMapGetEntryMethod.setAccessible(true);
+            accessor.makeAccessible(threadLocalMapGetEntryMethod);
 
             threadLocalEntryValueField = threadLocalMapEntryClass.getDeclaredField("value");
-            threadLocalEntryValueField.setAccessible(true);
+            accessor.makeAccessible(threadLocalEntryValueField);
 
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize ThreadTypesAdapterFactory");

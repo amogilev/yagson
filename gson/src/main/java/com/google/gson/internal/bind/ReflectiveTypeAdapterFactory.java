@@ -27,6 +27,8 @@ import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.HasField;
 import com.gilecode.yagson.adapters.TypeAdvisableComplexTypeAdapter;
 import com.gilecode.yagson.adapters.TypeInfoEmittingTypeAdapterWrapper;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.refs.*;
 import com.gilecode.yagson.refs.impl.PlaceholderUtils;
 import com.gilecode.yagson.types.PostReadProcessor;
@@ -53,6 +55,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
   private final Excluder excluder;
   private final Map<String, PostReadProcessor> readPostProcessorsByClassName;
   private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
+  private final static ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
 
   public ReflectiveTypeAdapterFactory(ConstructorConstructor constructorConstructor,
       FieldNamingStrategy fieldNamingPolicy, Excluder excluder,
@@ -296,7 +299,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
         if (!serialize && !deserialize) {
           continue;
         }
-        field.setAccessible(true);
+        accessor.makeAccessible(field);
         Type fieldType = $Gson$Types.resolve(type.getType(), raw, field.getGenericType());
         List<String> fieldNames = getFieldNames(field);
         for (int i = 0, size = fieldNames.size(); i < size; ++i) {

@@ -16,6 +16,9 @@
 
 package com.google.gson.internal;
 
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
+import com.gilecode.yagson.reflection.ReflectionAccessor;
+
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 import java.lang.reflect.Field;
@@ -30,6 +33,7 @@ import java.lang.reflect.Modifier;
  */
 public abstract class UnsafeAllocator {
   public abstract <T> T newInstance(Class<T> c) throws Exception;
+  private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
 
   public static UnsafeAllocator create() {
     // try JVM
@@ -39,7 +43,7 @@ public abstract class UnsafeAllocator {
     try {
       Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
       Field f = unsafeClass.getDeclaredField("theUnsafe");
-      f.setAccessible(true);
+      accessor.makeAccessible(f);
       final Object unsafe = f.get(null);
       final Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
       return new UnsafeAllocator() {
@@ -61,11 +65,11 @@ public abstract class UnsafeAllocator {
     try {
       Method getConstructorId = ObjectStreamClass.class
           .getDeclaredMethod("getConstructorId", Class.class);
-      getConstructorId.setAccessible(true);
+      accessor.makeAccessible(getConstructorId);
       final int constructorId = (Integer) getConstructorId.invoke(null, Object.class);
       final Method newInstance = ObjectStreamClass.class
           .getDeclaredMethod("newInstance", Class.class, int.class);
-      newInstance.setAccessible(true);
+      accessor.makeAccessible(newInstance);
       return new UnsafeAllocator() {
         @Override
         @SuppressWarnings("unchecked")
@@ -85,7 +89,7 @@ public abstract class UnsafeAllocator {
     try {
       final Method newInstance = ObjectInputStream.class
           .getDeclaredMethod("newInstance", Class.class, Class.class);
-      newInstance.setAccessible(true);
+      accessor.makeAccessible(newInstance);
       return new UnsafeAllocator() {
         @Override
         @SuppressWarnings("unchecked")
