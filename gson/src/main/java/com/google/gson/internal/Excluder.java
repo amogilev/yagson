@@ -90,6 +90,10 @@ public final class Excluder implements TypeAdapterFactory, Cloneable {
                       "modCount"),
               true, true)
       .withTransientsExclusionStrategy(
+              new ExcludeTransientFieldsInClassByNames(Throwable.class,
+                      "backtrace"),
+              true, true)
+      .withTransientsExclusionStrategy(
               new ExcludeTransientFieldsInClassByNames(CopyOnWriteArrayList.class,
                       "array"),
               true, true)

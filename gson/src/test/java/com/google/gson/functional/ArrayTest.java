@@ -26,6 +26,7 @@ import com.google.gson.reflect.TypeToken;
 
 import junit.framework.TestCase;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.ArrayList;

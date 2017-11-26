@@ -85,11 +85,12 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
 
     List<E> list = new ArrayList<E>();
 
-    ReferencePlaceholder<E[]> arrayPlaceholder = new ReferencePlaceholder<E[]>();
-    final AtomicReference<E[]> futureArray = new AtomicReference<E[]>();
+    // the actual type parameter for these two variables is <E[]>; can't be declared this way because of required casts
+    ReferencePlaceholder<Object> arrayPlaceholder = new ReferencePlaceholder<Object>();
+    final AtomicReference<Object> futureArray = new AtomicReference<Object>();
 
     // PROBLEM: we should register the created array instance before reading the element,
-    // but it is not possible as the array size is not known untul all elements are read.
+    // but it is not possible as the array size is not known until all elements are read.
     // If the temporary List is registered instead, self-referenced arrays are not de-serialized
     // correctly.
     //
@@ -124,8 +125,8 @@ public final class ArrayTypeAdapter<E> extends TypeAdvisableComplexTypeAdapter<O
     for (int i = 0; i < size; i++) {
       Array.set(array, i, list.get(i));
     }
-    futureArray.set(arrayType.cast(array));
-    arrayPlaceholder.applyActualObject(futureArray.get());
+    futureArray.set(array);
+    arrayPlaceholder.applyActualObject(array);
 
     return array;
   }

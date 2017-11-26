@@ -16,6 +16,7 @@
 package com.gilecode.yagson.tests;
 
 import com.gilecode.yagson.*;
+import com.gilecode.yagson.reflection.ReflectionAccessUtils;
 import com.gilecode.yagson.tests.data.Person;
 import com.gilecode.yagson.tests.data.ClassWithObject;
 import com.gilecode.yagson.tests.util.BindingTestCase;
@@ -257,9 +258,15 @@ public class TestVariousMaps extends BindingTestCase {
         Attributes obj = new Attributes();
         obj.putValue("foo", "bar");
 
-        test(obj, jsonStr(
-                "{'map':{'@type':'java.util.HashMap','@val':[[" +
-                        "{'@type':'java.util.jar.Attributes$Name','@val':{'name':'foo','hashCode':'@hash'}},'bar']]}}"));
+        if (ReflectionAccessUtils.getMajorJavaVersion() >= 9) {
+            test(obj, jsonStr(
+                    "{'map':{'@type':'java.util.LinkedHashMap','@val':[[" +
+                            "{'@type':'java.util.jar.Attributes$Name','@val':{'name':'foo','hashCode':'@hash'}},'bar']]}}"));
+        } else {
+            test(obj, jsonStr(
+                    "{'map':{'@type':'java.util.HashMap','@val':[[" +
+                            "{'@type':'java.util.jar.Attributes$Name','@val':{'name':'foo','hashCode':'@hash'}},'bar']]}}"));
+        }
         testAsMap(obj);
     }
 

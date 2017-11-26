@@ -33,7 +33,7 @@ public class TestExcludedClasses extends BindingTestCase {
         test(cl, cl.getClass(), "null", EqualityCheckMode.EXPECT_NULL);
         test(cl, (Class)null, "null", EqualityCheckMode.EXPECT_NULL);
 
-        assertNull(new YaGson().fromJson(jsonStr("{'@type':'sun.misc.Launcher$AppClassLoader'}"), Object.class));
+        assertNull(new YaGson().fromJson(jsonStr("{'@type':'" + cl.getClass().getName() + "'}"), Object.class));
     }
 
     public void testFieldClassLoader() {

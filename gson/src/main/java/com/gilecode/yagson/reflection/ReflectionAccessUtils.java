@@ -52,7 +52,7 @@ public class ReflectionAccessUtils {
         static final ReflectionAccessor instance = createReflectionAccessor();
     }
 
-    static int getMajorJavaVersion() {
+    public static int getMajorJavaVersion() {
         String[] parts = System.getProperty("java.version").split("[._]");
         int firstVer = Integer.parseInt(parts[0]);
         if (firstVer == 1 && parts.length > 1) {
