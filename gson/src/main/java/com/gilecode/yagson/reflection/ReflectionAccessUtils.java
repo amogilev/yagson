@@ -17,9 +17,9 @@ package com.gilecode.yagson.reflection;
 
 import com.gilecode.yagson.reflection.impl.PreJava9ReflectionAccessor;
 import com.gilecode.yagson.reflection.impl.UnsafeReflectionAccessor;
+import com.gilecode.yagson.util.VersionUtils;
 
 import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Field;
 
 /**
  * Provides {@link ReflectionAccessor} instance which may be used to avoid reflective access issues
@@ -52,18 +52,8 @@ public class ReflectionAccessUtils {
         static final ReflectionAccessor instance = createReflectionAccessor();
     }
 
-    public static int getMajorJavaVersion() {
-        String[] parts = System.getProperty("java.version").split("[._]");
-        int firstVer = Integer.parseInt(parts[0]);
-        if (firstVer == 1 && parts.length > 1) {
-            return Integer.parseInt(parts[1]);
-        } else {
-            return firstVer;
-        }
-    }
-
     static ReflectionAccessor createReflectionAccessor() {
-        if (getMajorJavaVersion() < 9) {
+        if (VersionUtils.getMajorJavaVersion() < 9) {
             return new PreJava9ReflectionAccessor();
         } else {
             return new UnsafeReflectionAccessor();
