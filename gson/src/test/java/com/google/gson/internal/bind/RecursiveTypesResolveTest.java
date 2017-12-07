@@ -109,3 +109,6 @@ public class RecursiveTypesResolveTest extends TestCase {
     assertNotNull(adapter);
   }
 }
+
+
+
