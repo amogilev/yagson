@@ -19,6 +19,7 @@ package com.google.gson.functional;
 
 import com.gilecode.yagson.refs.ReferencesPolicy;
 
+import com.gilecode.yagson.util.VersionUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -487,7 +488,11 @@ public class ObjectTest extends TestCase {
   public void testDateAsMapObjectField() {
     HasObjectMap a = new HasObjectMap();
     a.map.put("date", new Date(0));
-    assertEquals("{\"map\":{\"date\":\"Dec 31, 1969 4:00:00 PM\"}}", gson.toJson(a));
+    if (VersionUtils.isJava9OrLater()) {
+      assertEquals("{\"map\":{\"date\":\"Dec 31, 1969, 4:00:00 PM\"}}", gson.toJson(a));
+    } else {
+      assertEquals("{\"map\":{\"date\":\"Dec 31, 1969 4:00:00 PM\"}}", gson.toJson(a));
+    }
   }
 
   public class HasObjectMap {
