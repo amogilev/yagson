@@ -5,7 +5,7 @@
 YaGson is a universal type-preserving Java serialization library that can convert
 link:UserGuide.adoc#limitations[(almost)] 
 arbitrary Java Objects into JSON and
-back, with transparent support for circular references of any kind.
+back, with transparent support for circular references of any kind and with a full Java 9 compatibility.
 
 YaGson is based on Google's https://github.com/google/gson[Gson], so it inherits all Gson benefits and adds new valuable features.
 The name _YaGson_ is actually an abbreviation for "**y**et **a**nother *Gson*".
@@ -111,6 +111,11 @@ NOTE: The JSON representation of the second element of the array is `@root`, mea
 object itself. There may be more complicated references, describing a _path_ from the root to a referenced object, e.g.
 `@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in the
 parent object.
+
+== New in version `0.4`
+
+* Java 9 compatibility
+* google-gson codebase is updated to release 2.8.2
 
 == New in version `0.3.1`
 

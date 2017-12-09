@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+## Version 0.4
+
+_2017-12-09_
+
+New features:
+* Java 9 compatibility
+
+Updates:
+
+* google-gson codebase is updated to release 2.8.2
+
 ## Version 0.3.1
 
 _2017-08-27_

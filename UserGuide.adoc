@@ -6,7 +6,7 @@
 YaGson is a universal type-preserving Java serialization library that can convert
 link:UserGuide.adoc#limitations[(almost)] 
 arbitrary Java Objects into JSON and
-back, with transparent support for circular references of any kind.
+back, with transparent support for circular references of any kind and with a full Java 9 compatibility.
 
 It is based on https://github.com/google/gson[Gson], inheriting all benefits and adding new valuable features.
 The name _YaGson_ is actually an abbreviation for "**y**et **a**nother *Gson*".
@@ -78,7 +78,7 @@ In Maven projects, just add the following dependency:
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson</artifactId>
-    <version>0.3.1</version>
+    <version>0.4</version>
     <scope>compile</scope>
   </dependency>
 ----
@@ -630,6 +630,14 @@ a functional interface type and the `Serializable` type, e.g.
 
 Such serializable lambdas are correctly serialized as an instance of `java.lang.invoke.SerializedLambda` class and
 de-serialized back to a Lambda Expression object of the specified functional interface type.
+
+=== Java 9 Compatibility
+
+Despite the fact that `YaGson` internally use Java Reflection API for its operation, it does it in a way which causes
+neither "illegal reflection operation" warnings, nor `IllegalAccessException` even if the `--illegal-access=deny`
+JVM argument is used.
+
+So, it can be safely used to serialize and deserialize objects from different modules.
 
 == Using YaGson with REST and Micro-services
 
