@@ -36,7 +36,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
-import java.beans.beancontext.BeanContext;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -126,7 +125,8 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
                 ((isAddMethodMissing || isEnclosed) && !collType.getName().contains("EmptyList"));
       } else {
         return isDelegate || isAddMethodMissing || isEnclosed
-                || BeanContext.class.isAssignableFrom(collType)
+                // || BeanContext.class.isAssignableFrom(collType) -- replaced to startWith to support Android
+                || collType.getName().startsWith("java.beans.beancontext.BeanContext")
                 || BlockingQueue.class.isAssignableFrom(collType);
       }
     } catch (NoSuchMethodException e) {

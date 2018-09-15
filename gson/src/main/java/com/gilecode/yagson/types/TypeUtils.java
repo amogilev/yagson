@@ -396,13 +396,34 @@ public class TypeUtils {
         }
     }
 
+    private static Field getDeclaredFieldNoChecks(Class declaringClass, String fieldName) throws NoSuchFieldException {
+        Field f = declaringClass.getDeclaredField(fieldName);
+        accessor.makeAccessible(f);
+        return f;
+    }
+
     static Field getDeclaredField(Class declaringClass, String fieldName) {
         try {
-            Field f = declaringClass.getDeclaredField(fieldName);
-            accessor.makeAccessible(f);
-            return f;
+            return getDeclaredFieldNoChecks(declaringClass, fieldName);
         } catch (NoSuchFieldException e) {
             throw new IllegalStateException("Field '" + fieldName + "' is not found in " + declaringClass, e);
+        }
+    }
+
+    /**
+     * Same as {@link #getDeclaredField(Class, String)}, but allows alternative name of the field, which
+     * may be used on another version of system library, e.g. Android.
+     */
+    static Field getDeclaredField(Class declaringClass, String fieldName, String altFieldName) {
+        try {
+            return getDeclaredFieldNoChecks(declaringClass, fieldName);
+        } catch (NoSuchFieldException e) {
+            try {
+                return getDeclaredFieldNoChecks(declaringClass, altFieldName);
+            } catch (NoSuchFieldException e2) {
+                throw new IllegalStateException("Field '" + fieldName + "' ('" + altFieldName +
+                        "') is not found in " + declaringClass, e);
+            }
         }
     }
 
@@ -432,7 +453,8 @@ public class TypeUtils {
         }
     }
 
-    private static final Field enumSetElementTypeField = getDeclaredField(EnumSet.class, "elementType");
+    private static final Field enumSetElementTypeField =
+            getDeclaredField(EnumSet.class, "elementType", "elementClass");
     private static final Field enumMapKeyTypeField = getDeclaredField(EnumMap.class, "keyType");
 
     /**
@@ -654,7 +676,7 @@ public class TypeUtils {
 
     private static int findTypeVariableIndex(TypeVariable typeVarToFind, TypeVariable[] typeVariables) {
         for (int i = 0; i < typeVariables.length; i++) {
-            if (typeVarToFind == typeVariables[i]) {
+            if (typeVarToFind.equals(typeVariables[i])) {
                 return i;
             }
         }
@@ -682,7 +704,7 @@ public class TypeUtils {
                 Type[] typeArguments = ((ParameterizedType) lookupType).getActualTypeArguments();
                 int foundIdx = -1;
                 for (int i = 0; i < typeArguments.length; i++) {
-                    if (typeVar == typeArguments[i]) {
+                    if (typeVar.equals(typeArguments[i])) {
                         foundIdx = i;
                         break;
                     }
@@ -765,17 +787,20 @@ public class TypeUtils {
             throw new JsonSyntaxException("Only enum keys are allowed for EnumMap, but got " + keyType);
         }
         EnumMap otherInstance = new EnumMap(keyType);
-        copyFields(instance, otherInstance, EnumMap.class, "keyType", "keyUniverse", "vals");
+        copyDeclaredFields(instance, otherInstance, EnumMap.class);
+        // these keys are enough on Oracle JDK, but better to copy all, e.g. for Android
+//        copyFields(instance, otherInstance, EnumMap.class, "keyType", "keyUniverse", "vals");
     }
 
-    private static void copyFields(Object to, Object from, Class<?> declaringClass, String...fieldNames) {
-        for (String fname : fieldNames) {
-            try {
-                Field f = declaringClass.getDeclaredField(fname);
-                accessor.makeAccessible(f);
-                f.set(to, f.get(from));
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to initialize field " + fname + " of " + declaringClass);
+    private static void copyDeclaredFields(Object to, Object from, Class<?> declaringClass) {
+        for (Field f : declaringClass.getDeclaredFields()) {
+            if (!Modifier.isStatic(f.getModifiers())) {
+                try {
+                    accessor.makeAccessible(f);
+                    f.set(to, f.get(from));
+                } catch (Exception e) {
+                    throw new IllegalStateException("Failed to initialize field " + f.getName() + " of " + declaringClass);
+                }
             }
         }
     }

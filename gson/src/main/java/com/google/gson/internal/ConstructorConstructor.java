@@ -90,11 +90,20 @@ public final class ConstructorConstructor {
     if (EnumMap.class.isAssignableFrom(rawType)) {
       final Type enumType = $Gson$Types.resolve(type, rawType, EnumMap.class.getTypeParameters()[0]);
       if (enumType instanceof Class) {
-        postAllocateProcessor = new PostAllocateProcessor() {
-          public void apply(Object instance) {
-            TypeUtils.initEnumMapKeyType((EnumMap<?, ?>) instance, $Gson$Types.getRawType(enumType));
-          }
-        };
+        if (rawType == EnumMap.class) {
+          return new ObjectConstructor<T>() {
+            @SuppressWarnings("unchecked")
+            @Override public T construct() {
+              return (T) new EnumMap((Class<?>)enumType);
+            }
+          };
+        } else {
+          postAllocateProcessor = new PostAllocateProcessor() {
+            public void apply(Object instance) {
+              TypeUtils.initEnumMapKeyType((EnumMap<?, ?>) instance, $Gson$Types.getRawType(enumType));
+            }
+          };
+        }
       }
     }
 

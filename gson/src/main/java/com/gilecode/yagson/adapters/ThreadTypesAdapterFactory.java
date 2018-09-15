@@ -62,9 +62,36 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
      */
     private static final Thread BACKUP_THREAD = null;
 
-    private final Method threadLocalGetMapMethod;
-    private final Method threadLocalMapGetEntryMethod;
-    private final Field threadLocalEntryValueField;
+    private static class ReflectiveInfoHolder {
+        static boolean isAvailable;
+        static Method threadLocalGetMapMethod;
+        static Method threadLocalMapGetEntryMethod;
+        static Field threadLocalEntryValueField;
+
+        static {
+            ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+
+            try {
+                threadLocalGetMapMethod = ThreadLocal.class.getDeclaredMethod("getMap", Thread.class);
+                accessor.makeAccessible(threadLocalGetMapMethod);
+
+                Class<?> threadLocalMapClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap");
+                Class<?> threadLocalMapEntryClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry");
+
+                threadLocalMapGetEntryMethod = threadLocalMapClass.getDeclaredMethod("getEntry", ThreadLocal.class);
+                accessor.makeAccessible(threadLocalMapGetEntryMethod);
+
+                threadLocalEntryValueField = threadLocalMapEntryClass.getDeclaredField("value");
+                accessor.makeAccessible(threadLocalEntryValueField);
+
+                isAvailable = true;
+            } catch (Exception e) {
+                // Android 4?
+                isAvailable = false;
+            }
+        }
+    }
+
     private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
     private final ConstructorConstructor constructorConstructor;
 
@@ -72,24 +99,6 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
                                      ConstructorConstructor constructorConstructor) {
         this.jsonAdapterFactory = jsonAdapterFactory;
         this.constructorConstructor = constructorConstructor;
-        try {
-            ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
-
-            threadLocalGetMapMethod = ThreadLocal.class.getDeclaredMethod("getMap", Thread.class);
-            accessor.makeAccessible(threadLocalGetMapMethod);
-
-            Class<?> threadLocalMapClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap");
-            Class<?> threadLocalMapEntryClass = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry");
-
-            threadLocalMapGetEntryMethod = threadLocalMapClass.getDeclaredMethod("getEntry", ThreadLocal.class);
-            accessor.makeAccessible(threadLocalMapGetEntryMethod);
-
-            threadLocalEntryValueField = threadLocalMapEntryClass.getDeclaredField("value");
-            accessor.makeAccessible(threadLocalEntryValueField);
-
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to initialize ThreadTypesAdapterFactory");
-        }
     }
 
     @Override
@@ -103,7 +112,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
             @SuppressWarnings({"unchecked", "rawtypes"})
             TypeAdapter<T> result = (TypeAdapter)new ThreadAdapter();
             return result;
-        } else if (ThreadLocal.class.isAssignableFrom(rawType)) {
+        } else if (ThreadLocal.class.isAssignableFrom(rawType) && ReflectiveInfoHolder.isAvailable) {
             TypeToken<?> fieldType = TypeToken.get($Gson$Types.getSingleParameterType(typeToken.getType(),
                     typeToken.getRawType(), ThreadLocal.class));
 
@@ -132,7 +141,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
                     if (threadLocalMap != null) {
                         Object threadLocalEntry = getThreadLocalEntry(threadLocalMap, value);
                         if (threadLocalEntry != null) {
-                            return threadLocalEntryValueField.get(threadLocalEntry);
+                            return ReflectiveInfoHolder.threadLocalEntryValueField.get(threadLocalEntry);
                         }
                     }
                     return null;
@@ -162,7 +171,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
 
     private Object getCurrentThreadMap(Object value) {
         try {
-            return threadLocalGetMapMethod.invoke(value, Thread.currentThread());
+            return ReflectiveInfoHolder.threadLocalGetMapMethod.invoke(value, Thread.currentThread());
         } catch (Exception e) {
             throw new IllegalStateException("Failed to invoke getCurrentThreadMap", e);
         }
@@ -170,7 +179,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
 
     private Object getThreadLocalEntry(Object threadLocalMap, Object value) {
         try {
-            return threadLocalMapGetEntryMethod.invoke(threadLocalMap, value);
+            return ReflectiveInfoHolder.threadLocalMapGetEntryMethod.invoke(threadLocalMap, value);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to invoke getThreadLocalEntry", e);
         }

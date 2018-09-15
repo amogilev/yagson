@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A {@link PostReadProcessor} for sublists of {@link CopyOnWriteArrayList}. Sets the 'expectedArray'
- * field to match the correpsonding 'array' list in the backing full list.
+ * field to match the corresponding 'array' list in the backing full list.
  *
  * @author Andrey Mogilev
  */
@@ -34,7 +34,7 @@ public class COWSubListPostReadProcessor implements PostReadProcessor {
 
             Field fBackingList = TypeUtils.findOneFieldByType(c, CopyOnWriteArrayList.class);
             Field fExpectedArray = TypeUtils.getDeclaredField(c, "expectedArray");
-            Field fArray = TypeUtils.getDeclaredField(CopyOnWriteArrayList.class, "array");
+            Field fArray = TypeUtils.getDeclaredField(CopyOnWriteArrayList.class, "array", "elements");
 
             CopyOnWriteArrayList backingList = (CopyOnWriteArrayList) fBackingList.get(instance);
             Object[] array = (Object[]) fArray.get(backingList);
