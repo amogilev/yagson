@@ -42,15 +42,12 @@ public final class Streams {
   /**
    * Takes a reader in any state and returns the next value as a JsonElement.
    */
-  public static JsonElement parse(JsonReader reader, ReadContext ctx) throws JsonParseException {
-    if (ctx == null)
-      ctx = ReadContext.nullContext();
-
+  public static JsonElement parse(JsonReader reader) throws JsonParseException {
     boolean isEmpty = true;
     try {
       reader.peek();
       isEmpty = false;
-      return TypeAdapters.JSON_ELEMENT.read(reader, ctx);
+      return TypeAdapters.JSON_ELEMENT.read(reader);
     } catch (EOFException e) {
       /*
        * For compatibility with JSON 1.5 and earlier, we return a JsonNull for
@@ -74,7 +71,7 @@ public final class Streams {
    * Writes the JSON element to the writer, recursively.
    */
   public static void write(JsonElement element, JsonWriter writer) throws IOException {
-    TypeAdapters.JSON_ELEMENT.write(writer, element, null);
+    TypeAdapters.JSON_ELEMENT.write(writer, element);
   }
 
   public static Writer writerForAppendable(Appendable appendable) {

@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 
+import com.gilecode.yagson.adapters.RawTypeAdapter;
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.*;
@@ -682,16 +683,14 @@ public final class TypeAdapters {
 
   public static final TypeAdapterFactory LOCALE_FACTORY = newFactory(Locale.class, LOCALE);
 
-  public static final TypeAdapter<JsonElement> JSON_ELEMENT = new TypeAdapter<JsonElement>() {
+  /*
+  YaGson note: this type adapter is special, as 'read' returns low-level data, with no types/references
+  processing, so context is ignored in 'read' and 'write'.
+   */
+  public static final RawTypeAdapter<JsonElement> JSON_ELEMENT = new RawTypeAdapter<JsonElement>() {
 
     @Override
-    public JsonElement read(JsonReader in, ReadContext ctx) throws IOException {
-      JsonElement value = read(in);
-      ctx.registerObject(value, false);
-      return value;
-    }
-
-    private JsonElement read(JsonReader in) throws IOException {
+    public JsonElement read(JsonReader in) throws IOException {
       switch (in.peek()) {
       case STRING:
         return new JsonPrimitive(in.nextString());
@@ -717,9 +716,7 @@ public final class TypeAdapters {
         while (in.hasNext()) {
           String name = in.nextName();
           JsonElement value = read(in);
-          if (!name.equals("@type")) {
-            object.add(name, value);
-          }
+          object.add(name, value);
         }
         in.endObject();
         return object;
@@ -736,7 +733,7 @@ public final class TypeAdapters {
      * {@inheritDoc}
      * @param ctx WriteContext is not used for writing JsonElements, so may be null
      */
-    @Override public void write(JsonWriter out, JsonElement value, WriteContext ctx) throws IOException {
+    @Override public void write(JsonWriter out, JsonElement value) throws IOException {
       if (value == null || value.isJsonNull()) {
         out.nullValue();
       } else if (value.isJsonPrimitive()) {

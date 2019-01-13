@@ -97,6 +97,10 @@ import java.io.Writer;
  *   Gson gson = builder.create();
  * }</pre>
  *
+ * <strong>YaGson change:</strong> In YaGson, type adapters read/write methods MUST NOT be used directly,
+ * but only through Gson instance or contexts, i.e. {@link ReadContext#doRead(JsonReader, TypeAdapter, String)} and
+ * {@link WriteContext#doWrite(Object, TypeAdapter, String, JsonWriter)}
+ *
  * @since 2.1
  */
 // non-Javadoc:

@@ -253,7 +253,7 @@ class ReferencesAllDuplicatesModeContext {
 
         private Object registerReferenceUse(String reference) {
             Object value = getObjectByReference(reference);
-            // the object may now be reference both with the used and the current reference
+            // the object may now be referenced by either of references (old or new), so need to register it again
             registerObject(value, false);
             return value;
         }
