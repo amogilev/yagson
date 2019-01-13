@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 0.4.1
+
+_2018-10-06_
+
+New features & fixes:
+* Limited support for Android 4
+
 ## Version 0.4
 
 _2017-12-09_
