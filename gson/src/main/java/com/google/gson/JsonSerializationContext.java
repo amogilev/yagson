@@ -31,9 +31,11 @@ public interface JsonSerializationContext {
    * Invokes default serialization on the specified object.
    *
    * @param src the object that needs to be serialized.
+   * @param pathElement the path element which defines path from the parent object to src, e.g. '@root' for the root object,
+   *                    the field name for fields, array index for array elements etc.
    * @return a tree of {@link JsonElement}s corresponding to the serialized form of {@code src}.
    */
-  public JsonElement serialize(Object src);
+  public JsonElement serialize(Object src, String pathElement);
 
   /**
    * Invokes default serialization on the specified object passing the specific type information.
@@ -43,7 +45,23 @@ public interface JsonSerializationContext {
    *
    * @param src the object that needs to be serialized.
    * @param typeOfSrc the actual genericized type of src object.
+   * @param pathElement the path element which defines path from the parent object to src, e.g. '@root' for the root object,
+   *                    the field name for fields, array index for array elements etc.
    * @return a tree of {@link JsonElement}s corresponding to the serialized form of {@code src}.
    */
-  public JsonElement serialize(Object src, Type typeOfSrc);
+  public JsonElement serialize(Object src, String pathElement, Type typeOfSrc);
+
+  /**
+   * Serialize invoked as a delegate, with the path and the object already processed by the context.
+   * Also can be used for serialization of the root objects
+   */
+  public JsonElement delegatedOrRootSerialize(Object src);
+
+  /**
+   * Serialize invoked as a delegate, with the path and the object already processed by the context.
+   * Also can be used for serialization of the root objects
+   */
+  public JsonElement delegatedOrRootSerialize(Object src, Type typeOfSrc);
+
+
 }

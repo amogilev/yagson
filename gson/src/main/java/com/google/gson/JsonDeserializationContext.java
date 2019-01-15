@@ -35,10 +35,20 @@ public interface JsonDeserializationContext {
    * so will result in an infinite loop since Gson will in-turn call the custom deserializer again.
    *
    * @param json the parse tree.
+   * @param pathElement the path element which defines path from the parent object to src, e.g. '@root' for the root object,
+   *                    the field name for fields, array index for array elements etc.
    * @param typeOfT type of the expected return value.
+   *
    * @param <T> The type of the deserialized object.
    * @return An object of type typeOfT.
    * @throws JsonParseException if the parse tree does not contain expected data.
    */
-  public <T> T deserialize(JsonElement json, Type typeOfT) throws JsonParseException;
+  public <T> T deserialize(JsonElement json, String pathElement, Type typeOfT) throws JsonParseException;
+
+  /**
+   * Deserialize invoked as a delegate, with the path already processed by the context.
+   * Also can be used for serialization of the root objects
+   */
+  public <T> T delegatedOrRootDeserialize(JsonElement json, Type typeOfT) throws JsonParseException;
+
 }

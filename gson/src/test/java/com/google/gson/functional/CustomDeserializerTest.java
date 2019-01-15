@@ -116,7 +116,7 @@ public class CustomDeserializerTest extends TestCase {
       @Override public MyBase deserialize(JsonElement json, Type pojoType,
           JsonDeserializationContext context) throws JsonParseException {
         String type = json.getAsJsonObject().get(MyBase.TYPE_ACCESS).getAsString();
-        return context.deserialize(json, SubTypes.valueOf(type).getSubclass());
+        return context.delegatedOrRootDeserialize(json, SubTypes.valueOf(type).getSubclass());
       }
     }).create();
     SubType1 target = (SubType1) gson.fromJson(json, MyBase.class);

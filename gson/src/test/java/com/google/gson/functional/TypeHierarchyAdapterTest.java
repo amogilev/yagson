@@ -154,12 +154,12 @@ public final class TypeHierarchyAdapterTest extends TestCase {
     @Override public JsonElement serialize(Employee employee, Type typeOfSrc,
         JsonSerializationContext context) {
       JsonObject result = new JsonObject();
-      result.add("userid", context.serialize(employee.userid, String.class));
-      result.add("startDate", context.serialize(employee.startDate, long.class));
+      result.add("userid", context.serialize(employee.userid, "userid", String.class));
+      result.add("startDate", context.serialize(employee.startDate, "startDate", long.class));
       if (employee instanceof Manager) {
-        result.add("minions", context.serialize(((Manager) employee).minions, Employee[].class));
+        result.add("minions", context.serialize(((Manager) employee).minions, "minions", Employee[].class));
         if (employee instanceof CEO) {
-          result.add("assistant", context.serialize(((CEO) employee).assistant, Employee.class));
+          result.add("assistant", context.serialize(((CEO) employee).assistant, "assistant", Employee.class));
         }
       }
       return result;
@@ -174,7 +174,7 @@ public final class TypeHierarchyAdapterTest extends TestCase {
       JsonElement assistant = object.get("assistant");
       if (assistant != null) {
         result = new CEO();
-        ((CEO) result).assistant = context.deserialize(assistant, Employee.class);
+        ((CEO) result).assistant = context.deserialize(assistant, "assistant", Employee.class);
       }
 
       // only managers have minions
@@ -183,14 +183,14 @@ public final class TypeHierarchyAdapterTest extends TestCase {
         if (result == null) {
           result = new Manager();
         }
-        ((Manager) result).minions = context.deserialize(minons, Employee[].class);
+        ((Manager) result).minions = context.deserialize(minons, "minions", Employee[].class);
       }
 
       if (result == null) {
         result = new Employee();
       }
-      result.userid = context.deserialize(object.get("userid"), String.class);
-      result.startDate = context.<Long>deserialize(object.get("startDate"), long.class);
+      result.userid = context.deserialize(object.get("userid"), "userid", String.class);
+      result.startDate = context.<Long>deserialize(object.get("startDate"), "startDate", long.class);
       return result;
     }
   }

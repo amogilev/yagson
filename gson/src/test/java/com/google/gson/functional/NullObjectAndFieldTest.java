@@ -212,7 +212,7 @@ public class NullObjectAndFieldTest extends TestCase {
         .registerTypeAdapter(ObjectWithField.class, new JsonSerializer<ObjectWithField>() {
           @Override public JsonElement serialize(ObjectWithField src, Type typeOfSrc,
               JsonSerializationContext context) {
-            return context.serialize(null);
+            return context.delegatedOrRootSerialize(null);
           }
         }).create();
     ObjectWithField target = new ObjectWithField();
@@ -226,7 +226,7 @@ public class NullObjectAndFieldTest extends TestCase {
         .registerTypeAdapter(ObjectWithField.class, new JsonDeserializer<ObjectWithField>() {
           @Override public ObjectWithField deserialize(JsonElement json, Type type,
               JsonDeserializationContext context) {
-            return context.deserialize(null, type);
+            return context.delegatedOrRootDeserialize(null, type);
           }
         }).create();
     String json = "{value:'value1'}";

@@ -199,12 +199,12 @@ public class CustomTypeAdaptersTest extends TestCase {
     @Override
     public Foo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
         throws JsonParseException {
-      return context.deserialize(json, typeOfT);
+      return context.delegatedOrRootDeserialize(json, typeOfT);
     }
 
     @Override
     public JsonElement serialize(Foo src, Type typeOfSrc, JsonSerializationContext context) {
-      return context.serialize(src, typeOfSrc);
+      return context.delegatedOrRootSerialize(src, typeOfSrc);
     }
   }
 
