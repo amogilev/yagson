@@ -121,7 +121,7 @@ class ReferencesAllDuplicatesModeContext {
 
         protected final <T> boolean isPotentialReference(T value, TypeAdapter<T> valueTypeAdapter) {
             // avoid creating references to simple types even in "all duplicates" mode
-            return value != null && !AdapterUtils.isSimpleTypeAdapter(valueTypeAdapter);
+            return value != null && !valueTypeAdapter.isSimple();
         }
 
         public <T> String getReferenceFor(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {

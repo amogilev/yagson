@@ -129,22 +129,6 @@ public class Gson {
   private final boolean lenient;
   private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
 
-  final JsonDeserializationContext deserializationContext = new JsonDeserializationContext() {
-    @SuppressWarnings("unchecked")
-	public <T> T deserialize(JsonElement json, Type typeOfT) throws JsonParseException {
-      return (T) fromJson(json, typeOfT);
-    }
-  };
-
-  final JsonSerializationContext serializationContext = new JsonSerializationContext() {
-    public JsonElement serialize(Object src) {
-      return toJsonTree(src);
-    }
-    public JsonElement serialize(Object src, Type typeOfSrc) {
-      return toJsonTree(src, typeOfSrc);
-    }
-  };
-
   private final ReferencesPolicy referencesPolicy;
   private final TypeInfoPolicy typeInfoPolicy;
   private final NSLambdaPolicy nsLambdaPolicy;
@@ -996,6 +980,11 @@ public class Gson {
   }
 
   public static class FutureTypeAdapter<T> extends DelegatingTypeAdapter<T> {
+
+    public FutureTypeAdapter() {
+      super(null);
+    }
+
     public void setDelegate(TypeAdapter<T> typeAdapter) {
       if (delegate != null) {
         throw new AssertionError();

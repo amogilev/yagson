@@ -198,6 +198,7 @@ public class NullObjectAndFieldTest extends TestCase {
       obj.add("bag", JsonNull.INSTANCE);
       return obj;
     }
+    @Override public boolean isSimple() { return false; }
   }
 
   public void testExplicitNullSetsFieldToNullDuringDeserialization() {
@@ -212,8 +213,9 @@ public class NullObjectAndFieldTest extends TestCase {
         .registerTypeAdapter(ObjectWithField.class, new JsonSerializer<ObjectWithField>() {
           @Override public JsonElement serialize(ObjectWithField src, Type typeOfSrc,
               JsonSerializationContext context) {
-            return context.serialize(null);
+            return context.delegatedOrRootSerialize(null);
           }
+          @Override public boolean isSimple() { return false; }
         }).create();
     ObjectWithField target = new ObjectWithField();
     target.value = "value1";
@@ -226,8 +228,9 @@ public class NullObjectAndFieldTest extends TestCase {
         .registerTypeAdapter(ObjectWithField.class, new JsonDeserializer<ObjectWithField>() {
           @Override public ObjectWithField deserialize(JsonElement json, Type type,
               JsonDeserializationContext context) {
-            return context.deserialize(null, type);
+            return context.delegatedOrRootDeserialize(null, type);
           }
+          @Override public boolean isSimple() { return false; }
         }).create();
     String json = "{value:'value1'}";
     ObjectWithField target = gson.fromJson(json, ObjectWithField.class);

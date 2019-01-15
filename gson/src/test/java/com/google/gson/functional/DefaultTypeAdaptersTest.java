@@ -42,6 +42,7 @@ import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
 import com.gilecode.yagson.util.VersionUtils;
 import com.google.gson.*;
 import junit.framework.TestCase;
@@ -483,7 +484,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
     String pattern = "yyyy-MM-dd";
     Gson gson = new GsonBuilder()
         .setDateFormat(pattern)
-        .registerTypeAdapter(Date.class, new JsonDeserializer<Date>() {
+        .registerTypeAdapter(Date.class, new SimpleJsonDeserializer<Date>() {
           public Date deserialize(JsonElement json, Type typeOfT,
               JsonDeserializationContext context)
               throws JsonParseException {

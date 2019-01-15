@@ -34,7 +34,7 @@ import java.io.IOException;
 public final class TypeInfoEmittingTypeAdapterWrapper<T> extends DelegatingTypeAdapter<T> {
 
     public TypeInfoEmittingTypeAdapterWrapper(TypeAdapter<T> delegate) {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     @Override

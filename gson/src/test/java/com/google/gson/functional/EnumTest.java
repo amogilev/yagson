@@ -190,6 +190,7 @@ public class EnumTest extends TestCase {
         throws JsonParseException {
       return Roshambo.valueOf(json.getAsString().substring(3));
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   public enum Gender {

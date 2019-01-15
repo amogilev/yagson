@@ -20,7 +20,6 @@ import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.refs.ReferencesReadContext;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
-import com.gilecode.yagson.adapters.AdapterUtils;
 import com.gilecode.yagson.adapters.TypeAdviceReadingSimpleAdapterWrapper;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -71,7 +70,7 @@ public class ReadContext {
         //     For simple delegates, if '{' found, we expect and parse type advice here, and fail otherwise
 
 
-        if (AdapterUtils.isSimpleTypeAdapter(typeAdapter) && reader.peek() == JsonToken.BEGIN_OBJECT &&
+        if (typeAdapter.isSimple() && reader.peek() == JsonToken.BEGIN_OBJECT &&
                 gson.getTypeInfoPolicy().isEnabled()) {
             // simple type adapters do not use '{', so this is definitely a type advice. Use a wrapper adapter
             // to correctly process it

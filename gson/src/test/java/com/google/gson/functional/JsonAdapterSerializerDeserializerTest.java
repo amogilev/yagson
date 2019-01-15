@@ -18,6 +18,8 @@ package com.google.gson.functional;
 
 import java.lang.reflect.Type;
 
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
+import com.gilecode.yagson.adapters.SimpleJsonSerializer;
 import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -63,14 +65,14 @@ public final class JsonAdapterSerializerDeserializerTest extends TestCase {
     }
   }
 
-  private static final class UserSerializer implements JsonSerializer<User> {
+  private static final class UserSerializer extends SimpleJsonSerializer<User> {
     @Override
     public JsonElement serialize(User src, Type typeOfSrc, JsonSerializationContext context) {
       return new JsonPrimitive("UserSerializer");
     }
   }
 
-  private static final class UserDeserializer implements JsonDeserializer<User> {
+  private static final class UserDeserializer extends SimpleJsonDeserializer<User> {
     @Override
     public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
         throws JsonParseException {
@@ -88,6 +90,7 @@ public final class JsonAdapterSerializerDeserializerTest extends TestCase {
         throws JsonParseException {
       return new User("UserSerializerDeserializer");
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   public void testJsonSerializerDeserializerBasedJsonAdapterOnClass() {
@@ -123,6 +126,7 @@ public final class JsonAdapterSerializerDeserializerTest extends TestCase {
         throws JsonParseException {
       return new User2("UserSerializerDeserializer2");
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   public void testDifferentJsonAdaptersForGenericFieldsOfSameRawType() {
@@ -150,13 +154,13 @@ public final class JsonAdapterSerializerDeserializerTest extends TestCase {
     }
   }
 
-  private static final class BaseStringAdapter implements JsonSerializer<Base<String>> {
+  private static final class BaseStringAdapter extends SimpleJsonSerializer<Base<String>> {
     @Override public JsonElement serialize(Base<String> src, Type typeOfSrc, JsonSerializationContext context) {
       return new JsonPrimitive("BaseStringAdapter");
     }
   }
 
-  private static final class BaseIntegerAdapter implements JsonSerializer<Base<Integer>> {
+  private static final class BaseIntegerAdapter extends SimpleJsonSerializer<Base<Integer>> {
     @Override public JsonElement serialize(Base<Integer> src, Type typeOfSrc, JsonSerializationContext context) {
       return new JsonPrimitive("BaseIntegerAdapter");
     }

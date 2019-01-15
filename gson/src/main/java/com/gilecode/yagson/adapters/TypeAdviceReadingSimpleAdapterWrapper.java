@@ -17,7 +17,6 @@ package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.adapters.AdapterUtils;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
@@ -49,7 +48,7 @@ public final class TypeAdviceReadingSimpleAdapterWrapper<T> extends TypeAdapter<
         this.delegateTypeAdapter = delegateSimpleTypeAdapter;
 
         assert gson.getTypeInfoPolicy().isEnabled() : "Requires enabled type info";
-        assert AdapterUtils.isSimpleTypeAdapter(delegateSimpleTypeAdapter) : "Expects delegate type adapter to be simple";
+        assert delegateSimpleTypeAdapter.isSimple() : "Expects delegate type adapter to be simple";
     }
 
     @Override

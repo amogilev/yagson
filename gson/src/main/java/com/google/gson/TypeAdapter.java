@@ -99,7 +99,8 @@ import java.io.Writer;
  *
  * <strong>YaGson change:</strong> In YaGson, type adapters read/write methods MUST NOT be used directly,
  * but only through Gson instance or contexts, i.e. {@link ReadContext#doRead(JsonReader, TypeAdapter, String)} and
- * {@link WriteContext#doWrite(Object, TypeAdapter, String, JsonWriter)}
+ * {@link WriteContext#doWrite(Object, TypeAdapter, String, JsonWriter)}. The few exceptions are delegate type adapters
+ * and the read/write of root objects (still better be done throuh Gson instance)
  *
  * @since 2.1
  */
@@ -126,6 +127,22 @@ import java.io.Writer;
 // instances of {@code Date}, but cannot convert any other types.
 //
 public abstract class TypeAdapter<T> {
+
+  /**
+   * Returns whether the objects processed by this adapter are "simple", which means that
+   * <ul>
+   *     <li>JSON representation of that object is a String or primitive. <strong>Json Objects are not allowed!</strong>;</li>
+   *     <li>the objects cannot contain circular references;</li>
+   *     <li>duplication checks are not required for these objects</li>
+   * </ul>
+   * As a result of these constraints, the objects are NEVER converted to YaGson references.
+   * <p/>
+   * By default, no type adapters are simple. The easiest way to make your adapter simple is to extend
+   * {@link com.gilecode.yagson.adapters.SimpleTypeAdapter}
+   */
+  public boolean isSimple() {
+    return false;
+  }
 
   /**
    * Writes one JSON value (an array, object, string, number, boolean or null)

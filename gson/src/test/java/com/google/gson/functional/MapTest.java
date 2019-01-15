@@ -307,6 +307,7 @@ public class MapTest extends TestCase {
             }
             return array;
           }
+          @Override public boolean isSimple() { return false; }
         }).create();
 
     Map<String, Long> src = new LinkedHashMap<String, Long>();
@@ -497,6 +498,7 @@ public class MapTest extends TestCase {
           JsonSerializationContext context) {
         return baseTypeJsonElement;
       }
+      @Override public boolean isSimple() { return false; }
     };
 
     Gson gson = new GsonBuilder()

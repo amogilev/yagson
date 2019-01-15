@@ -301,6 +301,7 @@ public class ObjectTest extends TestCase {
                   ClassWithNoFields src, Type typeOfSrc, JsonSerializationContext context) {
                 return new JsonObject();
               }
+              @Override public boolean isSimple() { return false; }
             }).create();
 
     assertEquals("null", gson.toJson(new ClassWithNoFields() {

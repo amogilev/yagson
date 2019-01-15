@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
+import com.gilecode.yagson.adapters.SimpleJsonSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -328,7 +329,7 @@ public class CollectionTest extends TestCase {
   
   public void testUserCollectionTypeAdapter() {
     Type listOfString = new TypeToken<List<String>>() {}.getType();
-    Object stringListSerializer = new JsonSerializer<List<String>>() {
+    Object stringListSerializer = new SimpleJsonSerializer<List<String>>() {
       public JsonElement serialize(List<String> src, Type typeOfSrc,
           JsonSerializationContext context) {
         return new JsonPrimitive(src.get(0) + ";" + src.get(1));

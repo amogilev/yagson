@@ -20,15 +20,7 @@ package com.google.gson.internal.bind;
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.internal.$Gson$Preconditions;
 import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
@@ -49,7 +41,7 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
   final Gson gson;
   private final TypeToken<T> typeToken;
   private final TypeAdapterFactory skipPast;
-  private final GsonContextImpl context = new GsonContextImpl();
+  private final boolean simple;
 
   /** The delegate is lazily created because it may not be needed, and creating it may fail. */
   private TypeAdapter<T> delegate;
@@ -61,7 +53,39 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     this.gson = gson;
     this.typeToken = typeToken;
     this.skipPast = skipPast;
+
+    simple = checkIsSimpleConsistency(serializer, deserializer);
   }
+
+  private boolean checkIsSimpleConsistency(JsonSerializer<T> serializer, JsonDeserializer<T> deserializer) throws IllegalArgumentException {
+    if (serializer != null && deserializer != null) {
+      if (serializer.isSimple() != deserializer.isSimple()) {
+        throw new IllegalArgumentException("Serializer and deserializer must be consistent by isSimple()");
+      }
+      return serializer.isSimple();
+    } else if (serializer != null) {
+      return serializer.isSimple();
+    } else if (deserializer != null) {
+      return deserializer.isSimple();
+    } else {
+      return delegate().isSimple();
+    }
+//    } else {
+//      TypeAdapter<T> delegate = delegate();
+//      if (serializer != null && serializer.isSimple() != delegate.isSimple()) {
+//        throw new IllegalArgumentException("Serializer and delegate type adapter must be consistent by isSimple()");
+//      } else if (deserializer != null && deserializer.isSimple() != delegate.isSimple()) {
+//        throw new IllegalArgumentException("Deserializer and delegate type adapter must be consistent by isSimple()");
+//      }
+//      return delegate.isSimple();
+//    }
+  }
+
+  @Override
+  public boolean isSimple() {
+    return simple;
+  }
+
 
   @Override public T read(JsonReader in, ReadContext ctx) throws IOException {
     if (deserializer == null) {
@@ -70,8 +94,12 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     JsonElement value = Streams.parse(in);
     if (value.isJsonNull()) {
       return null;
+    } else if (value.isJsonPrimitive() && ((JsonPrimitive)value).isString()
+            && ctx.refsContext().isReferenceString(value.getAsString())) {
+      return ctx.refsContext().getReferencedObject(value.getAsString());
     }
-    T obj = deserializer.deserialize(value, typeToken.getType(), context);
+
+    T obj = deserializer.deserialize(value, typeToken.getType(), asJsonContext(ctx));
     return obj;
   }
 
@@ -84,7 +112,7 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
       out.nullValue();
       return;
     }
-    JsonElement tree = serializer.serialize(value, typeToken.getType(), context);
+    JsonElement tree = serializer.serialize(value, typeToken.getType(), asJsonContext(ctx));
     Streams.write(tree, out);
   }
 
@@ -156,16 +184,80 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     }
   }
 
-  private final class GsonContextImpl implements JsonSerializationContext, JsonDeserializationContext {
-    @Override public JsonElement serialize(Object src) {
-      return gson.toJsonTree(src);
-    }
-    @Override public JsonElement serialize(Object src, Type typeOfSrc) {
-      return gson.toJsonTree(src, typeOfSrc);
-    }
-    @SuppressWarnings("unchecked")
-    @Override public <R> R deserialize(JsonElement json, Type typeOfT) throws JsonParseException {
-      return (R) gson.fromJson(json, typeOfT);
-    }
-  };
+  private JsonDeserializationContext asJsonContext(final ReadContext readContext) {
+    return new JsonDeserializationContext() {
+      @SuppressWarnings("unchecked")
+      @Override
+      public <R> R deserialize(JsonElement json, String pathElement, Type typeOfT) throws JsonParseException {
+        if (json == null || json.equals(JsonNull.INSTANCE)) {
+          return null;
+        }
+        JsonReader jsonReader = new JsonTreeReader(json);
+        TypeAdapter<Object> adapter = (TypeAdapter<Object>) gson.getAdapter(TypeToken.get(typeOfT));
+        try {
+          return (R) readContext.doRead(jsonReader, adapter, pathElement);
+        } catch (IOException e) {
+          throw new JsonIOException(e);
+        }
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public <R> R delegatedOrRootDeserialize(JsonElement json, Type typeOfT) throws JsonParseException {
+        if (json == null || json.equals(JsonNull.INSTANCE)) {
+          return null;
+        }
+        TypeAdapter<R> adapter = (TypeAdapter<R>) gson.getAdapter(TypeToken.get(typeOfT));
+        return adapter.fromJsonTree(json, readContext);
+      }
+
+      @Override
+      public ReadContext getReadContext() {
+        return readContext;
+      }
+    };
+  }
+
+
+  private JsonSerializationContext asJsonContext(final WriteContext writeContext) {
+    return new JsonSerializationContext() {
+      @Override
+      public JsonElement serialize(Object src, String pathElement) {
+        return serialize(src, pathElement, Object.class);
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public JsonElement serialize(Object src, String pathElement, Type deserializationType) {
+        if (src == null) {
+          return JsonNull.INSTANCE;
+        }
+
+        TypeAdapter<Object> adapter = (TypeAdapter<Object>) gson.getAdapter(TypeToken.get(deserializationType));
+        return writeContext.doToJsonTree(src, adapter, pathElement);
+      }
+
+      @Override
+      public JsonElement delegatedOrRootSerialize(Object src) {
+        return delegatedOrRootSerialize(src, Object.class);
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public JsonElement delegatedOrRootSerialize(Object src, Type deserializationType) {
+        if (src == null) {
+          return JsonNull.INSTANCE;
+        }
+
+        TypeAdapter<Object> adapter = (TypeAdapter<Object>) gson.getAdapter(TypeToken.get(deserializationType));
+        return adapter.toJsonTree(src, writeContext);
+      }
+
+      @Override
+      public WriteContext getWriteContext() {
+        return writeContext;
+      }
+    };
+  }
+
 }

@@ -146,7 +146,8 @@ public class ParameterizedTypeFixtures {
         JsonSerializationContext context) {
       JsonObject json = new JsonObject();
       T value = src.getValue();
-      json.add(value.getClass().getSimpleName(), context.serialize(value));
+      String name = value.getClass().getSimpleName();
+      json.add(value.getClass().getSimpleName(), context.serialize(value, name));
       return json;
     }
 
@@ -173,5 +174,7 @@ public class ParameterizedTypeFixtures {
       }
       return new MyParameterizedType<T>(value);
     }
+
+    @Override public boolean isSimple() { return false; }
   }
 }
