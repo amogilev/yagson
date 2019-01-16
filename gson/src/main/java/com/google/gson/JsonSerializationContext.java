@@ -16,6 +16,8 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.WriteContext;
+
 import java.lang.reflect.Type;
 
 /**
@@ -62,6 +64,11 @@ public interface JsonSerializationContext {
    * Also can be used for serialization of the root objects
    */
   public JsonElement delegatedOrRootSerialize(Object src, Type typeOfSrc);
+
+  /**
+   * Returns the write context used in YaGson
+   */
+  WriteContext getWriteContext();
 
 
 }

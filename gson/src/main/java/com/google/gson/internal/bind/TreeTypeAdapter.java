@@ -61,7 +61,11 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     JsonElement value = Streams.parse(in);
     if (value.isJsonNull()) {
       return null;
+    } else if (value.isJsonPrimitive() && ((JsonPrimitive)value).isString()
+            && ctx.refsContext().isReferenceString(value.getAsString())) {
+      return ctx.refsContext().getReferencedObject(value.getAsString());
     }
+
     T obj = deserializer.deserialize(value, typeToken.getType(), asJsonContext(ctx));
     return obj;
   }
@@ -151,26 +155,32 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     return new JsonDeserializationContext() {
       @SuppressWarnings("unchecked")
       @Override
-      public <T2> T2 deserialize(JsonElement json, String pathElement, Type typeOfT) throws JsonParseException {
+      public <R> R deserialize(JsonElement json, String pathElement, Type typeOfT) throws JsonParseException {
         if (json == null || json.equals(JsonNull.INSTANCE)) {
           return null;
         }
         JsonReader jsonReader = new JsonTreeReader(json);
         TypeAdapter<Object> adapter = (TypeAdapter<Object>) gson.getAdapter(TypeToken.get(typeOfT));
         try {
-          return (T2) readContext.doRead(jsonReader, adapter, pathElement);
+          return (R) readContext.doRead(jsonReader, adapter, pathElement);
         } catch (IOException e) {
           throw new JsonIOException(e);
         }
       }
 
+      @SuppressWarnings("unchecked")
       @Override
-      public <T> T delegatedOrRootDeserialize(JsonElement json, Type typeOfT) throws JsonParseException {
+      public <R> R delegatedOrRootDeserialize(JsonElement json, Type typeOfT) throws JsonParseException {
         if (json == null || json.equals(JsonNull.INSTANCE)) {
           return null;
         }
-        TypeAdapter<Object> adapter = (TypeAdapter<Object>) gson.getAdapter(TypeToken.get(typeOfT));
-        return (T) adapter.fromJsonTree(json, readContext);
+        TypeAdapter<R> adapter = (TypeAdapter<R>) gson.getAdapter(TypeToken.get(typeOfT));
+        return adapter.fromJsonTree(json, readContext);
+      }
+
+      @Override
+      public ReadContext getReadContext() {
+        return readContext;
       }
     };
   }
@@ -199,6 +209,7 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
         return delegatedOrRootSerialize(src, Object.class);
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       public JsonElement delegatedOrRootSerialize(Object src, Type deserializationType) {
         if (src == null) {
@@ -207,6 +218,11 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
 
         TypeAdapter<Object> adapter = (TypeAdapter<Object>) gson.getAdapter(TypeToken.get(deserializationType));
         return adapter.toJsonTree(src, writeContext);
+      }
+
+      @Override
+      public WriteContext getWriteContext() {
+        return writeContext;
       }
     };
   }

@@ -16,6 +16,8 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.ReadContext;
+
 import java.lang.reflect.Type;
 
 /**
@@ -51,4 +53,8 @@ public interface JsonDeserializationContext {
    */
   public <T> T delegatedOrRootDeserialize(JsonElement json, Type typeOfT) throws JsonParseException;
 
+  /**
+   * Returns the read context used in YaGson
+   */
+  ReadContext getReadContext();
 }
