@@ -147,6 +147,9 @@ class ReferencesAllDuplicatesModeContext {
 
         public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement,
                                             WriteContext ctx) {
+            // resolve required for correct check of isSimple (i.e. if isPotentialReference)
+            valueTypeAdapter = AdapterUtils.resolve(valueTypeAdapter, value);
+
             String ref = getReferenceFor(value, valueTypeAdapter, pathElement);
             if (ref != null) {
                 return makeReferenceElement(ref);

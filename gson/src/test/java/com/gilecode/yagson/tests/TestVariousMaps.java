@@ -15,15 +15,16 @@
  */
 package com.gilecode.yagson.tests;
 
-import com.gilecode.yagson.*;
-import com.gilecode.yagson.tests.data.Person;
+import com.gilecode.yagson.YaGson;
 import com.gilecode.yagson.tests.data.ClassWithObject;
+import com.gilecode.yagson.tests.data.Person;
 import com.gilecode.yagson.tests.util.BindingTestCase;
 import com.gilecode.yagson.util.VersionUtils;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.internal.LinkedHashTreeMap;
 import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -283,4 +284,20 @@ public class TestVariousMaps extends BindingTestCase {
         test(obj, jsonStr("{'foo':'bar'}"));
         testAsMap(IdentityHashMap.class);
     }
+
+    public void testDuplicateMapKeys(){
+        HashMap<Integer, Double> first = new HashMap<Integer, Double>();
+        first.put(1, 0.0);
+
+        HashMap<Integer, Double> second = new HashMap<Integer, Double>();
+        second.put(1, 0.0);
+
+        List<HashMap<Integer, Double>> list = new ArrayList<HashMap<Integer, Double>>();
+        list.add(first);
+        list.add(second);
+
+        Type type = new TypeToken<ArrayList<HashMap<Integer,Double>>>(){}.getType();
+        test(list, type, jsonStr("[{'1':0.0},{'1':0.0}]"));
+    }
+
 }
