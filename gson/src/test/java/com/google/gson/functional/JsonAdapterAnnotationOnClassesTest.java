@@ -19,6 +19,8 @@ package com.google.gson.functional;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
+import com.gilecode.yagson.adapters.SimpleJsonSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -93,7 +95,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
    * The serializer overrides field adapter, but for deserializer the fieldAdapter is used.
    */
   public void testRegisteredSerializerOverridesJsonAdapter() {
-    JsonSerializer<A> serializer = new JsonSerializer<A>() {
+    JsonSerializer<A> serializer = new SimpleJsonSerializer<A>() {
       public JsonElement serialize(A src, Type typeOfSrc,
           JsonSerializationContext context) {
         return new JsonPrimitive("registeredSerializer");
@@ -112,7 +114,7 @@ public final class JsonAdapterAnnotationOnClassesTest extends TestCase {
    * The deserializer overrides Json adapter, but for serializer the jsonAdapter is used.
    */
   public void testRegisteredDeserializerOverridesJsonAdapter() {
-    JsonDeserializer<A> deserializer = new JsonDeserializer<A>() {
+    JsonDeserializer<A> deserializer = new SimpleJsonDeserializer<A>() {
       public A deserialize(JsonElement json, Type typeOfT,
           JsonDeserializationContext context) throws JsonParseException {
         return new A("registeredDeserializer");

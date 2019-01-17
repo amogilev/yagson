@@ -32,7 +32,15 @@ public abstract class DelegatingTypeAdapter<T> extends TypeAdapter<T> {
 
     protected TypeAdapter<T> delegate;
 
+    public DelegatingTypeAdapter(TypeAdapter<T> delegate) {
+        this.delegate = delegate;
+    }
+
     public TypeAdapter<T> getDelegate() {
         return delegate;
+    }
+
+    public void setDelegate(TypeAdapter<T> delegate) {
+        this.delegate = delegate;
     }
 }

@@ -15,6 +15,8 @@
  */
 package com.google.gson.functional;
 
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
+import com.gilecode.yagson.adapters.SimpleJsonSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -64,6 +66,7 @@ public class CustomTypeAdaptersTest extends TestCase {
         json.addProperty("value", 25);
         return json;
       }
+      @Override public boolean isSimple() { return false; }
     }).create();
     ClassWithCustomTypeConverter target = new ClassWithCustomTypeConverter();
     assertEquals("{\"bag\":5,\"value\":25}", gson.toJson(target));
@@ -79,6 +82,7 @@ public class CustomTypeAdaptersTest extends TestCase {
         return new ClassWithCustomTypeConverter(new BagOfPrimitives(value,
             value, false, ""), value);
       }
+      @Override public boolean isSimple() { return false; }
     }).create();
     String json = "{\"bag\":5,\"value\":25}";
     ClassWithCustomTypeConverter target = gson.fromJson(json, ClassWithCustomTypeConverter.class);
@@ -108,7 +112,7 @@ public class CustomTypeAdaptersTest extends TestCase {
 
   public void testCustomNestedSerializers() {
     Gson gson = new GsonBuilder().registerTypeAdapter(
-        BagOfPrimitives.class, new JsonSerializer<BagOfPrimitives>() {
+        BagOfPrimitives.class, new SimpleJsonSerializer<BagOfPrimitives>() {
           @Override public JsonElement serialize(BagOfPrimitives src, Type typeOfSrc,
           JsonSerializationContext context) {
         return new JsonPrimitive(6);
@@ -120,7 +124,7 @@ public class CustomTypeAdaptersTest extends TestCase {
 
   public void testCustomNestedDeserializers() {
     Gson gson = new GsonBuilder().registerTypeAdapter(
-        BagOfPrimitives.class, new JsonDeserializer<BagOfPrimitives>() {
+        BagOfPrimitives.class, new SimpleJsonDeserializer<BagOfPrimitives>() {
           @Override public BagOfPrimitives deserialize(JsonElement json, Type typeOfT,
           JsonDeserializationContext context) throws JsonParseException {
         int value = json.getAsInt();
@@ -140,6 +144,7 @@ public class CustomTypeAdaptersTest extends TestCase {
         json.addProperty("value", src.baseValue);
         return json;
       }
+      @Override public boolean isSimple() { return false; }
     }).create();
     Base b = new Base();
     String json = gson.toJson(b);
@@ -157,6 +162,7 @@ public class CustomTypeAdaptersTest extends TestCase {
         json.addProperty("value", src.baseValue);
         return json;
       }
+      @Override public boolean isSimple() { return false; }
     }).create();
     Base b = new Base();
     String json = gson.toJson(b);
@@ -206,11 +212,13 @@ public class CustomTypeAdaptersTest extends TestCase {
     public JsonElement serialize(Foo src, Type typeOfSrc, JsonSerializationContext context) {
       return context.delegatedOrRootSerialize(src, typeOfSrc);
     }
+    // this may be wrong, but no actual information is known at this point
+    @Override public boolean isSimple() { return false; }
   }
 
   public void testCustomSerializerInvokedForPrimitives() {
     Gson gson = new GsonBuilder()
-        .registerTypeAdapter(boolean.class, new JsonSerializer<Boolean>() {
+        .registerTypeAdapter(boolean.class, new SimpleJsonSerializer<Boolean>() {
           @Override public JsonElement serialize(Boolean s, Type t, JsonSerializationContext c) {
             return new JsonPrimitive(s ? 1 : 0);
           }
@@ -223,7 +231,7 @@ public class CustomTypeAdaptersTest extends TestCase {
   @SuppressWarnings("rawtypes")
   public void testCustomDeserializerInvokedForPrimitives() {
     Gson gson = new GsonBuilder()
-        .registerTypeAdapter(boolean.class, new JsonDeserializer() {
+        .registerTypeAdapter(boolean.class, new SimpleJsonDeserializer() {
           @Override
           public Object deserialize(JsonElement json, Type t, JsonDeserializationContext context) {
             return json.getAsInt() != 0;
@@ -235,7 +243,7 @@ public class CustomTypeAdaptersTest extends TestCase {
   }
 
   public void testCustomByteArraySerializer() {
-    Gson gson = new GsonBuilder().registerTypeAdapter(byte[].class, new JsonSerializer<byte[]>() {
+    Gson gson = new GsonBuilder().registerTypeAdapter(byte[].class, new SimpleJsonSerializer<byte[]>() {
       @Override
       public JsonElement serialize(byte[] src, Type typeOfSrc, JsonSerializationContext context) {
         StringBuilder sb = new StringBuilder(src.length);
@@ -252,7 +260,7 @@ public class CustomTypeAdaptersTest extends TestCase {
 
   public void testCustomByteArrayDeserializerAndInstanceCreator() {
     GsonBuilder gsonBuilder = new GsonBuilder().registerTypeAdapter(byte[].class,
-        new JsonDeserializer<byte[]>() {
+        new SimpleJsonDeserializer<byte[]>() {
           @Override public byte[] deserialize(JsonElement json,
               Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         String str = json.getAsString();
@@ -305,6 +313,7 @@ public class CustomTypeAdaptersTest extends TestCase {
       String contents = src.part1 + ':' + src.part2;
       return new JsonPrimitive(contents);
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   // Test created from Issue 70
@@ -435,6 +444,7 @@ public class CustomTypeAdaptersTest extends TestCase {
       obj.addProperty("myData", src.data);
       return obj;
     }
+    @Override public boolean isSimple() { return false; }
   }
 
   private static class DataHolderDeserializer implements JsonDeserializer<DataHolder> {
@@ -448,6 +458,7 @@ public class CustomTypeAdaptersTest extends TestCase {
       }
       return new DataHolder(jsonElement.getAsString());
     }
+    @Override public boolean isSimple() { return false; }
   }
 
   private static class DateTypeAdapter implements JsonSerializer<Date>, JsonDeserializer<Date> {
@@ -461,5 +472,6 @@ public class CustomTypeAdaptersTest extends TestCase {
     public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
       return new JsonPrimitive(src.getTime());
     }
+    @Override public boolean isSimple() { return true; }
   }
 }

@@ -83,6 +83,9 @@ public class TestTypes {
       obj.addProperty(Base.SERIALIZER_KEY, NAME);
       return obj;
     }
+
+    @Override
+    public boolean isSimple() { return false; }
   }
   public static class SubSerializer implements JsonSerializer<Sub> {
     public static final String NAME = SubSerializer.class.getSimpleName(); 
@@ -91,7 +94,10 @@ public class TestTypes {
       JsonObject obj = new JsonObject();
       obj.addProperty(Base.SERIALIZER_KEY, NAME);
       return obj;
-    }    
+    }
+
+    @Override
+    public boolean isSimple() { return false; }
   }
 
   public static class StringWrapper {
@@ -417,5 +423,8 @@ public class TestTypes {
         throws JsonParseException {
       return json.getAsLong() - DIFFERENCE;
     }
+
+    @Override
+    public boolean isSimple() { return true; }
   }
 }

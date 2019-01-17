@@ -16,6 +16,7 @@
 
 package com.google.gson.functional;
 
+import com.gilecode.yagson.adapters.SimpleJsonSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -90,7 +91,7 @@ public class CustomSerializerTest extends TestCase {
 
    public void testSerializerReturnsNull() {
      Gson gson = new GsonBuilder()
-       .registerTypeAdapter(Base.class, new JsonSerializer<Base>() {
+       .registerTypeAdapter(Base.class, new SimpleJsonSerializer<Base>() {
          public JsonElement serialize(Base src, Type typeOfSrc, JsonSerializationContext context) {
            return null;
          }

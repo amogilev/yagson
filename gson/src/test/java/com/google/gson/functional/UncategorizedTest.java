@@ -130,5 +130,6 @@ public class UncategorizedTest extends TestCase {
       }
       throw new JsonParseException("unknown type: " + json);
     }
+    @Override public boolean isSimple() { return false; }
   }
 }

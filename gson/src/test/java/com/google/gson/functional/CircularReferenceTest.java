@@ -89,6 +89,8 @@ public class CircularReferenceTest extends TestCase {
         obj.add("child", context.serialize(src.child, "child"));
         return obj;
       }
+      @Override
+      public boolean isSimple() { return false; }
     }).create();
     try {
       gson.toJson(obj);

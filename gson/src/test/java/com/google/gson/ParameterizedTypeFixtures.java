@@ -174,5 +174,7 @@ public class ParameterizedTypeFixtures {
       }
       return new MyParameterizedType<T>(value);
     }
+
+    @Override public boolean isSimple() { return false; }
   }
 }

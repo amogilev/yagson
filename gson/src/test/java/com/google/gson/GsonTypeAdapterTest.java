@@ -20,6 +20,8 @@ import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
 import junit.framework.TestCase;
 
 /**
@@ -89,6 +91,7 @@ public class GsonTypeAdapterTest extends TestCase {
         throws JsonParseException {
       throw new IllegalStateException();
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   private static class AtomicIntegerTypeAdapter
@@ -102,6 +105,8 @@ public class GsonTypeAdapterTest extends TestCase {
       int intValue = json.getAsInt();
       return new AtomicInteger(--intValue);
     }
+
+    @Override public boolean isSimple() { return true; }
   }
 
   static abstract class Abstract {
@@ -129,7 +134,7 @@ public class GsonTypeAdapterTest extends TestCase {
 
   private void assertSerialized(String expected, Class<?> instanceType, boolean registerAbstractDeserializer,
       boolean registerAbstractHierarchyDeserializer, Object instance) {
-    JsonDeserializer<Abstract> deserializer = new JsonDeserializer<Abstract>() {
+    JsonDeserializer<Abstract> deserializer = new SimpleJsonDeserializer<Abstract>() {
       public Abstract deserialize(JsonElement json, Type typeOfT,
           JsonDeserializationContext context) throws JsonParseException {
         throw new AssertionError();

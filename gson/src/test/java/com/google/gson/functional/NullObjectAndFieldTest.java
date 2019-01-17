@@ -198,6 +198,7 @@ public class NullObjectAndFieldTest extends TestCase {
       obj.add("bag", JsonNull.INSTANCE);
       return obj;
     }
+    @Override public boolean isSimple() { return false; }
   }
 
   public void testExplicitNullSetsFieldToNullDuringDeserialization() {
@@ -214,6 +215,7 @@ public class NullObjectAndFieldTest extends TestCase {
               JsonSerializationContext context) {
             return context.delegatedOrRootSerialize(null);
           }
+          @Override public boolean isSimple() { return false; }
         }).create();
     ObjectWithField target = new ObjectWithField();
     target.value = "value1";
@@ -228,6 +230,7 @@ public class NullObjectAndFieldTest extends TestCase {
               JsonDeserializationContext context) {
             return context.delegatedOrRootDeserialize(null, type);
           }
+          @Override public boolean isSimple() { return false; }
         }).create();
     String json = "{value:'value1'}";
     ObjectWithField target = gson.fromJson(json, ObjectWithField.class);

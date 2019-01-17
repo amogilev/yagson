@@ -980,6 +980,11 @@ public class Gson {
   }
 
   public static class FutureTypeAdapter<T> extends DelegatingTypeAdapter<T> {
+
+    public FutureTypeAdapter() {
+      super(null);
+    }
+
     public void setDelegate(TypeAdapter<T> typeAdapter) {
       if (delegate != null) {
         throw new AssertionError();

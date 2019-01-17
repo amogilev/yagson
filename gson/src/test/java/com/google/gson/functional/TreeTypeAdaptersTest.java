@@ -111,6 +111,7 @@ public class TreeTypeAdaptersTest extends TestCase {
     public JsonElement serialize(Id<?> src, Type typeOfSrc, JsonSerializationContext context) {
       return new JsonPrimitive(src.getValue());
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   @SuppressWarnings("unused")

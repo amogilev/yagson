@@ -17,6 +17,8 @@
 
 package com.google.gson.functional;
 
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
+import com.gilecode.yagson.adapters.SimpleJsonSerializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
@@ -125,7 +127,7 @@ public final class TypeAdapterPrecedenceTest extends TestCase {
   }
 
   private JsonSerializer<Foo> newSerializer(final String name) {
-    return new JsonSerializer<Foo>() {
+    return new SimpleJsonSerializer<Foo>() {
       @Override
       public JsonElement serialize(Foo src, Type typeOfSrc, JsonSerializationContext context) {
         return new JsonPrimitive(src.name + " via " + name);
@@ -134,7 +136,7 @@ public final class TypeAdapterPrecedenceTest extends TestCase {
   }
 
   private JsonDeserializer<Foo> newDeserializer(final String name) {
-    return new JsonDeserializer<Foo>() {
+    return new SimpleJsonDeserializer<Foo>() {
       @Override
       public Foo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
         return new Foo(json.getAsString() + " via " + name);

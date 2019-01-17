@@ -148,6 +148,7 @@ public final class TypeHierarchyAdapterTest extends TestCase {
     @Override public JsonElement serialize(Manager src, Type typeOfSrc, JsonSerializationContext context) {
       return new JsonPrimitive(src.userid);
     }
+    @Override public boolean isSimple() { return true; }
   }
 
   static class EmployeeAdapter implements JsonSerializer<Employee>, JsonDeserializer<Employee> {
@@ -193,6 +194,7 @@ public final class TypeHierarchyAdapterTest extends TestCase {
       result.startDate = context.<Long>deserialize(object.get("startDate"), "startDate", long.class);
       return result;
     }
+    @Override public boolean isSimple() { return false; }
   }
 
   static class Employee {
