@@ -47,20 +47,6 @@ import static com.gilecode.yagson.refs.References.REF_FIELD_PREFIX;
 public class AdapterUtils {
 
     /**
-     * Returns whether the specified type adapter is a {@link SimpleTypeAdapter}, or delegates
-     * to a {@link SimpleTypeAdapter}.
-     */
-    public static <T> boolean isSimpleTypeAdapter(TypeAdapter<T> typeAdapter) {
-        if (typeAdapter instanceof SimpleTypeAdapter) {
-            return true;
-        } else if (typeAdapter instanceof DelegatingTypeAdapter) {
-            return isSimpleTypeAdapter(((DelegatingTypeAdapter)typeAdapter).getDelegate());
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * Returns whether the specified type adapter is a special adapter created by {@link Excluder} to exclude classes,
      * or delegates to it.
      */

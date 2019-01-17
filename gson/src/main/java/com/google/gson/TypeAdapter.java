@@ -129,6 +129,22 @@ import java.io.Writer;
 public abstract class TypeAdapter<T> {
 
   /**
+   * Returns whether the objects processed by this adapter are "simple", which means that
+   * <ul>
+   *     <li>JSON representation of that object is a String or primitive. <strong>Json Objects are not allowed!</strong>;</li>
+   *     <li>the objects cannot contain circular references;</li>
+   *     <li>duplication checks are not required for these objects</li>
+   * </ul>
+   * As a result of these constraints, the objects are NEVER converted to YaGson references.
+   * <p/>
+   * By default, no type adapters are simple. The easiest way to make your adapter simple is to extend
+   * {@link com.gilecode.yagson.adapters.SimpleTypeAdapter}
+   */
+  public boolean isSimple() {
+    return false;
+  }
+
+  /**
    * Writes one JSON value (an array, object, string, number, boolean or null)
    * for {@code value}.
    *

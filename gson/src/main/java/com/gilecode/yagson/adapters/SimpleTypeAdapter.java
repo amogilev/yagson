@@ -41,6 +41,11 @@ public abstract class SimpleTypeAdapter<T> extends TypeAdapter<T> {
     abstract public T read(JsonReader in) throws IOException;
 
     @Override
+    public boolean isSimple() {
+        return true;
+    }
+
+    @Override
     public T read(JsonReader in, ReadContext ctx) throws IOException {
         T value = read(in);
         ctx.registerObject(value, true);

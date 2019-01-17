@@ -41,6 +41,7 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
   final Gson gson;
   private final TypeToken<T> typeToken;
   private final TypeAdapterFactory skipPast;
+  private final boolean simple;
 
   /** The delegate is lazily created because it may not be needed, and creating it may fail. */
   private TypeAdapter<T> delegate;
@@ -52,7 +53,39 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
     this.gson = gson;
     this.typeToken = typeToken;
     this.skipPast = skipPast;
+
+    simple = checkIsSimpleConsistency(serializer, deserializer);
   }
+
+  private boolean checkIsSimpleConsistency(JsonSerializer<T> serializer, JsonDeserializer<T> deserializer) throws IllegalArgumentException {
+    if (serializer != null && deserializer != null) {
+      if (serializer.isSimple() != deserializer.isSimple()) {
+        throw new IllegalArgumentException("Serializer and deserializer must be consistent by isSimple()");
+      }
+      return serializer.isSimple();
+    } else if (serializer != null) {
+      return serializer.isSimple();
+    } else if (deserializer != null) {
+      return deserializer.isSimple();
+    } else {
+      return delegate().isSimple();
+    }
+//    } else {
+//      TypeAdapter<T> delegate = delegate();
+//      if (serializer != null && serializer.isSimple() != delegate.isSimple()) {
+//        throw new IllegalArgumentException("Serializer and delegate type adapter must be consistent by isSimple()");
+//      } else if (deserializer != null && deserializer.isSimple() != delegate.isSimple()) {
+//        throw new IllegalArgumentException("Deserializer and delegate type adapter must be consistent by isSimple()");
+//      }
+//      return delegate.isSimple();
+//    }
+  }
+
+  @Override
+  public boolean isSimple() {
+    return simple;
+  }
+
 
   @Override public T read(JsonReader in, ReadContext ctx) throws IOException {
     if (deserializer == null) {

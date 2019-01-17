@@ -16,6 +16,9 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.ReadContext;
+import com.google.gson.stream.JsonReader;
+
 import java.lang.reflect.Type;
 
 /**
@@ -88,4 +91,23 @@ public interface JsonDeserializer<T> {
    */
   public T deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
       throws JsonParseException;
+
+  /**
+   * Returns whether the objects processed by this deserializer are "simple", which means that
+   * <ul>
+   *     <li>JSON representation of that object is a String or primitive. <strong>Json Objects are not allowed!</strong>;</li>
+   *     <li>the objects cannot contain circular references;</li>
+   *     <li>duplication checks are not required for these objects</li>
+   * </ul>
+   * As a result of these constraints, the objects are NEVER converted to YaGson references.
+   * <p/>
+   * On the other hand, non-simple deserializers MUST process potential @type/@value wrappers by their own,
+   * usually at each potential JSON Object start (i.e. at '{' symbol}. For example, see method
+   * {@link com.google.gson.internal.bind.ObjectTypeAdapter#read(JsonReader, ReadContext)}, case BEGIN_OBJECT.
+   * <p/>
+   * By default, no type adapters are simple. The easiest way to make your adapter simple is to extend
+   * {@link com.gilecode.yagson.adapters.SimpleTypeAdapter}
+   */
+  public boolean isSimple();
+
 }

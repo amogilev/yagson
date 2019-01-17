@@ -18,11 +18,9 @@ package com.google.gson.internal.bind;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.adapters.AdapterUtils;
 import com.gilecode.yagson.adapters.TypeInfoEmittingTypeAdapterWrapper;
 import com.gilecode.yagson.types.EmitTypeInfoPredicate;
 import com.gilecode.yagson.types.TypeUtils;
@@ -54,7 +52,7 @@ public final class TypeAdapterRuntimeTypeWrapper<T> extends TypeAdapter<T> {
     // Although similar check exists in ReadContext.doRead(), we need to duplicate it here, as wrappers hide
     //   simple delegate adapters
 
-    if (in.peek() == JsonToken.BEGIN_OBJECT && AdapterUtils.isSimpleTypeAdapter(delegate)) {
+    if (in.peek() == JsonToken.BEGIN_OBJECT && delegate.isSimple()) {
       // if the delegate adapter is simple and '{' is found, we expect and parse type advice here, and fail otherwise
       return TypeUtils.readTypeAdvisedValue(gson, in, type, ctx);
 

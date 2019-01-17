@@ -86,4 +86,18 @@ public interface JsonSerializer<T> {
    * @return a JsonElement corresponding to the specified object.
    */
   public JsonElement serialize(T src, Type typeOfSrc, JsonSerializationContext context);
+
+  /**
+   * Returns whether the objects processed by this serializer are "simple", which means that
+   * <ul>
+   *     <li>JSON representation of that object is a String or primitive. <strong>Json Objects are not allowed!</strong>;</li>
+   *     <li>the objects cannot contain circular references;</li>
+   *     <li>duplication checks are not required for these objects</li>
+   * </ul>
+   * As a result of these constraints, the objects are NEVER converted to YaGson references.
+   * <p/>
+   * By default, no type adapters are simple. The easiest way to make your adapter simple is to extend
+   * {@link com.gilecode.yagson.adapters.SimpleTypeAdapter}
+   */
+  public boolean isSimple();
 }
