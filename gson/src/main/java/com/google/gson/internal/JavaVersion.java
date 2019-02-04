@@ -88,5 +88,12 @@ public final class JavaVersion {
     return majorJavaVersion >= 9;
   }
 
+  /**
+   * @return {@code true} if the application is running on Java 11 or later; and {@code false} otherwise.
+   */
+  public static boolean isJava11OrLater() {
+    return majorJavaVersion >= 11;
+  }
+
   private JavaVersion() { }
 }
