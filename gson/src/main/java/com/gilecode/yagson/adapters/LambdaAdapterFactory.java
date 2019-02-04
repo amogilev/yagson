@@ -17,14 +17,13 @@ package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.types.NonSerializableLambdaException;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -43,7 +42,7 @@ public class LambdaAdapterFactory implements TypeAdapterFactory {
     private static final String SERIALIZED_LAMBDA_CLASS_NAME = "java.lang.invoke.SerializedLambda";
     private final Class<?> serializedLambdaClass;
     private final boolean enabled;
-    private final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+    private final ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
     private class AdaptersHolder {
         final TypeAdapter serializedLambdaAdapter;

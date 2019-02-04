@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Locale;
 
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
-import com.gilecode.yagson.util.VersionUtils;
+import com.google.gson.internal.JavaVersion;
 import com.google.gson.internal.PreJava9DateFormatProvider;
 import com.google.gson.internal.bind.util.ISO8601Utils;
 import com.google.gson.stream.JsonReader;
@@ -61,7 +61,7 @@ final class DefaultDateTypeAdapter extends SimpleTypeAdapter<Date> {
     if (!Locale.getDefault().equals(Locale.US)) {
       dateFormats.add(DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT));
     }
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       dateFormats.add(PreJava9DateFormatProvider.getUSDateTimeFormat(DateFormat.DEFAULT, DateFormat.DEFAULT));
     }
   }
@@ -80,7 +80,7 @@ final class DefaultDateTypeAdapter extends SimpleTypeAdapter<Date> {
     if (!Locale.getDefault().equals(Locale.US)) {
       dateFormats.add(DateFormat.getDateInstance(style));
     }
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       dateFormats.add(PreJava9DateFormatProvider.getUSDateFormat(style));
     }
   }
@@ -95,7 +95,7 @@ final class DefaultDateTypeAdapter extends SimpleTypeAdapter<Date> {
     if (!Locale.getDefault().equals(Locale.US)) {
       dateFormats.add(DateFormat.getDateTimeInstance(dateStyle, timeStyle));
     }
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       dateFormats.add(PreJava9DateFormatProvider.getUSDateTimeFormat(dateStyle, timeStyle));
     }
   }

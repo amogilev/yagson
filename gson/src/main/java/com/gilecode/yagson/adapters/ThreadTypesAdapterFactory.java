@@ -16,8 +16,6 @@
 package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.refs.PlaceholderUse;
 import com.gilecode.yagson.refs.ReferencePlaceholder;
 import com.google.gson.*;
@@ -25,6 +23,7 @@ import com.google.gson.internal.$Gson$Types;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.bind.JsonAdapterAnnotationTypeAdapterFactory;
 import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -69,7 +68,7 @@ public class ThreadTypesAdapterFactory implements TypeAdapterFactory {
         static Field threadLocalEntryValueField;
 
         static {
-            ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+            ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
             try {
                 threadLocalGetMapMethod = ThreadLocal.class.getDeclaredMethod("getMap", Thread.class);

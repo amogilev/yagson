@@ -17,14 +17,13 @@ package com.gilecode.yagson.types;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.TypeAdapter;
 import com.google.gson.internal.$Gson$Types;
 import com.gilecode.yagson.adapters.AdapterUtils;
 import com.google.gson.internal.bind.MapTypeAdapterFactory;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -55,7 +54,7 @@ public class TypeUtils {
         primitiveWrappers.put(double.class.getName(), Double.class);
     }
 
-    private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+    private static final ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
     public static boolean typesDiffer(Type type, Class<?> actualClass) {
         if (type instanceof GenericArrayType && actualClass.isArray()) {

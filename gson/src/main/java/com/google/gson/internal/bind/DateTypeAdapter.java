@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2011 Google Inc.
- * Modifications copyright (C) 2016,2017 Andrey Mogilev
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +16,12 @@
 
 package com.google.gson.internal.bind;
 
-import com.gilecode.yagson.util.VersionUtils;
+import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
+import com.google.gson.internal.JavaVersion;
 import com.google.gson.internal.PreJava9DateFormatProvider;
 import com.google.gson.internal.bind.util.ISO8601Utils;
 import com.google.gson.reflect.TypeToken;
@@ -58,12 +57,13 @@ public final class DateTypeAdapter extends SimpleTypeAdapter<Date> {
    * The first of them (default US format) is used for serialization as well.
    */
   private final List<DateFormat> dateFormats = new ArrayList<DateFormat>();
-  {
+
+  public DateTypeAdapter() {
     dateFormats.add(DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.US));
     if (!Locale.getDefault().equals(Locale.US)) {
       dateFormats.add(DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT));
     }
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       dateFormats.add(PreJava9DateFormatProvider.getUSDateTimeFormat(DateFormat.DEFAULT, DateFormat.DEFAULT));
     }
   }

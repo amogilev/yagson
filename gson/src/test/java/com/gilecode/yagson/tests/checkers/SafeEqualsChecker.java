@@ -15,12 +15,11 @@
  */
 package com.gilecode.yagson.tests.checkers;
 
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
 import com.gilecode.yagson.tests.util.EqualityCheckMode;
 import com.gilecode.yagson.tests.util.Pair;
 import com.gilecode.yagson.tests.util.Triple;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 
-import java.lang.ref.Reference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -166,7 +165,7 @@ public class SafeEqualsChecker implements EqualityChecker {
                     if (ignoredFieldNames.contains(f.getName())) {
                         continue;
                     }
-                    ReflectionAccessUtils.getReflectionAccessor().makeAccessible(f);
+                    ReflectionAccessor.getInstance().makeAccessible(f);
                     Object e1 = f.get(o1);
                     Object e2 = f.get(o2);
                     if (!objectsEqual(e1, e2, visited, f.getName())) {

@@ -26,6 +26,7 @@ import java.io.Writer;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,6 +39,7 @@ import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.types.*;
 import com.google.gson.internal.ConstructorConstructor;
 import com.google.gson.internal.Excluder;
+import com.google.gson.internal.GsonBuildConfig;
 import com.google.gson.internal.Primitives;
 import com.google.gson.internal.Streams;
 import com.google.gson.internal.bind.*;
@@ -117,17 +119,27 @@ public class Gson {
 
   private final Map<TypeToken<?>, TypeAdapter<?>> typeTokenCache = new ConcurrentHashMap<TypeToken<?>, TypeAdapter<?>>();
 
-  private final List<TypeAdapterFactory> factories;
   private final ConstructorConstructor constructorConstructor;
-
-  private final Excluder excluder;
-  private final FieldNamingStrategy fieldNamingStrategy;
-  private final boolean serializeNulls;
-  private final boolean htmlSafe;
-  private final boolean generateNonExecutableJson;
-  private final boolean prettyPrinting;
-  private final boolean lenient;
   private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
+
+  final List<TypeAdapterFactory> factories;
+
+  final Excluder excluder;
+  final FieldNamingStrategy fieldNamingStrategy;
+  final Map<Type, InstanceCreator<?>> instanceCreators;
+  final boolean serializeNulls;
+  final boolean complexMapKeySerialization;
+  final boolean generateNonExecutableJson;
+  final boolean htmlSafe;
+  final boolean prettyPrinting;
+  final boolean lenient;
+  final boolean serializeSpecialFloatingPointValues;
+  final String datePattern;
+  final int dateStyle;
+  final int timeStyle;
+  final LongSerializationPolicy longSerializationPolicy;
+  final List<TypeAdapterFactory> builderFactories;
+  final List<TypeAdapterFactory> builderHierarchyFactories;
 
   private final ReferencesPolicy referencesPolicy;
   private final TypeInfoPolicy typeInfoPolicy;
@@ -175,27 +187,39 @@ public class Gson {
         Collections.<Type, InstanceCreator<?>>emptyMap(), DEFAULT_SERIALIZE_NULLS,
         DEFAULT_COMPLEX_MAP_KEYS, DEFAULT_JSON_NON_EXECUTABLE, DEFAULT_ESCAPE_HTML,
         DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES,
-        LongSerializationPolicy.DEFAULT, Collections.<TypeAdapterFactory>emptyList(),
-        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED, NSLambdaPolicy.TO_NULL,
-        Collections.<ClassLoader>emptyList());
+        LongSerializationPolicy.DEFAULT, null, DateFormat.DEFAULT, DateFormat.DEFAULT,
+        Collections.<TypeAdapterFactory>emptyList(), Collections.<TypeAdapterFactory>emptyList(),
+        Collections.<TypeAdapterFactory>emptyList(), ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED,
+        NSLambdaPolicy.TO_NULL, Collections.<ClassLoader>emptyList());
   }
 
   protected Gson(final Excluder excluder, final FieldNamingStrategy fieldNamingStrategy,
       final Map<Type, InstanceCreator<?>> instanceCreators, boolean serializeNulls,
       boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
       boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
-      LongSerializationPolicy longSerializationPolicy,
-      List<TypeAdapterFactory> typeAdapterFactories,
+      LongSerializationPolicy longSerializationPolicy, String datePattern, int dateStyle,
+      int timeStyle, List<TypeAdapterFactory> builderFactories,
+      List<TypeAdapterFactory> builderHierarchyFactories,
+      List<TypeAdapterFactory> factoriesToBeAdded,
       ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy,
       List<ClassLoader> preferredClassLoaders) {
     this.constructorConstructor = new ConstructorConstructor(instanceCreators, typeInfoPolicy.isEnabled());
     this.excluder = excluder;
     this.fieldNamingStrategy = fieldNamingStrategy;
+    this.instanceCreators = instanceCreators;
     this.serializeNulls = serializeNulls;
+    this.complexMapKeySerialization = complexMapKeySerialization;
     this.generateNonExecutableJson = generateNonExecutableGson;
     this.htmlSafe = htmlSafe;
     this.prettyPrinting = prettyPrinting;
     this.lenient = lenient;
+    this.serializeSpecialFloatingPointValues = serializeSpecialFloatingPointValues;
+    this.longSerializationPolicy = longSerializationPolicy;
+    this.datePattern = datePattern;
+    this.dateStyle = dateStyle;
+    this.timeStyle = timeStyle;
+    this.builderFactories = builderFactories;
+    this.builderHierarchyFactories = builderHierarchyFactories;
     this.referencesPolicy = referencesPolicy;
     this.typeInfoPolicy = typeInfoPolicy;
     this.nsLambdaPolicy = nsLambdaPolicy;
@@ -211,8 +235,8 @@ public class Gson {
     // the excluder must precede all adapters that handle user-defined types
     factories.add(excluder);
 
-    // user's type adapters
-    factories.addAll(typeAdapterFactories);
+    // users' type adapters
+    factories.addAll(factoriesToBeAdded);
 
     // type adapters for basic platform types
     factories.add(TypeAdapters.STRING_FACTORY);
@@ -263,6 +287,16 @@ public class Gson {
         constructorConstructor, fieldNamingStrategy, excluder, jsonAdapterFactory, createDefaultReflectivePostReadProcessors()));
 
     this.factories = Collections.unmodifiableList(factories);
+  }
+
+  /**
+   * Returns a new GsonBuilder containing all custom factories and configuration used by the current
+   * instance.
+   *
+   * @return a GsonBuilder instance.
+   */
+  public GsonBuilder newBuilder() {
+    return new GsonBuilder(this);
   }
 
   private List<PostReadProcessor> createDefaultReflectivePostReadProcessors() {
@@ -441,7 +475,7 @@ public class Gson {
           return candidate;
         }
       }
-      throw new IllegalArgumentException("GSON cannot handle " + type);
+      throw new IllegalArgumentException("GSON (" + GsonBuildConfig.VERSION + ") cannot handle " + type);
     } finally {
       threadCalls.remove(type);
 
@@ -694,6 +728,10 @@ public class Gson {
       }
     } catch (IOException e) {
       throw new JsonIOException(e);
+    } catch (AssertionError e) {
+      AssertionError error = new AssertionError("AssertionError (GSON " + GsonBuildConfig.VERSION + "): " + e.getMessage());
+      error.initCause(e);
+      throw error;
     } finally {
       writer.setLenient(oldLenient);
       writer.setHtmlSafe(oldHtmlSafe);
@@ -770,6 +808,10 @@ public class Gson {
       Streams.write(jsonElement, writer);
     } catch (IOException e) {
       throw new JsonIOException(e);
+    } catch (AssertionError e) {
+      AssertionError error = new AssertionError("AssertionError (GSON " + GsonBuildConfig.VERSION + "): " + e.getMessage());
+      error.initCause(e);
+      throw error;
     } finally {
       writer.setLenient(oldLenient);
       writer.setHtmlSafe(oldHtmlSafe);
@@ -927,6 +969,10 @@ public class Gson {
     } catch (IOException e) {
       // TODO(inder): Figure out whether it is indeed right to rethrow this as JsonSyntaxException
       throw new JsonSyntaxException(e);
+    } catch (AssertionError e) {
+      AssertionError error = new AssertionError("AssertionError (GSON " + GsonBuildConfig.VERSION + "): " + e.getMessage());
+      error.initCause(e);
+      throw error;
     } finally {
       reader.setLenient(oldLenient);
     }

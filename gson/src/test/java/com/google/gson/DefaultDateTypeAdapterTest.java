@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.gilecode.yagson.util.VersionUtils;
+import com.gilecode.yagson.WriteContext;
+import com.google.gson.internal.JavaVersion;
+
 import junit.framework.TestCase;
 
 /**
@@ -33,44 +35,10 @@ import junit.framework.TestCase;
  */
 public class DefaultDateTypeAdapterTest extends TestCase {
 
-  public void testPrintDefaultDateUsPatterns() {
-    Integer[] styles = {DateFormat.SHORT, DateFormat.MEDIUM, DateFormat.LONG, DateFormat.FULL};
-    for (int style : styles) {
-      DateFormat df = DateFormat.getDateInstance(style, Locale.US);
-      String pattern = ((SimpleDateFormat)df).toPattern();
-      System.out.println("style=" + style + ": pattern = " + pattern);
-    }
-  }
+  private final Gson gson = new GsonBuilder().create();
 
-  public void testPrintDefaultDateFrancePatterns() {
-    Integer[] styles = {DateFormat.SHORT, DateFormat.MEDIUM, DateFormat.LONG, DateFormat.FULL};
-    for (int style : styles) {
-      DateFormat df = DateFormat.getDateInstance(style, Locale.FRANCE);
-      String pattern = ((SimpleDateFormat)df).toPattern();
-      System.out.println("style=" + style + ": pattern = " + pattern);
-    }
-  }
-
-  public void testPrintDefaultDateTimeUsPatterns() {
-    Integer[] styles = {DateFormat.SHORT, DateFormat.MEDIUM, DateFormat.LONG, DateFormat.FULL};
-    for (int dateStyle : styles) {
-      for (int timeStyle : styles) {
-        DateFormat df = DateFormat.getDateTimeInstance(dateStyle, timeStyle, Locale.US);
-        String pattern = ((SimpleDateFormat) df).toPattern();
-        System.out.println("dateStyle=" + dateStyle + ",timeStyle=" + timeStyle + ": pattern = " + pattern);
-      }
-    }
-  }
-
-  public void testPrintDefaultDateTimeFrancePatterns() {
-    Integer[] styles = {DateFormat.SHORT, DateFormat.MEDIUM, DateFormat.LONG, DateFormat.FULL};
-    for (int dateStyle : styles) {
-      for (int timeStyle : styles) {
-        DateFormat df = DateFormat.getDateTimeInstance(dateStyle, timeStyle, Locale.FRANCE);
-        String pattern = ((SimpleDateFormat) df).toPattern();
-        System.out.println("dateStyle=" + dateStyle + ",timeStyle=" + timeStyle + ": pattern = " + pattern);
-      }
-    }
+  private WriteContext wctx(Object root) {
+    return WriteContext.create(gson, root);
   }
 
   public void testFormattingInEnUs() {
@@ -87,9 +55,9 @@ public class DefaultDateTypeAdapterTest extends TestCase {
     Locale defaultLocale = Locale.getDefault();
     Locale.setDefault(locale);
     try {
-      String afterYearSep = VersionUtils.isJava9OrLater() ? ", " : " ";
-      String afterYearLongSep = VersionUtils.isJava9OrLater() ? " at " : " ";
-      String utcFull = VersionUtils.isJava9OrLater() ? "Coordinated Universal Time" : "UTC";
+      String afterYearSep = JavaVersion.isJava9OrLater() ? ", " : " ";
+      String afterYearLongSep = JavaVersion.isJava9OrLater() ? " at " : " ";
+      String utcFull = JavaVersion.isJava9OrLater() ? "Coordinated Universal Time" : "UTC";
       assertFormatted(String.format("Jan 1, 1970%s12:00:00 AM", afterYearSep),
               new DefaultDateTypeAdapter(Date.class));
       assertFormatted("1/1/70", new DefaultDateTypeAdapter(Date.class, DateFormat.SHORT));
@@ -115,7 +83,7 @@ public class DefaultDateTypeAdapterTest extends TestCase {
     Locale defaultLocale = Locale.getDefault();
     Locale.setDefault(Locale.FRANCE);
     try {
-      String afterYearSep = VersionUtils.isJava9OrLater() ? " à " : " ";
+      String afterYearSep = JavaVersion.isJava9OrLater() ? " à " : " ";
       assertParsed(String.format("1 janv. 1970%s00:00:00", afterYearSep),
               new DefaultDateTypeAdapter(Date.class));
       assertParsed("01/01/70", new DefaultDateTypeAdapter(Date.class, DateFormat.SHORT));
@@ -127,7 +95,7 @@ public class DefaultDateTypeAdapterTest extends TestCase {
           new DefaultDateTypeAdapter(DateFormat.MEDIUM, DateFormat.MEDIUM));
       assertParsed(String.format("1 janvier 1970%s00:00:00 UTC", afterYearSep),
           new DefaultDateTypeAdapter(DateFormat.LONG, DateFormat.LONG));
-      assertParsed(VersionUtils.isJava9OrLater() ?
+      assertParsed(JavaVersion.isJava9OrLater() ?
                       "jeudi 1 janvier 1970 à 00:00:00 Coordinated Universal Time" :
                       "jeudi 1 janvier 1970 00 h 00 UTC",
           new DefaultDateTypeAdapter(DateFormat.FULL, DateFormat.FULL));
@@ -167,7 +135,7 @@ public class DefaultDateTypeAdapterTest extends TestCase {
     Locale defaultLocale = Locale.getDefault();
     Locale.setDefault(Locale.US);
     try {
-      String afterYearSep = VersionUtils.isJava9OrLater() ? ", " : " ";
+      String afterYearSep = JavaVersion.isJava9OrLater() ? ", " : " ";
       assertFormatted(String.format("Dec 31, 1969%s4:00:00 PM", afterYearSep),
               new DefaultDateTypeAdapter(Date.class));
       assertParsed("Dec 31, 1969 4:00:00 PM", new DefaultDateTypeAdapter(Date.class));
@@ -192,7 +160,7 @@ public class DefaultDateTypeAdapterTest extends TestCase {
     DateFormat formatter = DateFormat.getDateInstance(dateStyle, Locale.US);
     Date currentDate = new Date();
 
-    String dateString = dateTypeAdapter.toJson(currentDate, null);
+    String dateString = dateTypeAdapter.toJson(currentDate, wctx(currentDate));
     assertEquals(toLiteral(formatter.format(currentDate)), dateString);
   }
 
@@ -202,7 +170,7 @@ public class DefaultDateTypeAdapterTest extends TestCase {
     DateFormat formatter = new SimpleDateFormat(pattern);
     Date currentDate = new Date();
 
-    String dateString = dateTypeAdapter.toJson(currentDate, null);
+    String dateString = dateTypeAdapter.toJson(currentDate, wctx(currentDate));
     assertEquals(toLiteral(formatter.format(currentDate)), dateString);
   }
 
@@ -216,7 +184,7 @@ public class DefaultDateTypeAdapterTest extends TestCase {
   public void testNullValue() throws Exception {
     DefaultDateTypeAdapter adapter = new DefaultDateTypeAdapter(Date.class);
     assertNull(adapter.fromJson("null"));
-    assertEquals("null", adapter.toJson(null, null));
+    assertEquals("null", adapter.toJson(null, wctx(null)));
   }
 
   public void testUnexpectedToken() throws Exception {
@@ -228,7 +196,8 @@ public class DefaultDateTypeAdapterTest extends TestCase {
   }
 
   private void assertFormatted(String formatted, DefaultDateTypeAdapter adapter) {
-    assertEquals(toLiteral(formatted), adapter.toJson(new Date(0), null));
+    Date d = new Date(0);
+    assertEquals(toLiteral(formatted), adapter.toJson(d, wctx(d)));
   }
 
   private void assertParsed(String date, DefaultDateTypeAdapter adapter) throws IOException {

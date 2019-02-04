@@ -54,7 +54,8 @@ public class YaGsonBuilder extends GsonBuilder {
                 serializeNulls, complexMapKeySerialization,
                 generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
                 serializeSpecialFloatingPointValues, longSerializationPolicy,
-                createTypeAdapterFactories(),
+                datePattern, dateStyle, timeStyle,
+                createCustomTypeAdapterFactoriesList(), this.hierarchyFactories, factories,
                 referencesPolicy, typeInfoPolicy, nsLambdaPolicy, preferredClassLoaders);
     }
 

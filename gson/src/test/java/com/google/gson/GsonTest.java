@@ -16,12 +16,17 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.adapters.SimpleTypeAdapter;
 import com.gilecode.yagson.refs.ReferencesPolicy;
 import com.gilecode.yagson.types.NSLambdaPolicy;
 import com.gilecode.yagson.types.TypeInfoPolicy;
 import com.google.gson.internal.Excluder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,13 +52,38 @@ public final class GsonTest extends TestCase {
   public void testOverridesDefaultExcluder() {
     Gson gson = new Gson(CUSTOM_EXCLUDER, CUSTOM_FIELD_NAMING_STRATEGY,
         new HashMap<Type, InstanceCreator<?>>(), true, false, true, false,
-        true, true, false, LongSerializationPolicy.DEFAULT,
-        new ArrayList<TypeAdapterFactory>(), ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED,
+        true, true, false, LongSerializationPolicy.DEFAULT, null, DateFormat.DEFAULT,
+        DateFormat.DEFAULT, new ArrayList<TypeAdapterFactory>(),
+        new ArrayList<TypeAdapterFactory>(), new ArrayList<TypeAdapterFactory>(),
+        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED,
         NSLambdaPolicy.TO_NULL, Collections.<ClassLoader>emptyList());
 
     assertEquals(CUSTOM_EXCLUDER, gson.excluder());
     assertEquals(CUSTOM_FIELD_NAMING_STRATEGY, gson.fieldNamingStrategy());
     assertEquals(true, gson.serializeNulls());
     assertEquals(false, gson.htmlSafe());
+  }
+
+  public void testClonedTypeAdapterFactoryListsAreIndependent() {
+    Gson original = new Gson(CUSTOM_EXCLUDER, CUSTOM_FIELD_NAMING_STRATEGY,
+        new HashMap<Type, InstanceCreator<?>>(), true, false, true, false,
+        true, true, false, LongSerializationPolicy.DEFAULT, null, DateFormat.DEFAULT,
+        DateFormat.DEFAULT, new ArrayList<TypeAdapterFactory>(),
+        new ArrayList<TypeAdapterFactory>(), new ArrayList<TypeAdapterFactory>(),
+        ReferencesPolicy.DISABLED, TypeInfoPolicy.DISABLED,
+        NSLambdaPolicy.TO_NULL, Collections.<ClassLoader>emptyList());
+
+    Gson clone = original.newBuilder()
+        .registerTypeAdapter(Object.class, new TestTypeAdapter())
+        .create();
+
+    assertEquals(original.factories.size() + 1, clone.factories.size());
+  }
+
+  private static final class TestTypeAdapter extends SimpleTypeAdapter<Object> {
+    @Override public void write(JsonWriter out, Object value) throws IOException {
+      // Test stub.
+    }
+    @Override public Object read(JsonReader in) throws IOException { return null; }
   }
 }

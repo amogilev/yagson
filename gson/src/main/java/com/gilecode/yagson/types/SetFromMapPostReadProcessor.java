@@ -15,8 +15,7 @@
  */
 package com.gilecode.yagson.types;
 
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -33,7 +32,7 @@ import java.util.Map;
  */
 public class SetFromMapPostReadProcessor implements PostReadProcessor {
 
-    private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+    private static final ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
     @SuppressWarnings("unchecked")
     public void apply(Object instance) {

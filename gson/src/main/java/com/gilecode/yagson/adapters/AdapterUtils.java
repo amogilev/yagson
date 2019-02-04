@@ -17,7 +17,6 @@ package com.gilecode.yagson.adapters;
 
 import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
 import com.gilecode.yagson.refs.PathElementProducer;
 import com.gilecode.yagson.types.*;
 import com.google.gson.Gson;
@@ -28,6 +27,7 @@ import com.google.gson.internal.Excluder;
 import com.google.gson.internal.Streams;
 import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.google.gson.internal.bind.TypeAdapterRuntimeTypeWrapper;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -94,7 +94,7 @@ public class AdapterUtils {
                 // skip duplicate names, get/set only 'latest' versions (closest to the actual class)
                 continue;
             }
-            ReflectionAccessUtils.getReflectionAccessor().makeAccessible(f);
+            ReflectionAccessor.getInstance().makeAccessible(f);
 
             Object defaultValue;
             try {

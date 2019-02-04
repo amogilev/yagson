@@ -17,8 +17,6 @@
 
 package com.google.gson.internal;
 
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.types.PostAllocateProcessor;
 import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.InstanceCreator;
@@ -32,13 +30,18 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import com.google.gson.InstanceCreator;
+import com.google.gson.JsonIOException;
+import com.google.gson.internal.reflect.ReflectionAccessor;
+import com.google.gson.reflect.TypeToken;
+
 /**
  * Returns a function that can construct an instance of a requested type.
  */
 public final class ConstructorConstructor {
   private final Map<Type, InstanceCreator<?>> instanceCreators;
   private final boolean isTypeInfoEnabled;
-  private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+  private final ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
   public ConstructorConstructor(Map<Type, InstanceCreator<?>> instanceCreators, boolean isTypeInfoEnabled) {
     this.instanceCreators = instanceCreators;

@@ -81,13 +81,13 @@ public class GsonBuilder {
   protected FieldNamingStrategy fieldNamingPolicy = FieldNamingPolicy.IDENTITY;
   protected final Map<Type, InstanceCreator<?>> instanceCreators
       = new HashMap<Type, InstanceCreator<?>>();
-  private final List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
+  protected final List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
   /** tree-style hierarchy factories. These come after factories for backwards compatibility. */
-  private final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<TypeAdapterFactory>();
+  protected final List<TypeAdapterFactory> hierarchyFactories = new ArrayList<TypeAdapterFactory>();
   protected boolean serializeNulls = DEFAULT_SERIALIZE_NULLS;
-  private String datePattern;
-  private int dateStyle = DateFormat.DEFAULT;
-  private int timeStyle = DateFormat.DEFAULT;
+  protected String datePattern;
+  protected int dateStyle = DateFormat.DEFAULT;
+  protected int timeStyle = DateFormat.DEFAULT;
   protected boolean complexMapKeySerialization = DEFAULT_COMPLEX_MAP_KEYS;
   protected boolean serializeSpecialFloatingPointValues = DEFAULT_SPECIALIZE_FLOAT_VALUES;
   protected boolean escapeHtmlChars = DEFAULT_ESCAPE_HTML;
@@ -106,6 +106,31 @@ public class GsonBuilder {
    * {@link #create()}.
    */
   public GsonBuilder() {
+  }
+
+  /**
+   * Constructs a GsonBuilder instance from a Gson instance. The newly constructed GsonBuilder
+   * has the same configuration as the previously built Gson instance.
+   *
+   * @param gson the gson instance whose configuration should by applied to a new GsonBuilder.
+   */
+  GsonBuilder(Gson gson) {
+    this.excluder = gson.excluder;
+    this.fieldNamingPolicy = gson.fieldNamingStrategy;
+    this.instanceCreators.putAll(gson.instanceCreators);
+    this.serializeNulls = gson.serializeNulls;
+    this.complexMapKeySerialization = gson.complexMapKeySerialization;
+    this.generateNonExecutableJson = gson.generateNonExecutableJson;
+    this.escapeHtmlChars = gson.htmlSafe;
+    this.prettyPrinting = gson.prettyPrinting;
+    this.lenient = gson.lenient;
+    this.serializeSpecialFloatingPointValues = gson.serializeSpecialFloatingPointValues;
+    this.longSerializationPolicy = gson.longSerializationPolicy;
+    this.datePattern = gson.datePattern;
+    this.dateStyle = gson.dateStyle;
+    this.timeStyle = gson.timeStyle;
+    this.factories.addAll(gson.builderFactories);
+    this.hierarchyFactories.addAll(gson.builderHierarchyFactories);
   }
 
   /**
@@ -615,12 +640,13 @@ public class GsonBuilder {
         serializeNulls, complexMapKeySerialization,
         generateNonExecutableJson, escapeHtmlChars, prettyPrinting, lenient,
         serializeSpecialFloatingPointValues, longSerializationPolicy,
-        createTypeAdapterFactories(),
+        datePattern, dateStyle, timeStyle,
+        this.factories, this.hierarchyFactories, createCustomTypeAdapterFactoriesList(),
         referencesPolicy, typeInfoPolicy, nsLambdaPolicy, preferredClassLoaders);
   }
 
-  protected List<TypeAdapterFactory> createTypeAdapterFactories() {
-    List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
+  protected List<TypeAdapterFactory> createCustomTypeAdapterFactoriesList() {
+    List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>(this.factories.size() + this.hierarchyFactories.size() + 3);
 
     factories.addAll(this.factories);
     Collections.reverse(factories);

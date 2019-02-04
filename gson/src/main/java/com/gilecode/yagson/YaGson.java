@@ -30,6 +30,7 @@ import com.google.gson.stream.JsonWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
+import java.text.DateFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +96,8 @@ public class YaGson extends Gson {
                 DEFAULT_JSON_NON_EXECUTABLE,
                 !TypeInfoPolicy.defaultPolicy().isEnabled(), // disable htmlSafe if types are printed
                 DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES, LongSerializationPolicy.DEFAULT,
+                null, DateFormat.DEFAULT, DateFormat.DEFAULT,
+                Collections.<TypeAdapterFactory>emptyList(), Collections.<TypeAdapterFactory>emptyList(),
                 Collections.<TypeAdapterFactory>emptyList(),
                 References.defaultPolicy(), TypeInfoPolicy.defaultPolicy(), NSLambdaPolicy.TO_NULL,
                 Collections.<ClassLoader>emptyList());
@@ -104,12 +107,18 @@ public class YaGson extends Gson {
           Map<Type, InstanceCreator<?>> instanceCreators, boolean serializeNulls,
           boolean complexMapKeySerialization, boolean generateNonExecutableGson, boolean htmlSafe,
           boolean prettyPrinting, boolean lenient, boolean serializeSpecialFloatingPointValues,
-          LongSerializationPolicy longSerializationPolicy, List<TypeAdapterFactory> typeAdapterFactories,
+          LongSerializationPolicy longSerializationPolicy,
+            String datePattern, int dateStyle,
+            int timeStyle, List<TypeAdapterFactory> builderFactories,
+            List<TypeAdapterFactory> builderHierarchyFactories,
+            List<TypeAdapterFactory> factoriesToBeAdded,
           ReferencesPolicy referencesPolicy, TypeInfoPolicy typeInfoPolicy, NSLambdaPolicy nsLambdaPolicy,
           List<ClassLoader> preferredClassLoaders) {
         super(excluder, fieldNamingPolicy, instanceCreators, serializeNulls, complexMapKeySerialization,
                 generateNonExecutableGson, htmlSafe, prettyPrinting, lenient, serializeSpecialFloatingPointValues,
-                longSerializationPolicy, typeAdapterFactories, referencesPolicy, typeInfoPolicy, nsLambdaPolicy,
+                longSerializationPolicy, datePattern, dateStyle, timeStyle,
+                builderFactories, builderHierarchyFactories, factoriesToBeAdded,
+                referencesPolicy, typeInfoPolicy, nsLambdaPolicy,
                 preferredClassLoaders);
     }
 

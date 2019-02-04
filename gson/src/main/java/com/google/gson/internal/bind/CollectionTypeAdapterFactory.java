@@ -21,8 +21,6 @@ import com.gilecode.yagson.ReadContext;
 import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.AdapterUtils;
 import com.gilecode.yagson.adapters.TypeAdvisableComplexTypeAdapter;
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.refs.*;
 import com.gilecode.yagson.types.*;
 
@@ -31,6 +29,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
 import com.google.gson.internal.*;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -50,7 +49,7 @@ import static com.gilecode.yagson.types.TypeUtils.classOf;
  */
 public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
   private final ConstructorConstructor constructorConstructor;
-  private final static ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+  private final static ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
   public CollectionTypeAdapterFactory(ConstructorConstructor constructorConstructor) {
     this.constructorConstructor = constructorConstructor;

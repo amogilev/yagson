@@ -16,6 +16,23 @@
  */
 package com.google.gson.functional;
 
+import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.JavaVersion;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
@@ -42,9 +59,6 @@ import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.UUID;
 
-import com.gilecode.yagson.adapters.SimpleJsonDeserializer;
-import com.gilecode.yagson.util.VersionUtils;
-import com.google.gson.*;
 import junit.framework.TestCase;
 
 import com.gilecode.yagson.adapters.SimpleTypeAdapter;
@@ -91,6 +105,10 @@ public class DefaultTypeAdaptersTest extends TestCase {
     try {
       gson.fromJson("String.class", String.class.getClass());  
     } catch (Exception expected) {}
+
+    // YaGson provides default adapter for classes
+    assertEquals(String.class, gson.fromJson("java.lang.String", Class.class));
+
     // Override with a custom type adapter for class.
     gson = new GsonBuilder().registerTypeAdapter(Class.class, new MyClassTypeAdapter()).create();
     assertEquals(String.class, gson.fromJson("java.lang.String", Class.class));  
@@ -323,7 +341,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
   public void testDefaultDateSerialization() {
     Date now = new Date(1315806903103L);
     String json = gson.toJson(now);
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       assertEquals("\"Sep 11, 2011, 10:55:03 PM\"", json);
     } else {
       assertEquals("\"Sep 11, 2011 10:55:03 PM\"", json);
@@ -368,7 +386,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
   public void testDefaultJavaSqlTimestampSerialization() {
     Timestamp now = new java.sql.Timestamp(1259875082000L);
     String json = gson.toJson(now);
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       assertEquals("\"Dec 3, 2009, 1:18:02 PM\"", json);
     } else {
       assertEquals("\"Dec 3, 2009 1:18:02 PM\"", json);
@@ -398,7 +416,7 @@ public class DefaultTypeAdaptersTest extends TestCase {
     Gson gson = new GsonBuilder().create();
     Date now = new Date(1315806903103L);
     String json = gson.toJson(now);
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       assertEquals("\"Sep 11, 2011, 10:55:03 PM\"", json);
     } else {
       assertEquals("\"Sep 11, 2011 10:55:03 PM\"", json);

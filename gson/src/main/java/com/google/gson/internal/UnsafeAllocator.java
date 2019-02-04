@@ -16,8 +16,7 @@
 
 package com.google.gson.internal;
 
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
@@ -33,7 +32,7 @@ import java.lang.reflect.Modifier;
  */
 public abstract class UnsafeAllocator {
   public abstract <T> T newInstance(Class<T> c) throws Exception;
-  private static final ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+  private static final ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
   public static UnsafeAllocator create() {
     // try JVM

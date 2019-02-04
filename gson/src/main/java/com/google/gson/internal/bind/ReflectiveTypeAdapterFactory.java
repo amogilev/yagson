@@ -27,8 +27,6 @@ import com.gilecode.yagson.WriteContext;
 import com.gilecode.yagson.adapters.HasField;
 import com.gilecode.yagson.adapters.TypeAdvisableComplexTypeAdapter;
 import com.gilecode.yagson.adapters.TypeInfoEmittingTypeAdapterWrapper;
-import com.gilecode.yagson.reflection.ReflectionAccessUtils;
-import com.gilecode.yagson.reflection.ReflectionAccessor;
 import com.gilecode.yagson.refs.*;
 import com.gilecode.yagson.refs.impl.PlaceholderUtils;
 import com.gilecode.yagson.types.PostReadProcessor;
@@ -41,6 +39,7 @@ import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.internal.*;
+import com.google.gson.internal.reflect.ReflectionAccessor;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -55,7 +54,7 @@ public final class ReflectiveTypeAdapterFactory implements TypeAdapterFactory {
   private final Excluder excluder;
   private final Map<String, PostReadProcessor> readPostProcessorsByClassName;
   private final JsonAdapterAnnotationTypeAdapterFactory jsonAdapterFactory;
-  private final static ReflectionAccessor accessor = ReflectionAccessUtils.getReflectionAccessor();
+  private final ReflectionAccessor accessor = ReflectionAccessor.getInstance();
 
   public ReflectiveTypeAdapterFactory(ConstructorConstructor constructorConstructor,
       FieldNamingStrategy fieldNamingPolicy, Excluder excluder,

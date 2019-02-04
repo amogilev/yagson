@@ -19,8 +19,8 @@ import com.gilecode.yagson.YaGson;
 import com.gilecode.yagson.tests.data.ClassWithObject;
 import com.gilecode.yagson.tests.data.Person;
 import com.gilecode.yagson.tests.util.BindingTestCase;
-import com.gilecode.yagson.util.VersionUtils;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.internal.JavaVersion;
 import com.google.gson.internal.LinkedHashTreeMap;
 import com.google.gson.reflect.TypeToken;
 
@@ -259,7 +259,7 @@ public class TestVariousMaps extends BindingTestCase {
         Attributes obj = new Attributes();
         obj.putValue("foo", "bar");
 
-        if (VersionUtils.isJava9OrLater()) {
+        if (JavaVersion.isJava9OrLater()) {
             test(obj, jsonStr(
                     "{'map':{'@type':'java.util.LinkedHashMap','@val':[[" +
                             "{'@type':'java.util.jar.Attributes$Name','@val':{'name':'foo','hashCode':'@hash'}},'bar']]}}"));

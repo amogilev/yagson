@@ -19,7 +19,6 @@ package com.google.gson.functional;
 
 import com.gilecode.yagson.refs.ReferencesPolicy;
 
-import com.gilecode.yagson.util.VersionUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -37,6 +36,7 @@ import com.google.gson.common.TestTypes.ClassWithObjects;
 import com.google.gson.common.TestTypes.ClassWithTransientFields;
 import com.google.gson.common.TestTypes.Nested;
 import com.google.gson.common.TestTypes.PrimitiveArray;
+import com.google.gson.internal.JavaVersion;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -489,7 +489,7 @@ public class ObjectTest extends TestCase {
   public void testDateAsMapObjectField() {
     HasObjectMap a = new HasObjectMap();
     a.map.put("date", new Date(0));
-    if (VersionUtils.isJava9OrLater()) {
+    if (JavaVersion.isJava9OrLater()) {
       assertEquals("{\"map\":{\"date\":\"Dec 31, 1969, 4:00:00 PM\"}}", gson.toJson(a));
     } else {
       assertEquals("{\"map\":{\"date\":\"Dec 31, 1969 4:00:00 PM\"}}", gson.toJson(a));

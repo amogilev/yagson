@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Andrey Mogilev
+ * Copyright (C) 2017 The Gson authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gilecode.yagson.reflection;
+package com.google.gson.internal.reflect;
 
 import java.lang.reflect.AccessibleObject;
 
 /**
- * Provides a replacement for {@link AccessibleObject#setAccessible(boolean)}, useful when that basic operation is
- * prohibited, e.g. throws {@link java.lang.reflect.InaccessibleObjectException} in Java 9.
- *
- * @author Andrey Mogilev
+ * A basic implementation of {@link ReflectionAccessor} which is suitable for Java 8 and below.
+ * <p>
+ * This implementation just calls {@link AccessibleObject#setAccessible(boolean) setAccessible(true)}, which worked
+ * fine before Java 9.
  */
-public interface ReflectionAccessor {
+final class PreJava9ReflectionAccessor extends ReflectionAccessor {
 
-    /**
-     * Does the same as {@code ao.setAccessible(true)}, but never throws
-     * {@link java.lang.reflect.InaccessibleObjectException}
-     */
-    void makeAccessible(AccessibleObject ao);
-
+  /** {@inheritDoc} */
+  @Override
+  public void makeAccessible(AccessibleObject ao) {
+    ao.setAccessible(true);
+  }
 }
