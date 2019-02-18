@@ -39,7 +39,10 @@ public class YaGsonBuilder extends GsonBuilder {
         if (TypeInfoPolicy.defaultPolicy().isEnabled()) {
             enableComplexMapKeySerialization();
         }
-        escapeHtmlChars = false;
+
+        // turn on some nice Gson deatures which are disabled by default
+        disableHtmlEscaping();
+        serializeSpecialFloatingPointValues();
     }
 
     /**
@@ -252,11 +255,12 @@ public class YaGsonBuilder extends GsonBuilder {
     }
 
     /**
-     * {@inheritDoc}
+     * Turns off default YaGson serialization of special FP values (NaN, +Infinity and -Infinity),
+     * thus making it the same as in default Gson mode.
      */
-    @Override
-    public YaGsonBuilder serializeSpecialFloatingPointValues() {
-        return (YaGsonBuilder) super.serializeSpecialFloatingPointValues();
+    public YaGsonBuilder dontSerializeSpecialFloatingPointValues() {
+        this.serializeSpecialFloatingPointValues = false;
+        return this;
     }
 
     /**

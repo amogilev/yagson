@@ -147,4 +147,41 @@ public class TestPrimitiveTypes extends BindingTestCase {
         byte result = defaultMapper.fromJson(json, byte.class);
         assertEquals((byte)2, result);
     }
+
+    // test corner cases for FP numbers
+    public void testSpecialDoubleNumbers() {
+        test(Double.NaN, double.class, "NaN");
+        test(Double.POSITIVE_INFINITY, double.class, "Infinity");
+        test(Double.NEGATIVE_INFINITY, double.class, "-Infinity");
+
+        test(Double.NaN, Double.class, "NaN");
+        test(Double.POSITIVE_INFINITY, Double.class, "Infinity");
+        test(Double.NEGATIVE_INFINITY, Double.class, "-Infinity");
+    }
+
+    public void testSpecialFloatNumbers() {
+        test(Float.NaN, float.class, "NaN");
+        test(Float.POSITIVE_INFINITY, float.class, "Infinity");
+        test(Float.NEGATIVE_INFINITY, float.class, "-Infinity");
+
+        test(Float.NaN, float.class, "NaN");
+        test(Float.POSITIVE_INFINITY, Float.class, "Infinity");
+        test(Float.NEGATIVE_INFINITY, Float.class, "-Infinity");
+    }
+
+    public void testMaxMinDoubleNumbers() {
+        test(Double.MAX_VALUE, double.class, "1.7976931348623157E308");
+        test(Double.MIN_VALUE, double.class, "4.9E-324");
+        test(Double.MIN_NORMAL, double.class, "2.2250738585072014E-308");
+
+        test(Double.MAX_VALUE, Double.class, "1.7976931348623157E308");
+        test(Double.MIN_VALUE, Double.class, "4.9E-324");
+        test(Double.MIN_NORMAL, Double.class, "2.2250738585072014E-308");
+    }
+
+    public void testMaxMinFloatNumbers() {
+        test(Float.MAX_VALUE, float.class, "3.4028235E38");
+        test(Float.MIN_VALUE, float.class, "1.4E-45");
+        test(Float.MIN_NORMAL, float.class, "1.17549435E-38");
+    }
 }

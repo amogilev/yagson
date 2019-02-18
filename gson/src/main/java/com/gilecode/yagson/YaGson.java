@@ -92,10 +92,12 @@ public class YaGson extends Gson {
         super(Excluder.DEFAULT.forReferencesPolicy(References.defaultPolicy()),
                 FieldNamingPolicy.IDENTITY,
                 Collections.<Type, InstanceCreator<?>>emptyMap(), false,
-                TypeInfoPolicy.defaultPolicy().isEnabled(),
+                TypeInfoPolicy.defaultPolicy().isEnabled(), // enabled complexMapKeySerialization if types are printed
                 DEFAULT_JSON_NON_EXECUTABLE,
                 !TypeInfoPolicy.defaultPolicy().isEnabled(), // disable htmlSafe if types are printed
-                DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT, DEFAULT_SPECIALIZE_FLOAT_VALUES, LongSerializationPolicy.DEFAULT,
+                DEFAULT_PRETTY_PRINT, DEFAULT_LENIENT,
+                true, // enable special FP values by default
+                LongSerializationPolicy.DEFAULT,
                 null, DateFormat.DEFAULT, DateFormat.DEFAULT,
                 Collections.<TypeAdapterFactory>emptyList(), Collections.<TypeAdapterFactory>emptyList(),
                 Collections.<TypeAdapterFactory>emptyList(),
