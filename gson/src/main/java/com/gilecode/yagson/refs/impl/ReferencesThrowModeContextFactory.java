@@ -21,19 +21,19 @@ import com.gilecode.yagson.refs.ReferencesWriteContext;
 
 /**
  * A factory which creates {@link ReferencesReadContext} and {@link ReferencesWriteContext} for a
- * {@link com.gilecode.yagson.refs.ReferencesPolicy#DISABLED} references policy.
+ * {@link com.gilecode.yagson.refs.ReferencesPolicy#DETECT_CIRCULAR_AND_THROW} references policy.
  * <p/>
  * NOTE: This is a non-default policy, use with care!
  *
  * @author Andrey Mogilev
  */
-public class ReferencesNoneModeContextFactory implements ReferencesContextFactory {
-  
-  public ReferencesReadContext createReadContext() {
-    return ReferencesNoneModeContext.readContextInstance;
-  }
+public class ReferencesThrowModeContextFactory implements ReferencesContextFactory {
 
   public ReferencesWriteContext createWriteContext(Object root) {
-    return ReferencesNoneModeContext.writeContextInstance;
+    return new ReferencesThrowModeContext().new RefsWriteContext(root);
+  }
+
+  public ReferencesReadContext createReadContext() {
+    return ReferencesThrowModeContext.readContextInstance;
   }
 }

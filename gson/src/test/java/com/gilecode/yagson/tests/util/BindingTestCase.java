@@ -55,6 +55,11 @@ public abstract class BindingTestCase extends TestCase {
             .setTypeInfoPolicy(TypeInfoPolicy.DISABLED)
             .create();
 
+    protected static YaGson gsonWithRecursionChecks = new YaGsonBuilder()
+            .setReferencesPolicy(ReferencesPolicy.DETECT_CIRCULAR_AND_THROW)
+            .setTypeInfoPolicy(TypeInfoPolicy.DISABLED)
+            .create();
+
     protected static YaGson defaultMapper = new YaGson();
 
     protected static final Comparator<String> MY_STRING_CMP = new Comparator<String>() {

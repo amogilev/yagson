@@ -15,6 +15,7 @@
  */
 package com.gilecode.yagson.tests;
 
+import com.gilecode.yagson.refs.CircularReferenceException;
 import com.gilecode.yagson.tests.util.BindingTestCase;
 
 import java.util.ArrayList;
@@ -43,6 +44,15 @@ public class TestReferences extends BindingTestCase {
 
 		test(gsonCircularOnlyMode, parent, expected);
 		test(gsonAllDuplicatesMode, parent, expected);
+
+		try {
+			gsonWithRecursionChecks.toJson(parent);
+			fail();
+		} catch (CircularReferenceException e) {
+			assertEquals(
+					"Circular reference in a serialized object is detected: from @root.children.0 to @root",
+					e.getMessage());
+		}
 	}
 
 	public void testSelfDependency1() {
@@ -51,6 +61,15 @@ public class TestReferences extends BindingTestCase {
 		String expected = jsonStr("{'id':10,'self':'@root'}");
 		test(gsonCircularOnlyMode, obj, expected);
 		test(gsonAllDuplicatesMode, obj, expected);
+
+		try {
+			gsonWithRecursionChecks.toJson(obj);
+			fail();
+		} catch (CircularReferenceException e) {
+			assertEquals(
+					"Circular reference in a serialized object is detected: from @root to @root",
+					e.getMessage());
+		}
 	}
 
 	public void testSelfDependency2() {
@@ -107,6 +126,15 @@ public class TestReferences extends BindingTestCase {
 				"{'id':1,'connections':[{'id':2,'connections':[" +
 						"{'id':3,'connections':[{'id':4,'connections':['@root.connections.0']}]}," +
 						"'@root.connections.0.connections.0.connections.0']}]}"));
+
+		try {
+			gsonWithRecursionChecks.toJson(n1);
+			fail();
+		} catch (CircularReferenceException e) {
+			assertEquals(
+					"Circular reference in a serialized object is detected: from @root.connections.0.connections.0.connections.0.connections to @root.connections.0",
+					e.getMessage());
+		}
 
 	}
 

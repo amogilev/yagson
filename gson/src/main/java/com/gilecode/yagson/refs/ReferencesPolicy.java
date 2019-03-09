@@ -15,10 +15,7 @@
  */
 package com.gilecode.yagson.refs;
 
-import com.gilecode.yagson.refs.impl.ReferencesAllDuplicatesModeContextFactory;
-import com.gilecode.yagson.refs.impl.ReferencesCircularAndSiblingsContextFactory;
-import com.gilecode.yagson.refs.impl.ReferencesCircularOnlyModeContextFactory;
-import com.gilecode.yagson.refs.impl.ReferencesNoneModeContextFactory;
+import com.gilecode.yagson.refs.impl.*;
 
 /**
  * Enumerates supported references policies.
@@ -28,19 +25,36 @@ import com.gilecode.yagson.refs.impl.ReferencesNoneModeContextFactory;
 public enum ReferencesPolicy {
 
     /**
-     * No references are allowed (same as in original Gson)
+     * No references are allowed (same as in original Gson).
+     * <p/>
+     * Occurrences of circular references in serialized objects would lead to errors
+     * (most probably {@link StackOverflowError}, but also could be {@link OutOfMemoryError}
+     * with extensive usage of CPU and other resources before the error is thrown)
      */
     DISABLED(new ReferencesNoneModeContextFactory()),
 
     /**
-     * Only the circular references are checked. This is the minimal mode required to avoid
-     * {@link StackOverflowError}. However, a lot of standard collections may function improperly, as
-     * they contain multiple "views" to the same backing object, e.g. see Collections$SynchronizedSortedSet.
+     * Detects circular references in serialized objects and immediately throws {@link CircularReferenceException}.
+     * <p/>
+     * This policy provides ability to use YaGson in the "safe Gson" mode, i.e. be fully compatible with Gson but
+     * prevent errors related to circular references.
+     */
+    DETECT_CIRCULAR_AND_THROW(new ReferencesThrowModeContextFactory()),
+
+    /**
+     * Supports circular references by serializing them as paths to the original object starting from the root
+     * serialized object, e.g. "@root.anArrayField.0".
+     * <p/>
+     * This is the minimal mode required to avoid {@link StackOverflowError}. However, a lot of standard
+     * collections may function improperly, as they contain multiple "views" to the same backing object,
+     * e.g. see Collections$SynchronizedSortedSet.
      */
     CIRCULAR_ONLY(new ReferencesCircularOnlyModeContextFactory()),
 
     /**
-     * Checks the circular references and duplicate fields in each object.
+     * Supports circular references as in {@link #CIRCULAR_ONLY} mode, but also detects duplicate sibling fields in
+     * each object and serializes them as "sibling references". For example, if there are two equal fields "a" and "b"
+     * in the same object, then a value of the field "b" is serialized as "@.a".
      * <p/>
      * Fixes some (but not all!) of the issues with multiple "views" in the standard collections. For example,
      * Collections$SynchronizedSortedSet is deserialized correctly in this mode, but
@@ -49,7 +63,8 @@ public enum ReferencesPolicy {
     CIRCULAR_AND_SIBLINGS(new ReferencesCircularAndSiblingsContextFactory()),
 
     /**
-     * 'Full' mode - all objects (except of Numbers and Strings) are checked for duplication.
+     * 'Full' mode - all objects (except of Numbers and Strings) are checked for duplication and serialized as
+     * either paths from the root object or sibling references.
      * <p/>
      * This mode is default one, as other modes may yield incorrect behavior of the de-serialized objects, such as
      * {@link java.util.concurrent.BlockingQueue}s}.

@@ -35,58 +35,78 @@ import com.google.gson.stream.JsonWriter;
  *
  * @author Andrey Mogilev
  */
-class ReferencesNoneModeContext implements ReferencesReadContext, ReferencesWriteContext {
+class ReferencesNoneModeContext {
 
-    public static ReferencesNoneModeContext instance = new ReferencesNoneModeContext();
+    public static ReferencesReadContext readContextInstance = new RefsReadContext();
+    public static ReferencesWriteContext writeContextInstance = new RefsWriteContext();
 
-    public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter,
-                                        String pathElement, WriteContext ctx) {
-        return valueTypeAdapter.toJsonTree(value, ctx);
+    static class RefsWriteContext implements ReferencesWriteContext {
+
+        @Override
+        public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter, String pathElement,
+                JsonWriter out, WriteContext ctx) throws IOException {
+            valueTypeAdapter.write(out, value, ctx);
+        }
+
+        @Override
+        public <T> JsonElement doToJsonTree(T value, TypeAdapter<T> valueTypeAdapter, String pathElement,
+                WriteContext ctx) {
+            return valueTypeAdapter.toJsonTree(value, ctx);
+        }
+
+        @Override
+        public <T> String getReferenceFor(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {
+            return null;
+        }
+
+        @Override
+        public ReferencesPolicy getPolicy() {
+            return ReferencesPolicy.DISABLED;
+        }
+
+        @Override
+        public ReferencesWriteContext makeChildContext() {
+            return this;
+        }
+
+        @Override
+        public void mergeWithChildContext(ReferencesWriteContext rctx) {
+            // do nothing
+        }
     }
 
-    public <T> String getReferenceFor(T value, TypeAdapter<T> valueTypeAdapter, String pathElement) {
-        return null;
-    }
+    static class RefsReadContext implements ReferencesReadContext {
 
-    public <T> void doWrite(T value, TypeAdapter<T> valueTypeAdapter,
-                            String pathElement, JsonWriter out, WriteContext ctx) throws IOException {
-        valueTypeAdapter.write(out, value, ctx);
-    }
+        @Override
+        public void registerObject(Object value, boolean fromSimpleTypeAdapter) {
+            // do nothing
+        }
 
-    public void registerObject(Object value, boolean fromSimpleTypeAdapter) {
-        // do nothing
-    }
+        @Override
+        public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter, String pathElement, ReadContext ctx) throws IOException {
+            return typeAdapter.read(reader, ctx);
+        }
 
-    public <T> T doRead(JsonReader reader, TypeAdapter<T> typeAdapter,
-                        String pathElement, ReadContext ctx) throws IOException {
-        return typeAdapter.read(reader, ctx);
-    }
+        @Override
+        public boolean isReferenceString(String str) {
+            // no references are supported
+            return false;
+        }
 
-    public boolean isReferenceString(String str) {
-        // no references are supported
-        return false;
-    }
+        @Override
+        public <T> T getReferencedObject(String reference) throws IOException {
+            throw new JsonSyntaxException("The reference cannot be read, as the current policy is ReferencesPolicy." +
+                    getPolicy() + ": '" + reference + "'");
+        }
 
-    public <T> T getReferencedObject(String reference) throws IOException {
-        throw new JsonSyntaxException("The reference cannot be read, as the current policy is ReferencesPolicy." +
-                ReferencesPolicy.DISABLED + ": '" + reference + "'");
-    }
+        @Override
+        public <T> ReferencePlaceholder<T> consumeLastPlaceholderIfAny() {
+            return null;
+        }
 
-    public <T> ReferencePlaceholder<T> consumeLastPlaceholderIfAny() {
-        return null;
-    }
-
-    public ReferencesPolicy getPolicy() {
-        return ReferencesPolicy.DISABLED;
-    }
-
-    @Override
-    public ReferencesWriteContext makeChildContext() {
-        return this;
-    }
-
-    @Override
-    public void mergeWithChildContext(ReferencesWriteContext rctx) {
-        // do nothing
+        @Override
+        public ReferencesPolicy getPolicy() {
+            return ReferencesPolicy.DISABLED;
+        }
     }
 }

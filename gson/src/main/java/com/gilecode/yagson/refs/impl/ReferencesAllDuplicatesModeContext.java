@@ -133,7 +133,7 @@ class ReferencesAllDuplicatesModeContext {
             if (ref != null) {
                 String curRef = getCurrentReference();
                 if (ref.startsWith(curRef + ".") && ref.indexOf('.', curRef.length() + 1) < 0) {
-                    // use shorter 'sibling field' reference istsead of the full reference
+                    // use shorter 'sibling field' reference instead of the full reference
                     // NOTE: unlike ReferencesPolicy.CIRCULAR_AND_SIBLINGS mode, not only 'fields' are
                     //  supported
                     String siblingRef = References.REF_FIELD_PREFIX + ref.substring(curRef.length() + 1);
