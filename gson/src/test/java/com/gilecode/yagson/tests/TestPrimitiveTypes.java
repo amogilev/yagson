@@ -1,6 +1,10 @@
 package com.gilecode.yagson.tests;
 
 import com.gilecode.yagson.tests.util.BindingTestCase;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Test for the serialization of primitive types, their auto-boxing and auto-cast.
@@ -167,6 +171,16 @@ public class TestPrimitiveTypes extends BindingTestCase {
         test(Float.NaN, float.class, "NaN");
         test(Float.POSITIVE_INFINITY, Float.class, "Infinity");
         test(Float.NEGATIVE_INFINITY, Float.class, "-Infinity");
+    }
+
+    public void testSpecialFPNumbersAsMapKeys() {
+        Map<Float, String> obj = new HashMap<Float, String>();
+        obj.put(Float.NaN, "1");
+        obj.put(Float.POSITIVE_INFINITY, "2");
+        obj.put(Float.NEGATIVE_INFINITY, "3");
+
+        test(obj, new TypeToken<HashMap<Float, String>>(){}.getType(),
+                jsonStr("{'NaN':'1','Infinity':'2','-Infinity':'3'}"));
     }
 
     public void testMaxMinDoubleNumbers() {

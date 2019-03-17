@@ -259,6 +259,7 @@ public abstract class TypeAdapter<T> {
   public final JsonElement toJsonTree(T value, WriteContext ctx) {
     try {
       JsonTreeWriter jsonWriter = new JsonTreeWriter();
+      jsonWriter.setLenient(true);
       write(jsonWriter, value, ctx);
       return jsonWriter.get();
     } catch (IOException e) {
