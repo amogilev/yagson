@@ -33,6 +33,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +45,8 @@ public final class ObjectTypeAdapter extends TypeAdapter<Object> {
   public static final TypeAdapterFactory FACTORY = new TypeAdapterFactory() {
     @SuppressWarnings("unchecked")
     @Override public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-      if (type.getRawType() == Object.class) {
+      Class<? super T> rawType = type.getRawType();
+      if (rawType == Object.class || rawType == Serializable.class || rawType == Comparable.class) {
         return (TypeAdapter<T>) new ObjectTypeAdapter(gson);
       }
       return null;

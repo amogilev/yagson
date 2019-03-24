@@ -3,8 +3,10 @@ package com.gilecode.yagson.tests;
 import com.gilecode.yagson.tests.util.BindingTestCase;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Test for the serialization of primitive types, their auto-boxing and auto-cast.
@@ -174,13 +176,13 @@ public class TestPrimitiveTypes extends BindingTestCase {
     }
 
     public void testSpecialFPNumbersAsMapKeys() {
-        Map<Float, String> obj = new HashMap<Float, String>();
+        Map<Float, String> obj = new TreeMap<Float, String>();
         obj.put(Float.NaN, "1");
         obj.put(Float.POSITIVE_INFINITY, "2");
         obj.put(Float.NEGATIVE_INFINITY, "3");
 
-        test(obj, new TypeToken<HashMap<Float, String>>(){}.getType(),
-                jsonStr("{'NaN':'1','Infinity':'2','-Infinity':'3'}"));
+        test(obj, new TypeToken<TreeMap<Float, String>>(){}.getType(),
+                jsonStr("{'-Infinity':'3','Infinity':'2','NaN':'1'}"));
     }
 
     public void testMaxMinDoubleNumbers() {
@@ -198,4 +200,18 @@ public class TestPrimitiveTypes extends BindingTestCase {
         test(Float.MIN_VALUE, float.class, "1.4E-45");
         test(Float.MIN_NORMAL, float.class, "1.17549435E-38");
     }
+
+    public void testAsSerializable() {
+        test(1, Serializable.class, jsonStr("{'@type':'java.lang.Integer','@val':1}"));
+
+        Object o = gsonCircularOnlyMode.fromJson("1", Serializable.class);
+        assertEquals(1L, o);
+
+        o = gsonCircularOnlyMode.fromJson("1.1", Comparable.class);
+        assertEquals(1.1, o);
+
+        o = gsonCircularOnlyMode.fromJson(jsonStr("'str'"), Comparable.class);
+        assertEquals("str", o);
+    }
+
 }

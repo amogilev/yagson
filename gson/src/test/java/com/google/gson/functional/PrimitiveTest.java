@@ -339,7 +339,9 @@ public class PrimitiveTest extends TestCase {
 
     Serializable serializableString = expected;
     String actualJson = gson.toJson(serializableString, Serializable.class);
-    assertFalse(expectedJson.equals(actualJson));
+    // YaGson change: Serializable is handled by ObjectTypeAdapter and thus supports Strings
+//    assertFalse(expectedJson.equals(actualJson));
+    assertTrue(expectedJson.equals(actualJson));
   }
 
   private String extractElementFromArray(String json) {
