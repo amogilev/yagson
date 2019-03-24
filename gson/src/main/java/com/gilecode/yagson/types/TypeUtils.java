@@ -864,4 +864,16 @@ public class TypeUtils {
     public static boolean isNonSerializableLambdaClass(Class<?> c) {
         return isLambdaClass(c) && !Serializable.class.isAssignableFrom(c);
     }
+
+    /**
+     * Safety wrapper for {@link Field#getGenericType()}, which handles potential {@link TypeNotPresentException}
+     * and handles them by returning non-generic Class in case of exception caught.
+     */
+    public static Type getFieldGenericTypeSafe(Field f) {
+        try {
+            return f.getGenericType();
+        } catch (TypeNotPresentException e) {
+            return f.getType();
+        }
+    }
 }

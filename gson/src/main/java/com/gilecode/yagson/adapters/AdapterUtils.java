@@ -105,7 +105,8 @@ public class AdapterUtils {
             }
 
             Class<?> defaultFieldClass = defaultValue == null ? f.getType() : defaultValue.getClass();
-            TypeAdapter<Object> fieldAdapter = new DefaultTypeAdapterRuntimeWrapper(gson, defaultFieldClass, f.getGenericType());
+            Type fieldType = TypeUtils.getFieldGenericTypeSafe(f);
+            TypeAdapter<Object> fieldAdapter = new DefaultTypeAdapterRuntimeWrapper(gson, defaultFieldClass, fieldType);
 
             result.put(fname, new FieldInfo(f, defaultValue, fieldAdapter));
         }

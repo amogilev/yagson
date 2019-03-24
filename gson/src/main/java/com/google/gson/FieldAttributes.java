@@ -16,6 +16,7 @@
 
 package com.google.gson;
 
+import com.gilecode.yagson.types.TypeUtils;
 import com.google.gson.internal.$Gson$Preconditions;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -77,7 +78,7 @@ public final class FieldAttributes {
    * @return the specific type declared for this field
    */
   public Type getDeclaredType() {
-    return field.getGenericType();
+    return TypeUtils.getFieldGenericTypeSafe(field);
   }
 
   /**
