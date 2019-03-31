@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+== New in version `0.5`
+
+## Version 0.5
+
+_2019-04-01_
+
+New features & fixes:
+* Support for JsonSerializer/JsonDeserializer
+* New ReferencePolicy: `DETECT_CIRCULAR_AND_THROW`
+* Improvements and bugfixes
+* google-gson codebase is updated to release 2.8.5
+
 ## Version 0.4.1
 
 _2018-10-06_

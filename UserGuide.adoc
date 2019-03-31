@@ -78,7 +78,7 @@ In Maven projects, just add the following dependency:
   <dependency>
     <groupId>com.gilecode.yagson</groupId>
     <artifactId>yagson</artifactId>
-    <version>0.4</version>
+    <version>0.5</version>
     <scope>compile</scope>
   </dependency>
 ----
