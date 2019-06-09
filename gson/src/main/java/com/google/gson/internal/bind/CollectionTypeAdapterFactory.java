@@ -450,14 +450,29 @@ public final class CollectionTypeAdapterFactory implements TypeAdapterFactory {
         return;
       }
 
-      out.beginArray();
+      // NOTE: serializing "as collection" requires call of custom class-provided methods: Collection.iterator()
+      //       and the methods of that iterator, which is not perfectly safe. There are examples where iterator()
+      //       throws UnsupportedOperationException, and potentially hasNext()/next() may throw exceptions too.
+      //       Currently only iterator() is checked before decision to use "as collection" vs. "as object"
+      //       serialization, but if more examples will be found, it would be more safe to copy everything to a
+      //       temporal ArrayList and use "as object" if failed.
+      Iterator<E> it;
+      try {
+        it = collection.iterator();
+      } catch (Exception e) {
+        AdapterUtils.writeByReflectiveAdapter(out, collection, ctx, gson, formalCollType);
+        return;
+      }
 
+      out.beginArray();
       int i = writeExtraFields(collection, out, ctx);
 
-      for (E element : collection) {
+      while (it.hasNext()) {
+        E element = it.next();
         ctx.doWrite(element, elementTypeAdapter, Integer.toString(i), out);
         i++;
       }
+
       out.endArray();
     }
   }

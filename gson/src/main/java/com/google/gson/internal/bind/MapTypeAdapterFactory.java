@@ -447,27 +447,42 @@ public final class MapTypeAdapterFactory implements TypeAdapterFactory {
         return;
       }
 
+      boolean skipEntries = ctx.isSkipNextMapEntries();
+      Iterator<Map.Entry<K, V>> it = null;
+      if (!skipEntries) {
+        try {
+          it = map.entrySet().iterator();
+        } catch (Exception e) {
+          // incorrect map implementation - revert to "as object" serialization
+          AdapterUtils.writeByReflectiveAdapter(out, map, ctx, gson, formalMapType);
+          return;
+        }
+      }
+
       if (!complexMapKeySerialization) {
         out.beginObject();
         int i = 0;
-        for (Map.Entry<K, V> entry : map.entrySet()) {
-          out.name(String.valueOf(entry.getKey()));
-          ctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
-          i++;
+        if (!skipEntries) {
+          while (it.hasNext()) {
+            Map.Entry<K, V> entry = it.next();
+            out.name(String.valueOf(entry.getKey()));
+            ctx.doWrite(entry.getValue(), valueTypeAdapter, "" + i + "-val", out);
+            i++;
+          }
         }
         writeExtraFields(out, map, ctx, i, false);
         out.endObject();
         return;
       }
 
-      boolean skipEntries = ctx.isSkipNextMapEntries();
       boolean hasComplexKeys = false;
       List<JsonElement> keys = new ArrayList<JsonElement>(map.size());
       List<V> values = new ArrayList<V>(map.size());
 
       if (!skipEntries) {
         int i = 0;
-        for (Map.Entry<K, V> entry : map.entrySet()) {
+        while (it.hasNext()) {
+          Map.Entry<K, V> entry = it.next();
           JsonElement keyElement = ctx.doToJsonTree(entry.getKey(), keyTypeAdapter, keyRef(i));
           i++;
           keys.add(keyElement);
