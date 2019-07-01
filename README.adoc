@@ -112,6 +112,10 @@ object itself. There may be more complicated references, describing a _path_ fro
 `@root.0.field1.1-key`. Also, there are _shortcut_ references like `@.field`, which point to a sibling field in the
 parent object.
 
+== New in version `0.5.1`
+
+* Support serialization of non-iterable collections and maps
+
 == New in version `0.5`
 
 * Support for JsonSerializer/JsonDeserializer

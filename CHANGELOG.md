@@ -1,7 +1,12 @@
 Change Log
 ==========
 
-== New in version `0.5`
+## Version 0.5.1
+
+_2019-07-02_
+
+New features & fixes:
+* Support serialization of non-iterable collections and maps
 
 ## Version 0.5
 
