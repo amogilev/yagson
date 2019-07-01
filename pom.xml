@@ -12,7 +12,7 @@
 
   <groupId>com.gilecode.yagson</groupId>
   <artifactId>yagson-parent</artifactId>
-  <version>0.5.1-SNAPSHOT</version>
+  <version>0.5.1</version>
   <packaging>pom</packaging>
 
   <name>YaGson Parent</name>
