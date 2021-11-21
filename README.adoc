@@ -1,5 +1,13 @@
 = YaGson
 
+== WARNING
+
+YaGson is best compatible with Java version from 6 to 8. **It is not recommended for Java 9+**.
+
+Since Java 9 you may notice "Illegal reflective access" warning in the console output.
+
+Since Java 12 there may be **java.lang.reflect.InaccessibleObjectException**  thrown when attempting to serialize/deserialize some core classes. Since Java 16 such exception is thrown much more often.
+
 == Overview
 
 YaGson is a universal type-preserving Java serialization library that can convert
